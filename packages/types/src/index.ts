@@ -341,3 +341,52 @@ export interface LessonPlan {
   blocks: LessonBlock[];
   createdAt: string;
 }
+
+// --- Caregiver notifications & overview ---
+
+export type NotificationAudience = "parent" | "teacher" | "district_admin";
+
+export type NotificationType =
+  | "difficulty_proposal"
+  | "baseline_completed"
+  | "session_completed"
+  | "message_from_teacher"
+  | "message_from_parent";
+
+export type NotificationStatus = "unread" | "read";
+
+export interface Notification {
+  id: string;
+  tenantId: string;
+  learnerId: string;
+  // For simplicity, we store user IDs of recipients; in future, this could be group-based.
+  recipientUserId: string;
+  audience: NotificationAudience;
+  type: NotificationType;
+  title: string;
+  body: string;
+  createdAt: string;
+  status: NotificationStatus;
+  relatedDifficultyProposalId?: string;
+  relatedBaselineAssessmentId?: string;
+  relatedSessionId?: string;
+}
+
+// Lightweight caregiver-facing learner overview
+
+export interface CaregiverSubjectView {
+  subject: SubjectCode;
+  enrolledGrade: number;
+  assessedGradeLevel: number;
+  masteryScore: number;
+  difficultyRecommendation?: "easier" | "maintain" | "harder";
+}
+
+export interface CaregiverLearnerOverview {
+  learner: Learner;
+  brainProfile: LearnerBrainProfile | null;
+  subjects: CaregiverSubjectView[];
+  lastBaselineSummary?: BaselineResultSummary;
+  recentSessionDates: string[]; // e.g., last 5 dates a session was completed
+  pendingDifficultyProposals: DifficultyChangeProposal[];
+}

@@ -128,6 +128,42 @@ Run tests (where configured):
 pnpm test
 ```
 
+### Targeted linting with Turborepo filters
+
+This repo uses **Turborepo** under the hood for linting. The `lint` task is defined at the root as:
+
+- Root `package.json`: `"lint": "turbo lint"`
+
+Each workspace that supports linting exposes its own `lint` script. To lint just one app or service, filter **by package name**, not by path:
+
+- API Gateway service (package name: `@aivo/api-gateway`):
+
+   ```powershell
+   pnpm lint --filter @aivo/api-gateway
+   ```
+
+- Parent/Teacher web app (package name: `parent-teacher-web`):
+
+   ```powershell
+   pnpm lint --filter parent-teacher-web
+   ```
+
+You can combine filters to lint multiple projects at once:
+
+```powershell
+pnpm lint --filter @aivo/api-gateway --filter parent-teacher-web
+```
+
+#### Filter vs. path patterns
+
+The `dev:web` script uses **path-style filters** with `...` to include dependencies, for example:
+
+- Root `package.json`: `"dev:web": "turbo dev --filter=apps/web... --filter=apps/learner-web... --filter=apps/parent-teacher-web..."`
+
+For linting, you should generally stick with **bare package names** (like `parent-teacher-web` or `@aivo/api-gateway`) and omit the `apps/` or `services/` prefix.
+
+If a filter fails, double-check the `name` field in that package's `package.json` and use that value directly.
+
 ## Notes
 
 - Uses **pnpm workspaces** and **Turborepo** for orchestration.

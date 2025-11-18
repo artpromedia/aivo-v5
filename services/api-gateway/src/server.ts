@@ -29,8 +29,15 @@ import type {
   School,
   RoleAssignment,
   LearnerSession,
-  SessionActivity
+  SessionActivity,
+  CaregiverLearnerOverview,
+  Notification,
+  CaregiverSubjectView
 } from "@aivo/types";
+import type {
+  ListNotificationsResponse,
+  MarkNotificationReadResponse
+} from "@aivo/api-client/src/caregiver-contracts";
 import { getMockUserFromHeader, requireRole } from "./authContext";
 
 const fastify = Fastify({ logger: true });
@@ -267,6 +274,16 @@ fastify.post("/difficulty/proposals", async (request, reply) => {
     status: created.status as any
   };
 
+  // Notify a mock parent user that there is a new difficulty proposal.
+  createDifficultyNotification({
+    tenantId: "demo-tenant",
+    learnerId: body.learnerId,
+    recipientUserId: "user-parent-1", // TODO: lookup parents/guardians for learner
+    audience: "parent",
+    proposalId: proposal.id,
+    direction: proposal.direction
+  });
+
   return reply.send({ proposal });
 });
 
@@ -448,6 +465,48 @@ const mockRoleAssignments: RoleAssignment[] = [
     role: "teacher"
   }
 ];
+
+// --- In-memory notifications for caregivers ---
+
+const mockNotifications: Notification[] = [];
+
+// Helper: create a difficulty change notification (used when proposals are created/updated)
+function createDifficultyNotification(args: {
+  tenantId: string;
+  learnerId: string;
+  recipientUserId: string;
+  audience: "parent" | "teacher";
+  proposalId: string;
+  direction: "easier" | "harder";
+}) {
+  const id = `notif-${mockNotifications.length + 1}`;
+  const title =
+    args.direction === "harder"
+      ? "AIVO suggests a gentle increase in difficulty"
+      : "AIVO suggests making this subject gentler";
+
+  const body =
+    args.direction === "harder"
+      ? "Based on recent progress, AIVO recommends trying slightly more challenging work. Please review and approve if you agree."
+      : "AIVO noticed some struggle and suggests temporarily easing the difficulty. Please review and approve if you agree.";
+
+  const notif: Notification = {
+    id,
+    tenantId: args.tenantId,
+    learnerId: args.learnerId,
+    recipientUserId: args.recipientUserId,
+    audience: args.audience,
+    type: "difficulty_proposal",
+    title,
+    body,
+    createdAt: new Date().toISOString(),
+    status: "unread",
+    relatedDifficultyProposalId: args.proposalId
+  };
+
+  mockNotifications.push(notif);
+  return notif;
+}
 
 // --- In-memory sessions (mock) ---
 
@@ -757,9 +816,201 @@ fastify.get("/admin/tenants/:tenantId/roles", async (request, reply) => {
   return reply.send(response);
 });
 
+// --- Caregiver routes ---
+
+// GET /caregiver/learners/:learnerId/overview
+fastify.get("/caregiver/learners/:learnerId/overview", async (request, reply) => {
+  const user = (request as any).user;
+  const params = z.object({ learnerId: z.string() }).parse(request.params);
+  const learnerId = params.learnerId;
+
+  // TODO: enforce that this user is a parent/teacher of the learner
+  if (!user.roles.includes("parent") && !user.roles.includes("teacher")) {
+    return reply
+      .status(403)
+      .send({ error: "Only parents and teachers can view this overview." });
+  }
+
+  // Mock learner & brain profile
+  const learner: CaregiverLearnerOverview["learner"] = {
+    id: learnerId,
+    tenantId: user.tenantId,
+    userId: "learner-user-1",
+    displayName: "Alex",
+    currentGrade: 7,
+    region: "north_america",
+    createdAt: new Date().toISOString()
+  };
+
+  const brainProfile: CaregiverLearnerOverview["brainProfile"] = {
+    learnerId,
+    tenantId: user.tenantId,
+    region: "north_america",
+    currentGrade: 7,
+    gradeBand: "6_8",
+    subjectLevels: [
+      {
+        subject: "math",
+        enrolledGrade: 7,
+        assessedGradeLevel: 5,
+        masteryScore: 0.62
+      },
+      {
+        subject: "ela",
+        enrolledGrade: 7,
+        assessedGradeLevel: 7,
+        masteryScore: 0.75
+      }
+    ],
+    neurodiversity: { adhd: true, prefersLowStimulusUI: true },
+    preferences: { prefersStepByStep: true, prefersVisual: true },
+    lastUpdatedAt: new Date().toISOString()
+  };
+
+  // Build caregiver subject views
+  const subjects: CaregiverSubjectView[] = brainProfile.subjectLevels.map((lvl) => {
+    let difficultyRecommendation: "easier" | "maintain" | "harder" | undefined;
+    const diff = lvl.enrolledGrade - lvl.assessedGradeLevel;
+    if (diff >= 2) difficultyRecommendation = "easier";
+    else if (diff <= -1) difficultyRecommendation = "harder";
+    else difficultyRecommendation = "maintain";
+
+    return {
+      subject: lvl.subject,
+      enrolledGrade: lvl.enrolledGrade,
+      assessedGradeLevel: lvl.assessedGradeLevel,
+      masteryScore: lvl.masteryScore,
+      difficultyRecommendation
+    };
+  });
+
+  // Mock baseline summary
+  const lastBaselineSummary: CaregiverLearnerOverview["lastBaselineSummary"] = {
+    subjectLevels: brainProfile.subjectLevels,
+    notes:
+      "Baseline shows Alex is currently working at a 5th-grade level in math but on-level in ELA. AIVO will scaffold 7th-grade math concepts with 5th-grade difficulty."
+  };
+
+  // Mock recent sessions (e.g., last 3 days)
+  const today = new Date();
+  const recentSessionDates = [0, 1, 2].map((offset) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - offset);
+    return d.toISOString().slice(0, 10);
+  });
+
+  // For now, query difficulty proposals via Prisma and filter to pending
+  const records = await prisma.difficultyChangeProposal.findMany({
+    where: { learnerId }
+  });
+
+  const pendingDifficultyProposals = records
+    .filter((p: any) => p.status === "pending")
+    .map((p: any) => ({
+      id: p.id,
+      learnerId: p.learnerId,
+      subject: p.subject as any,
+      fromAssessedGradeLevel: p.fromAssessedGradeLevel,
+      toAssessedGradeLevel: p.toAssessedGradeLevel,
+      direction: p.direction as any,
+      rationale: p.rationale,
+      createdBy: p.createdBy as any,
+      createdAt: p.createdAt.toISOString(),
+      status: p.status as any,
+      decidedByUserId: p.decidedByUserId ?? undefined,
+      decidedAt: p.decidedAt ? p.decidedAt.toISOString() : undefined,
+      decisionNotes: p.decisionNotes ?? undefined
+    }));
+
+  const overview: CaregiverLearnerOverview = {
+    learner,
+    brainProfile,
+    subjects,
+    lastBaselineSummary,
+    recentSessionDates,
+    pendingDifficultyProposals
+  };
+
+  return reply.send({ overview });
+});
+
+// GET /caregiver/notifications
+fastify.get("/caregiver/notifications", async (request, reply) => {
+  const user = (request as any).user;
+
+  if (!user.roles.includes("parent") && !user.roles.includes("teacher")) {
+    return reply
+      .status(403)
+      .send({ error: "Only parents and teachers can view notifications." });
+  }
+
+  const notifications = mockNotifications.filter(
+    (n) => n.recipientUserId === user.userId
+  );
+
+  const response: ListNotificationsResponse = { notifications };
+  return reply.send(response);
+});
+
+// POST /caregiver/notifications/:id/read
+fastify.post("/caregiver/notifications/:id/read", async (request, reply) => {
+  const user = (request as any).user;
+  const params = z.object({ id: z.string() }).parse(request.params);
+
+  const notification = mockNotifications.find(
+    (n) => n.id === params.id && n.recipientUserId === user.userId
+  );
+  if (!notification) {
+    return reply.status(404).send({ error: "Notification not found" });
+  }
+
+  notification.status = "read";
+
+  const response: MarkNotificationReadResponse = { notification };
+  return reply.send(response);
+});
+
 fastify
   .listen({ port: 4000, host: "0.0.0.0" })
   .then(() => {
+    // Seed a demo difficulty proposal so caregiver views always have something to show.
+    // This runs once on server start and is idempotent on repeated restarts as long as
+    // the same ID is used.
+    void (async () => {
+      try {
+        const existing = await prisma.difficultyChangeProposal.findFirst({
+          where: { id: "demo-proposal-1" }
+        });
+        if (!existing) {
+          await prisma.difficultyChangeProposal.create({
+            data: {
+              id: "demo-proposal-1",
+              learnerId: "demo-learner",
+              subject: "math" as any,
+              fromAssessedGradeLevel: 5,
+              toAssessedGradeLevel: 6,
+              direction: "harder" as any,
+              rationale:
+                "AIVO noticed strong mastery at the current level and suggests a gentle step up.",
+              createdBy: "system",
+              status: "pending" as any
+            }
+          });
+
+          createDifficultyNotification({
+            tenantId: "demo-tenant",
+            learnerId: "demo-learner",
+            recipientUserId: "user-parent-1",
+            audience: "parent",
+            proposalId: "demo-proposal-1",
+            direction: "harder"
+          });
+        }
+      } catch (err) {
+        fastify.log.error({ err }, "Failed to seed demo difficulty proposal");
+      }
+    })();
+
     fastify.log.info("API Gateway listening on http://0.0.0.0:4000");
   })
   .catch((err) => {

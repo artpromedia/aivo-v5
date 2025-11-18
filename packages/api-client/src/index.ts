@@ -23,6 +23,11 @@ import type {
   ListRoleAssignmentsResponse
 } from "./admin-contracts";
 import type {
+  GetCaregiverLearnerOverviewResponse,
+  ListNotificationsResponse,
+  MarkNotificationReadResponse
+} from "./caregiver-contracts";
+import type {
   GetTodaySessionResponse,
   StartSessionRequest,
   StartSessionResponse,
@@ -168,6 +173,27 @@ export class AivoApiClient {
       {
         method: "PATCH",
         body: JSON.stringify({ status: body.status })
+      }
+    );
+  }
+
+  // Caregiver views
+
+  getCaregiverLearnerOverview(learnerId: string) {
+    return this.request<GetCaregiverLearnerOverviewResponse>(
+      `/caregiver/learners/${learnerId}/overview`
+    );
+  }
+
+  listNotifications() {
+    return this.request<ListNotificationsResponse>("/caregiver/notifications");
+  }
+
+  markNotificationRead(notificationId: string) {
+    return this.request<MarkNotificationReadResponse>(
+      `/caregiver/notifications/${notificationId}/read`,
+      {
+        method: "POST"
       }
     );
   }
