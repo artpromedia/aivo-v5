@@ -13,7 +13,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx}\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed": "ts-node --transpile-only scripts/seed-tenants-and-users.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",

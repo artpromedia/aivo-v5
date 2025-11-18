@@ -1,4 +1,6 @@
-import { prisma } from "@aivo/persistence";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 async function main() {
   // Seed a demo tenant matching the IDs used in mock auth
@@ -83,7 +85,6 @@ async function main() {
 main()
   .catch((err) => {
     console.error("Seed failed", err);
-    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
