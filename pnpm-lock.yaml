@@ -290,6 +290,19 @@ importers:
         specifier: workspace:*
         version: link:../types
 
+  packages/persistence:
+    dependencies:
+      '@prisma/client':
+        specifier: ^6.0.0
+        version: 6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      prisma:
+        specifier: ^6.0.0
+        version: 6.19.0(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/types: {}
 
   packages/ui:

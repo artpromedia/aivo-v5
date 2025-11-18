@@ -117,3 +117,99 @@ model DifficultyChangeProposal {
   learner          Learner?            @relation(fields: [learnerId], references: [id])
   sourceAssessment BaselineAssessment? @relation(fields: [sourceAssessmentId], references: [id])
 }
+
+// --- Multi-tenancy & users (added incrementally) ---
+
+model Tenant {
+  id        String   @id @default(uuid())
+  type      String
+  name      String
+  region    Region
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  learners Learner[]
+  users    User[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+
+  learners  Learner[] @relation("LearnerOwner")
+  notices   Notification[] @relation("NotificationRecipient")
+}
+
+model RoleAssignment {
+  id         String   @id @default(uuid())
+  userId     String
+  tenantId   String
+  districtId String?
+  schoolId   String?
+  role       String
+
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// --- Sessions & activities (new) ---
+
+model Session {
+  id             String   @id @default(uuid())
+  learnerId      String
+  tenantId       String
+  date           String
+  subject        SubjectCode
+  status         String
+  plannedMinutes Int
+  actualMinutes  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  learner   Learner @relation(fields: [learnerId], references: [id])
+  activities SessionActivity[]
+}
+
+model SessionActivity {
+  id              String   @id @default(uuid())
+  sessionId       String
+  learnerId       String
+  subject         SubjectCode
+  type            String
+  title           String
+  instructions    String
+  estimatedMinutes Int
+  status          String
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  session Session @relation(fields: [sessionId], references: [id])
+}
+
+// --- Notifications (new, initially with optional relations) ---
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String
+  learnerId String
+  recipientUserId String
+
+  audience  String
+  type      String
+  title     String
+  body      String
+  status    String
+  createdAt DateTime @default(now())
+
+  relatedDifficultyProposalId String?
+  relatedBaselineAssessmentId String?
+  relatedSessionId            String?
+
+  learner   Learner? @relation(fields: [learnerId], references: [id])
+}

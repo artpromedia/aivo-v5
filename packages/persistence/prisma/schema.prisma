@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DATABASE_PROVIDER") // e.g. "postgresql" or "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  type      String
+  name      String
+  region    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users      User[]
+  learners   Learner[]
+  proposals  DifficultyProposal[]
+  sessions   Session[]
+  notices    Notification[]
+}
+
+model User {
+  id        String      @id @default(cuid())
+  email     String      @unique
+  name      String?
+  createdAt DateTime    @default(now())
+
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  roles     RoleAssignment[]
+  learners  Learner[]   @relation("LearnerOwner")
+  notices   Notification[] @relation("NotificationRecipient")
+}
+
+model RoleAssignment {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId   String
+  districtId String?
+  schoolId   String?
+  role       String
+}
+
+model Learner {
+  id        String     @id @default(cuid())
+  displayName String
+  currentGrade Int
+  region      String
+  createdAt   DateTime  @default(now())
+
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  owner     User        @relation("LearnerOwner", fields: [ownerId], references: [id])
+  ownerId   String
+
+  brainProfile BrainProfile?
+  sessions     Session[]
+  proposals    DifficultyProposal[]
+  notices      Notification[]
+}
+
+model BrainProfile {
+  id          String   @id @default(cuid())
+  learner     Learner  @relation(fields: [learnerId], references: [id])
+  learnerId   String   @unique
+  region      String
+  currentGrade Int
+  gradeBand   String
+  // Store subject levels and neurodiversity/preferences as JSON for now
+  subjectLevels Json
+  neurodiversity Json
+  preferences   Json
+  updatedAt    DateTime @default(now())
+}
+
+model DifficultyProposal {
+  id          String   @id @default(cuid())
+  learner     Learner  @relation(fields: [learnerId], references: [id])
+  learnerId   String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+
+  subject     String
+  fromLevel   Int
+  toLevel     Int
+  direction   String
+  rationale   String
+  createdBy   String   // "system" | "teacher" | "parent"
+  createdAt   DateTime @default(now())
+  status      String   // "pending" | "approved" | "rejected"
+  decidedById String?
+  decidedAt   DateTime?
+  decisionNotes String?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  learner   Learner  @relation(fields: [learnerId], references: [id])
+  learnerId String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  date      String
+  subject   String
+  status    String
+  plannedMinutes Int
+  actualMinutes  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  activities SessionActivity[]
+}
+
+model SessionActivity {
+  id          String   @id @default(cuid())
+  session     Session  @relation(fields: [sessionId], references: [id])
+  sessionId   String
+
+  learnerId   String
+  subject     String
+  type        String    // "micro_lesson" | "guided_practice" | ...
+  title       String
+  instructions String
+  estimatedMinutes Int
+  status      String    // "pending" | "in_progress" | "completed" | "skipped"
+  startedAt   DateTime?
+  completedAt DateTime?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  learner   Learner  @relation(fields: [learnerId], references: [id])
+  learnerId String
+
+  recipient User     @relation("NotificationRecipient", fields: [recipientUserId], references: [id])
+  recipientUserId String
+
+  audience  String
+  type      String
+  title     String
+  body      String
+  status    String   // "unread" | "read"
+  createdAt DateTime @default(now())
+
+  relatedDifficultyProposalId String?
+  relatedBaselineAssessmentId String?
+  relatedSessionId            String?
+}

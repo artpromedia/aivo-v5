@@ -2,6 +2,15 @@ import Fastify from "fastify";
 import { z } from "zod";
 import fetch from "node-fetch";
 import { prisma } from "./db";
+import {
+  createDifficultyProposal as dbCreateDifficultyProposal,
+  listPendingProposalsForLearner,
+  decideOnProposal as dbDecideOnProposal,
+  createNotification as dbCreateNotification,
+  listNotificationsForUser,
+  markNotificationRead as dbMarkNotificationRead,
+  getLearnerWithBrainProfile
+} from "@aivo/persistence";
 import type {
   GenerateBaselineRequest,
   GenerateBaselineResponse,
@@ -241,47 +250,56 @@ fastify.post("/baseline/submit", async (request, reply) => {
 // Difficulty proposals via Prisma
 
 fastify.post("/difficulty/proposals", async (request, reply) => {
+  const user = (request as any).user;
   const body = request.body as CreateDifficultyProposalRequest;
 
-  const baseFrom = 5; // TODO: derive from learner brain profile
-  const direction =
+  const learnerProfile = await getLearnerWithBrainProfile(body.learnerId);
+  const baseFrom =
+    (learnerProfile?.brainProfile as any)?.currentGrade ?? 5; // TODO: derive per-subject
+  const direction: "easier" | "harder" =
     body.toAssessedGradeLevel > baseFrom ? "harder" : "easier";
 
-  const created = await prisma.difficultyChangeProposal.create({
-    data: {
-      learnerId: body.learnerId,
-      subject: body.subject as any,
-      fromAssessedGradeLevel: baseFrom,
-      toAssessedGradeLevel: body.toAssessedGradeLevel,
-      direction: direction as any,
-      rationale:
-        body.rationale ??
-        "System detected sustained mastery; recommending an adjustment in difficulty.",
-      createdBy: "system"
-    }
+  const created = await dbCreateDifficultyProposal({
+    learnerId: body.learnerId,
+    tenantId: user.tenantId ?? "demo-tenant",
+    subject: body.subject,
+    fromLevel: baseFrom,
+    toLevel: body.toAssessedGradeLevel,
+    direction,
+    rationale:
+      body.rationale ??
+      "System detected sustained mastery; recommending an adjustment in difficulty.",
+    createdBy: "system"
   });
 
   const proposal: CreateDifficultyProposalResponse["proposal"] = {
     id: created.id,
     learnerId: created.learnerId,
     subject: created.subject as any,
-    fromAssessedGradeLevel: created.fromAssessedGradeLevel,
-    toAssessedGradeLevel: created.toAssessedGradeLevel,
+    fromAssessedGradeLevel: created.fromLevel,
+    toAssessedGradeLevel: created.toLevel,
     direction: created.direction as any,
     rationale: created.rationale,
-    createdBy: "system",
+    createdBy: created.createdBy as any,
     createdAt: created.createdAt.toISOString(),
     status: created.status as any
   };
 
-  // Notify a mock parent user that there is a new difficulty proposal.
-  createDifficultyNotification({
-    tenantId: "demo-tenant",
+  await dbCreateNotification({
+    tenantId: user.tenantId ?? "demo-tenant",
     learnerId: body.learnerId,
-    recipientUserId: "user-parent-1", // TODO: lookup parents/guardians for learner
+    recipientUserId: "user-parent-1", // TODO: lookup real caregiver(s)
     audience: "parent",
-    proposalId: proposal.id,
-    direction: proposal.direction
+    type: "difficulty_proposal",
+    title:
+      direction === "harder"
+        ? "AIVO suggests a gentle increase in difficulty"
+        : "AIVO suggests making this subject gentler",
+    body:
+      direction === "harder"
+        ? "Based on recent progress, AIVO recommends trying slightly more challenging work. Please review and approve if you agree."
+        : "AIVO noticed some struggle and suggests temporarily easing the difficulty. Please review and approve if you agree.",
+    relatedDifficultyProposalId: created.id
   });
 
   return reply.send({ proposal });
@@ -294,25 +312,26 @@ const listQuerySchema = z.object({
 fastify.get("/difficulty/proposals", async (request, reply) => {
   const query = listQuerySchema.parse(request.query);
 
-  const records = await prisma.difficultyChangeProposal.findMany({
-    where: query.learnerId ? { learnerId: query.learnerId } : undefined
-  });
+  const records = query.learnerId
+    ? await listPendingProposalsForLearner(query.learnerId)
+    : await prisma.difficultyChangeProposal.findMany();
 
   const response: ListDifficultyProposalsResponse = {
     proposals: records.map((p: any) => ({
       id: p.id,
       learnerId: p.learnerId,
       subject: p.subject as any,
-      fromAssessedGradeLevel: p.fromAssessedGradeLevel,
-      toAssessedGradeLevel: p.toAssessedGradeLevel,
+      fromAssessedGradeLevel: (p as any).fromLevel ?? p.fromAssessedGradeLevel,
+      toAssessedGradeLevel: (p as any).toLevel ?? p.toAssessedGradeLevel,
       direction: p.direction as any,
       rationale: p.rationale,
       createdBy: p.createdBy as any,
       createdAt: p.createdAt.toISOString(),
       status: p.status as any,
-      decidedByUserId: p.decidedByUserId ?? undefined,
-      decidedAt: p.decidedAt ? p.decidedAt.toISOString() : undefined,
-      decisionNotes: p.decisionNotes ?? undefined
+      decidedByUserId: (p as any).decidedById ?? p.decidedByUserId ?? undefined,
+      decidedAt: (p as any).decidedAt?.toISOString() ??
+        (p.decidedAt ? p.decidedAt.toISOString() : undefined),
+      decisionNotes: (p as any).decisionNotes ?? p.decisionNotes ?? undefined
     }))
   };
 
@@ -320,35 +339,35 @@ fastify.get("/difficulty/proposals", async (request, reply) => {
 });
 
 fastify.post("/difficulty/proposals/:id/decision", async (request, reply) => {
+  const user = (request as any).user;
   const paramsSchema = z.object({ id: z.string() });
   const params = paramsSchema.parse(request.params);
 
   const body = request.body as { approve: boolean; notes?: string };
 
-  const updated = await prisma.difficultyChangeProposal.update({
-    where: { id: params.id },
-    data: {
-      status: (body.approve ? "approved" : "rejected") as any,
-      decidedByUserId: "demo-user", // TODO: from auth
-      decidedAt: new Date(),
-      decisionNotes: body.notes
-    }
+  const updated = await dbDecideOnProposal({
+    proposalId: params.id,
+    approve: body.approve,
+    decidedById: user.userId,
+    notes: body.notes
   });
 
   const proposal: DecideOnDifficultyProposalResponse["proposal"] = {
     id: updated.id,
     learnerId: updated.learnerId,
     subject: updated.subject as any,
-    fromAssessedGradeLevel: updated.fromAssessedGradeLevel,
-    toAssessedGradeLevel: updated.toAssessedGradeLevel,
+    fromAssessedGradeLevel: (updated as any).fromLevel ?? updated.fromAssessedGradeLevel,
+    toAssessedGradeLevel: (updated as any).toLevel ?? updated.toAssessedGradeLevel,
     direction: updated.direction as any,
     rationale: updated.rationale,
     createdBy: updated.createdBy as any,
     createdAt: updated.createdAt.toISOString(),
     status: updated.status as any,
-    decidedByUserId: updated.decidedByUserId ?? undefined,
-    decidedAt: updated.decidedAt ? updated.decidedAt.toISOString() : undefined,
-    decisionNotes: updated.decisionNotes ?? undefined
+    decidedByUserId: (updated as any).decidedById ?? updated.decidedByUserId ?? undefined,
+    decidedAt:
+      (updated as any).decidedAt?.toISOString() ??
+      (updated.decidedAt ? updated.decidedAt.toISOString() : undefined),
+    decisionNotes: (updated as any).decisionNotes ?? updated.decisionNotes ?? undefined
   };
 
   const response: DecideOnDifficultyProposalResponse = { proposal };
@@ -466,47 +485,7 @@ const mockRoleAssignments: RoleAssignment[] = [
   }
 ];
 
-// --- In-memory notifications for caregivers ---
-
-const mockNotifications: Notification[] = [];
-
-// Helper: create a difficulty change notification (used when proposals are created/updated)
-function createDifficultyNotification(args: {
-  tenantId: string;
-  learnerId: string;
-  recipientUserId: string;
-  audience: "parent" | "teacher";
-  proposalId: string;
-  direction: "easier" | "harder";
-}) {
-  const id = `notif-${mockNotifications.length + 1}`;
-  const title =
-    args.direction === "harder"
-      ? "AIVO suggests a gentle increase in difficulty"
-      : "AIVO suggests making this subject gentler";
-
-  const body =
-    args.direction === "harder"
-      ? "Based on recent progress, AIVO recommends trying slightly more challenging work. Please review and approve if you agree."
-      : "AIVO noticed some struggle and suggests temporarily easing the difficulty. Please review and approve if you agree.";
-
-  const notif: Notification = {
-    id,
-    tenantId: args.tenantId,
-    learnerId: args.learnerId,
-    recipientUserId: args.recipientUserId,
-    audience: args.audience,
-    type: "difficulty_proposal",
-    title,
-    body,
-    createdAt: new Date().toISOString(),
-    status: "unread",
-    relatedDifficultyProposalId: args.proposalId
-  };
-
-  mockNotifications.push(notif);
-  return notif;
-}
+// --- Caregiver notifications now persisted via @aivo/persistence ---
 
 // --- In-memory sessions (mock) ---
 
@@ -944,9 +923,23 @@ fastify.get("/caregiver/notifications", async (request, reply) => {
       .send({ error: "Only parents and teachers can view notifications." });
   }
 
-  const notifications = mockNotifications.filter(
-    (n) => n.recipientUserId === user.userId
-  );
+  const records = await listNotificationsForUser(user.userId);
+
+  const notifications: Notification[] = records.map((n: any) => ({
+    id: n.id,
+    tenantId: n.tenantId,
+    learnerId: n.learnerId,
+    recipientUserId: n.recipientUserId,
+    audience: n.audience as any,
+    type: n.type as any,
+    title: n.title,
+    body: n.body,
+    createdAt: n.createdAt.toISOString(),
+    status: n.status as any,
+    relatedDifficultyProposalId: n.relatedDifficultyProposalId ?? undefined,
+    relatedBaselineAssessmentId: n.relatedBaselineAssessmentId ?? undefined,
+    relatedSessionId: n.relatedSessionId ?? undefined
+  }));
 
   const response: ListNotificationsResponse = { notifications };
   return reply.send(response);
@@ -957,14 +950,29 @@ fastify.post("/caregiver/notifications/:id/read", async (request, reply) => {
   const user = (request as any).user;
   const params = z.object({ id: z.string() }).parse(request.params);
 
-  const notification = mockNotifications.find(
-    (n) => n.id === params.id && n.recipientUserId === user.userId
-  );
-  if (!notification) {
+  await dbMarkNotificationRead(params.id, user.userId);
+  const records = await listNotificationsForUser(user.userId);
+  const updated = records.find((n: any) => n.id === params.id);
+
+  if (!updated) {
     return reply.status(404).send({ error: "Notification not found" });
   }
 
-  notification.status = "read";
+  const notification: Notification = {
+    id: updated.id,
+    tenantId: updated.tenantId,
+    learnerId: updated.learnerId,
+    recipientUserId: updated.recipientUserId,
+    audience: updated.audience as any,
+    type: updated.type as any,
+    title: updated.title,
+    body: updated.body,
+    createdAt: updated.createdAt.toISOString(),
+    status: updated.status as any,
+    relatedDifficultyProposalId: updated.relatedDifficultyProposalId ?? undefined,
+    relatedBaselineAssessmentId: updated.relatedBaselineAssessmentId ?? undefined,
+    relatedSessionId: updated.relatedSessionId ?? undefined
+  };
 
   const response: MarkNotificationReadResponse = { notification };
   return reply.send(response);
@@ -997,13 +1005,16 @@ fastify
             }
           });
 
-          createDifficultyNotification({
+          await dbCreateNotification({
             tenantId: "demo-tenant",
             learnerId: "demo-learner",
             recipientUserId: "user-parent-1",
             audience: "parent",
-            proposalId: "demo-proposal-1",
-            direction: "harder"
+            type: "difficulty_proposal",
+            title: "AIVO suggests a gentle increase in difficulty",
+            body:
+              "AIVO noticed strong mastery at the current level and suggests a gentle step up.",
+            relatedDifficultyProposalId: "demo-proposal-1"
           });
         }
       } catch (err) {

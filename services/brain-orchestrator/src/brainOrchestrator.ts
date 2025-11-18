@@ -9,6 +9,7 @@ import type {
 } from "@aivo/types";
 import { getDifficultyRecommendations } from "@aivo/brain-model";
 import fetch from "node-fetch";
+import { getLearnerWithBrainProfile } from "@aivo/persistence";
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -43,17 +44,41 @@ async function callModelDispatch(prompt: string, system?: string): Promise<Model
   return (await res.json()) as ModelDispatchResult;
 }
 
-async function fetchBrainProfile(
-  gatewayBaseUrl: string,
-  learnerId: string
-): Promise<LearnerBrainProfile | null> {
-  const res = await fetch(`${gatewayBaseUrl}/brain-profile/${encodeURIComponent(learnerId)}`);
-  if (!res.ok) {
-    // In a real system we might log and fall back; for now just return null on failure.
+async function fetchBrainProfile(learnerId: string): Promise<LearnerBrainProfile | null> {
+  const record = await getLearnerWithBrainProfile(learnerId);
+  if (!record) {
     return null;
   }
-  const data = (await res.json()) as { brainProfile?: LearnerBrainProfile };
-  return data.brainProfile ?? null;
+
+  if (!record.brainProfile) {
+    const region = (record.region as Region) ?? "north_america";
+    const currentGrade = record.currentGrade ?? 7;
+    const gradeBand: any = currentGrade <= 5 ? "k_5" : currentGrade <= 8 ? "six_8" : "nine_12";
+
+    return {
+      learnerId: record.id,
+      tenantId: record.tenantId,
+      region,
+      currentGrade,
+      gradeBand,
+      subjectLevels: [],
+      neurodiversity: {},
+      preferences: {},
+      lastUpdatedAt: new Date().toISOString()
+    };
+  }
+
+  return {
+    learnerId: record.id,
+    tenantId: record.tenantId,
+    region: record.brainProfile.region as Region,
+    currentGrade: record.brainProfile.currentGrade,
+    gradeBand: record.brainProfile.gradeBand as any,
+    subjectLevels: record.brainProfile.subjectLevels as any,
+    neurodiversity: record.brainProfile.neurodiversity as any,
+    preferences: record.brainProfile.preferences as any,
+    lastUpdatedAt: record.brainProfile.lastUpdatedAt.toISOString()
+  };
 }
 
 async function fetchTenantConfig(
@@ -91,7 +116,7 @@ export async function generateLessonPlanMock(
   const gatewayBaseUrl = process.env.API_GATEWAY_BASE_URL ?? "http://api-gateway:4000";
 
   const [brainProfile, tenantConfig] = await Promise.all([
-    fetchBrainProfile(gatewayBaseUrl, input.learnerId),
+    fetchBrainProfile(input.learnerId),
     fetchTenantConfig(gatewayBaseUrl, input.tenantId)
   ]);
 
