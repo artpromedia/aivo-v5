@@ -33,13 +33,6 @@ export interface User {
     email: string;
     name?: string;
 }
-export interface TenantConfig {
-    tenantId: string;
-    name: string;
-    defaultRegion: Region;
-    allowedProviders: LLMProviderName[];
-    dataResidency?: string;
-}
 export type LLMProviderName = "openai" | "anthropic" | "google" | "meta";
 export interface ModelDispatchConfig {
     primary: LLMProviderName;
@@ -121,4 +114,151 @@ export interface DifficultyChangeProposal {
     decidedByUserId?: string;
     decidedAt?: string;
     decisionNotes?: string;
+}
+export type TenantType = "district" | "independent_school" | "clinic" | "homeschool_network";
+export interface Tenant {
+    id: string;
+    type: TenantType;
+    name: string;
+    region: Region;
+    createdAt: string;
+    isActive: boolean;
+}
+export interface TenantConfig {
+    tenantId: string;
+    name: string;
+    defaultRegion: Region;
+    allowedProviders: LLMProviderName[];
+    dataResidency?: string;
+    curricula: CurriculumConfig[];
+}
+export type CurriculumStandard = "us_common_core" | "us_state_specific" | "cambridge" | "ib" | "local_national" | "custom";
+export interface CurriculumConfig {
+    id: string;
+    label: string;
+    region: Region;
+    standard: CurriculumStandard;
+    subjects: SubjectCode[];
+}
+export interface District {
+    id: string;
+    tenantId: string;
+    name: string;
+    country: string;
+    createdAt: string;
+}
+export interface School {
+    id: string;
+    tenantId: string;
+    districtId?: string | null;
+    name: string;
+    city?: string;
+    createdAt: string;
+}
+export interface RoleAssignment {
+    userId: string;
+    tenantId: string;
+    districtId?: string | null;
+    schoolId?: string | null;
+    role: Role;
+}
+export type ActivityType = "micro_lesson" | "guided_practice" | "calm_check_in" | "reflection" | "gameified_practice";
+export type ActivityStatus = "pending" | "in_progress" | "completed" | "skipped";
+export interface SessionActivity {
+    id: string;
+    sessionId: string;
+    learnerId: string;
+    subject: SubjectCode;
+    type: ActivityType;
+    title: string;
+    instructions: string;
+    estimatedMinutes: number;
+    status: ActivityStatus;
+    startedAt?: string;
+    completedAt?: string;
+}
+export type SessionStatus = "planned" | "active" | "completed" | "abandoned";
+export interface LearnerSession {
+    id: string;
+    learnerId: string;
+    tenantId: string;
+    date: string;
+    subject: SubjectCode;
+    status: SessionStatus;
+    plannedMinutes: number;
+    actualMinutes?: number;
+    activities: SessionActivity[];
+    createdAt: string;
+    updatedAt: string;
+}
+export interface SubjectProgressSnapshot {
+    learnerId: string;
+    subject: SubjectCode;
+    date: string;
+    masteryScore: number;
+    streakDays: number;
+    totalMinutesThisWeek: number;
+    notes?: string;
+}
+export type BrainDomain = "conceptual_understanding" | "procedural_fluency" | "strategic_reasoning" | "real_world_application" | "executive_function_support" | "self_regulation";
+export type LessonContentType = "calm_intro" | "worked_example" | "guided_practice" | "independent_practice" | "reflection_prompt" | "strategy_tip" | "sensory_break_suggestion";
+export type PracticeQuestionFormat = "multiple_choice" | "open_ended" | "fill_in_the_blank" | "step_by_step" | "sortable_steps";
+export interface LessonBlock {
+    id: string;
+    order: number;
+    type: LessonContentType;
+    domain: BrainDomain;
+    title: string;
+    prompt: string;
+    studentFacingText: string;
+    example?: string;
+    practiceQuestion?: string;
+    practiceFormat?: PracticeQuestionFormat;
+    accessibilityNotes?: string;
+    estimatedMinutes?: number;
+}
+export interface LessonPlan {
+    id: string;
+    learnerId: string;
+    tenantId: string;
+    subject: SubjectCode;
+    region: Region;
+    domain?: BrainDomain;
+    title: string;
+    objective: string;
+    blocks: LessonBlock[];
+    createdAt: string;
+}
+export type NotificationAudience = "parent" | "teacher" | "district_admin";
+export type NotificationType = "difficulty_proposal" | "baseline_completed" | "session_completed" | "message_from_teacher" | "message_from_parent";
+export type NotificationStatus = "unread" | "read";
+export interface Notification {
+    id: string;
+    tenantId: string;
+    learnerId: string;
+    recipientUserId: string;
+    audience: NotificationAudience;
+    type: NotificationType;
+    title: string;
+    body: string;
+    createdAt: string;
+    status: NotificationStatus;
+    relatedDifficultyProposalId?: string;
+    relatedBaselineAssessmentId?: string;
+    relatedSessionId?: string;
+}
+export interface CaregiverSubjectView {
+    subject: SubjectCode;
+    enrolledGrade: number;
+    assessedGradeLevel: number;
+    masteryScore: number;
+    difficultyRecommendation?: "easier" | "maintain" | "harder";
+}
+export interface CaregiverLearnerOverview {
+    learner: Learner;
+    brainProfile: LearnerBrainProfile | null;
+    subjects: CaregiverSubjectView[];
+    lastBaselineSummary?: BaselineResultSummary;
+    recentSessionDates: string[];
+    pendingDifficultyProposals: DifficultyChangeProposal[];
 }

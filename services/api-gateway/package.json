@@ -6,13 +6,15 @@
   "types": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "test": "jest"
   },
   "dependencies": {
     "@aivo/types": "workspace:*",
     "@aivo/api-client": "workspace:*",
+    "@aivo/persistence": "workspace:*",
+    "@aivo/auth": "workspace:*",
     "@prisma/client": "^6.0.0",
     "fastify": "^5.0.0",
     "zod": "^3.23.0",

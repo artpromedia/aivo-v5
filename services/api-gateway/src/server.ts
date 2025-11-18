@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import { z } from "zod";
 import fetch from "node-fetch";
-import { prisma } from "./db";
+import { prisma, findUserWithRolesByEmail } from "@aivo/persistence";
 import {
   createDifficultyProposal as dbCreateDifficultyProposal,
   listPendingProposalsForLearner,
@@ -47,34 +47,75 @@ import type {
   ListNotificationsResponse,
   MarkNotificationReadResponse
 } from "@aivo/api-client/src/caregiver-contracts";
-import { getMockUserFromHeader, requireRole } from "./authContext";
+import { getUserFromRequest, requireRole, type RequestUser } from "./authContext";
+import { signAccessToken, type Role } from "@aivo/auth";
 
 const fastify = Fastify({ logger: true });
 
-// --- Auth + role simulation ---
+const DEV_JWT_SECRET = process.env.JWT_SECRET || "dev-secret-aivo";
 
+// Attach user from JWT on every request
 fastify.addHook("preHandler", async (request, _reply) => {
-  const roleHeader = request.headers["x-aivo-user"];
-  (request as any).user = getMockUserFromHeader(roleHeader);
+  const user = getUserFromRequest(request);
+  (request as any).user = user;
 });
 
-fastify.get("/me", async (request) => {
-  const user = (request as any).user;
+// Login endpoint issuing JWTs backed by Prisma User & RoleAssignment
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
 
-  // For now we expose a single mock learner linked to this user.
-  // Later this can be a list or pulled from the real DB.
-  const mockLearnerId = "demo-learner";
+fastify.post("/auth/login", async (request, reply) => {
+  const body = loginSchema.parse(request.body);
+
+  // NOTE: Password is currently ignored; this is a dev-only flow that
+  // authenticates by email and derives roles from RoleAssignment.
+  const result = await findUserWithRolesByEmail(body.email);
+
+  if (!result) {
+    return reply.status(401).send({ error: "Invalid credentials" });
+  }
+
+  const { user, roles } = result;
+
+  const roleEnums = roles.map((r) => r as Role);
+
+  const token = signAccessToken(
+    {
+  sub: user.id,
+  tenantId: user.tenantId ?? undefined,
+  roles: roleEnums,
+      name: user.name ?? undefined,
+      email: user.email
+    },
+    DEV_JWT_SECRET
+  );
+
+  return reply.send({
+    accessToken: token,
+    user: {
+  id: user.id,
+  tenantId: user.tenantId ?? undefined,
+  roles: roleEnums,
+      name: user.name ?? undefined,
+      email: user.email
+    }
+  });
+});
+
+fastify.get("/me", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
 
   return {
     userId: user.userId,
     tenantId: user.tenantId,
     roles: user.roles,
-    learner: {
-      id: mockLearnerId,
-      displayName: "Demo Learner",
-      subjects: ["math"],
-      region: "north_america"
-    }
+    name: user.name,
+    email: user.email
   };
 });
 
@@ -250,8 +291,12 @@ fastify.post("/baseline/submit", async (request, reply) => {
 // Difficulty proposals via Prisma
 
 fastify.post("/difficulty/proposals", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const body = request.body as CreateDifficultyProposalRequest;
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
 
   const learnerProfile = await getLearnerWithBrainProfile(body.learnerId);
   const baseFrom =
@@ -276,8 +321,10 @@ fastify.post("/difficulty/proposals", async (request, reply) => {
     id: created.id,
     learnerId: created.learnerId,
     subject: created.subject as any,
-    fromAssessedGradeLevel: created.fromLevel,
-    toAssessedGradeLevel: created.toLevel,
+    fromAssessedGradeLevel:
+      (created as any).fromLevel ?? created.fromAssessedGradeLevel,
+    toAssessedGradeLevel:
+      (created as any).toLevel ?? created.toAssessedGradeLevel,
     direction: created.direction as any,
     rationale: created.rationale,
     createdBy: created.createdBy as any,
@@ -339,11 +386,15 @@ fastify.get("/difficulty/proposals", async (request, reply) => {
 });
 
 fastify.post("/difficulty/proposals/:id/decision", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const paramsSchema = z.object({ id: z.string() });
   const params = paramsSchema.parse(request.params);
 
   const body = request.body as { approve: boolean; notes?: string };
+
+   if (!user) {
+     return reply.status(401).send({ error: "Unauthenticated" });
+   }
 
   const updated = await dbDecideOnProposal({
     proposalId: params.id,
@@ -697,7 +748,7 @@ fastify.patch("/sessions/:sessionId/activities/:activityId", async (request, rep
 // --- Admin routes ---
 
 fastify.get("/admin/tenants", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   try {
     requireRole(user, ["platform_admin"]);
   } catch (err: any) {
@@ -711,8 +762,12 @@ fastify.get("/admin/tenants", async (request, reply) => {
 });
 
 fastify.get("/admin/tenants/:tenantId", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const params = z.object({ tenantId: z.string() }).parse(request.params);
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
 
   if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
@@ -734,7 +789,7 @@ fastify.get("/admin/tenants/:tenantId", async (request, reply) => {
 });
 
 fastify.get("/admin/tenants/:tenantId/districts", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const params = z.object({ tenantId: z.string() }).parse(request.params);
 
   try {
@@ -743,7 +798,7 @@ fastify.get("/admin/tenants/:tenantId/districts", async (request, reply) => {
     return reply.status(err.statusCode ?? 403).send({ error: err.message });
   }
 
-  if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
+  if (!user || (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId)) {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
@@ -753,7 +808,7 @@ fastify.get("/admin/tenants/:tenantId/districts", async (request, reply) => {
 });
 
 fastify.get("/admin/tenants/:tenantId/schools", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const params = z.object({ tenantId: z.string() }).parse(request.params);
   const query = z.object({ districtId: z.string().optional() }).parse(request.query);
 
@@ -763,7 +818,7 @@ fastify.get("/admin/tenants/:tenantId/schools", async (request, reply) => {
     return reply.status(err.statusCode ?? 403).send({ error: err.message });
   }
 
-  if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
+  if (!user || (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId)) {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
@@ -777,7 +832,7 @@ fastify.get("/admin/tenants/:tenantId/schools", async (request, reply) => {
 });
 
 fastify.get("/admin/tenants/:tenantId/roles", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const params = z.object({ tenantId: z.string() }).parse(request.params);
 
   try {
@@ -786,7 +841,7 @@ fastify.get("/admin/tenants/:tenantId/roles", async (request, reply) => {
     return reply.status(err.statusCode ?? 403).send({ error: err.message });
   }
 
-  if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
+  if (!user || (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId)) {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
@@ -799,12 +854,12 @@ fastify.get("/admin/tenants/:tenantId/roles", async (request, reply) => {
 
 // GET /caregiver/learners/:learnerId/overview
 fastify.get("/caregiver/learners/:learnerId/overview", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const params = z.object({ learnerId: z.string() }).parse(request.params);
   const learnerId = params.learnerId;
 
   // TODO: enforce that this user is a parent/teacher of the learner
-  if (!user.roles.includes("parent") && !user.roles.includes("teacher")) {
+  if (!user || (!user.roles.includes("parent") && !user.roles.includes("teacher"))) {
     return reply
       .status(403)
       .send({ error: "Only parents and teachers can view this overview." });
@@ -915,9 +970,9 @@ fastify.get("/caregiver/learners/:learnerId/overview", async (request, reply) =>
 
 // GET /caregiver/notifications
 fastify.get("/caregiver/notifications", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
 
-  if (!user.roles.includes("parent") && !user.roles.includes("teacher")) {
+  if (!user || (!user.roles.includes("parent") && !user.roles.includes("teacher"))) {
     return reply
       .status(403)
       .send({ error: "Only parents and teachers can view notifications." });
@@ -947,12 +1002,16 @@ fastify.get("/caregiver/notifications", async (request, reply) => {
 
 // POST /caregiver/notifications/:id/read
 fastify.post("/caregiver/notifications/:id/read", async (request, reply) => {
-  const user = (request as any).user;
+  const user = (request as any).user as RequestUser | null;
   const params = z.object({ id: z.string() }).parse(request.params);
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
 
   await dbMarkNotificationRead(params.id, user.userId);
   const records = await listNotificationsForUser(user.userId);
-  const updated = records.find((n: any) => n.id === params.id);
+  const updated = records.find((n: any) => n.id === params.id) as any;
 
   if (!updated) {
     return reply.status(404).send({ error: "Notification not found" });

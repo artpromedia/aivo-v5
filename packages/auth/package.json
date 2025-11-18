@@ -1,19 +1,19 @@
 {
-  "name": "@aivo/persistence",
+  "name": "@aivo/auth",
   "version": "0.0.1",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@prisma/client": "^6.0.0"
+    "jsonwebtoken": "^9.0.2",
+    "@aivo/types": "workspace:*",
+    "@aivo/api-client": "workspace:*"
   },
   "devDependencies": {
-    "prisma": "^6.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "@types/node": "^22.7.5"
   }
 }

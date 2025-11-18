@@ -165,3 +165,25 @@ export async function markNotificationRead(notificationId: string, userId: strin
   void userId;
   return { count: 0 };
 }
+
+// --- Auth helpers ----------------------------------------------------------
+
+export async function findUserWithRolesByEmail(
+  email: string
+): Promise<null | { user: any; roles: string[] }> {
+  const user = await (prisma as any).user.findUnique({
+    where: { email },
+    include: { tenant: true }
+  });
+
+  if (!user) return null;
+
+  const assignments = await (prisma as any).roleAssignment.findMany({
+    where: { userId: user.id }
+  });
+
+  return {
+    user,
+    roles: (assignments as any[]).map((a) => a.role as string)
+  };
+}
