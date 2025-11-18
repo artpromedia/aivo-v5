@@ -1,0 +1,57 @@
+"use client";
+
+import { ThemeProviderByGrade, useAivoTheme } from "@aivo/ui";
+import { getGradeBand } from "@aivo/brain-model";
+
+const mockBrainProfile = {
+  learnerId: "demo",
+  tenantId: "demo-tenant",
+  region: "north_america",
+  currentGrade: 7,
+  gradeBand: getGradeBand(7),
+  subjectLevels: [],
+  neurodiversity: { adhd: true, prefersLowStimulusUI: true },
+  preferences: { prefersStepByStep: true, prefersVisual: true },
+  lastUpdatedAt: new Date().toISOString()
+} as const;
+
+function LearnerHome() {
+  const theme = useAivoTheme();
+  return (
+    <main
+      className={`flex min-h-screen flex-col items-center justify-center p-6 ${theme.background}`}
+    >
+      <section
+        className={`max-w-xl w-full rounded-2xl shadow-soft-coral ${theme.card} p-6`}
+        aria-label="Learner dashboard"
+      >
+        <div
+          className={`inline-flex items-center gap-2 rounded-pill px-3 py-1 text-xs font-semibold bg-gradient-to-r ${theme.gradient} text-white`}
+        >
+          <span>7th Grade • Math at 5th Grade Level</span>
+        </div>
+        <h1 className={`mt-4 text-2xl font-bold ${theme.accent}`}>
+          Welcome back, AIVO Learner
+        </h1>
+        <p className={`mt-2 text-sm ${theme.text}`}>
+          We’ll practice 7th-grade math, gently scaffolded at your 5th-grade comfort level.
+          When you feel ready, we’ll ask your parent or teacher if we can make it a bit more
+          challenging.
+        </p>
+        <button
+          className="mt-6 w-full rounded-pill bg-coral px-4 py-3 text-sm font-semibold text-white shadow-soft-coral transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-coral"
+        >
+          Start today&apos;s calm practice
+        </button>
+      </section>
+    </main>
+  );
+}
+
+export default function Page() {
+  return (
+    <ThemeProviderByGrade gradeBand={mockBrainProfile.gradeBand}>
+      <LearnerHome />
+    </ThemeProviderByGrade>
+  );
+}

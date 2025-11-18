@@ -1,0 +1,37 @@
+{
+  "name": "aivo-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=apps/web... --filter=apps/learner-web... --filter=apps/parent-teacher-web... --filter=apps/admin-web...",
+    "dev:mobile": "turbo dev --filter=mobile/learner-mobile... --filter=mobile/parent-teacher-mobile...",
+    "dev:services": "turbo dev --filter=services/*",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx}\""
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+  "@types/react": "^18.2.6",
+  "@types/react-dom": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "jest": "^29.7.0",
+    "postcss": "^8.4.38",
+    "prettier": "^3.3.0",
+    "tailwindcss": "^3.4.4",
+    "ts-jest": "^29.1.1",
+    "turbo": "^2.6.1",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

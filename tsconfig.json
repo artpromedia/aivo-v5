@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["DOM", "ES2022"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@aivo/types": ["packages/types/src"],
+      "@aivo/brain-model": ["packages/brain-model/src"],
+      "@aivo/ui": ["packages/ui/src"]
+    }
+  },
+  "include": ["apps", "mobile", "packages", "services"]
+}
