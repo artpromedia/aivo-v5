@@ -278,6 +278,8 @@ export interface LearnerSession {
 
 // Progress snapshot
 
+// --- Legacy progress snapshot (kept for backward-compat / simple UIs) ---
+
 export interface SubjectProgressSnapshot {
   learnerId: string;
   subject: SubjectCode;
@@ -286,6 +288,70 @@ export interface SubjectProgressSnapshot {
   streakDays: number;
   totalMinutesThisWeek: number;
   notes?: string;
+}
+
+// --- Analytics & Telemetry -------------------------------------------------
+
+export type TelemetryEventType =
+  | "session_completed"
+  | "baseline_completed"
+  | "difficulty_proposal_created"
+  | "difficulty_proposal_decided"
+  | "lesson_generated";
+
+export interface TelemetryEvent {
+  id: string;
+  tenantId: string;
+  learnerId: string;
+  type: TelemetryEventType;
+  subject?: SubjectCode;
+  createdAt: string;
+  // Simple JSON payload for extra data (sessionId, masteryDelta, etc.)
+  payload: unknown;
+}
+
+export interface SubjectProgressSnapshotPoint {
+  id: string;
+  learnerId: string;
+  subject: SubjectCode;
+  date: string; // YYYY-MM-DD
+  masteryScore: number; // 0–1
+  minutesPracticed: number;
+  difficultyLevel: number; // interpreted as assessedGradeLevel or similar
+}
+
+export interface LearnerProgressTimeseriesPoint {
+  date: string;
+  masteryScore: number;
+  minutesPracticed: number;
+  difficultyLevel: number;
+}
+
+export interface LearnerSubjectProgressOverview {
+  subject: SubjectCode;
+  enrolledGrade: number;
+  currentAssessedGradeLevel: number;
+  timeseries: LearnerProgressTimeseriesPoint[];
+}
+
+export interface ExplainableRecommendationFactor {
+  label: string;
+  description: string;
+  weight: number; // relative importance 0–1
+}
+
+export interface ExplainableDifficultySummary {
+  subject: SubjectCode;
+  currentDifficultyLevel: number;
+  targetDifficultyLevel: number;
+  rationale: string;
+  factors: ExplainableRecommendationFactor[];
+}
+
+export interface LearnerAnalyticsOverview {
+  learnerId: string;
+  subjects: LearnerSubjectProgressOverview[];
+  difficultySummaries: ExplainableDifficultySummary[];
 }
 
 // --- Brain domains and lesson content ---

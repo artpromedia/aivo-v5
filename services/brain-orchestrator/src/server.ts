@@ -14,7 +14,7 @@ const fastify = FastifyFactory({ logger: true });
 fastify.post("/lessons/generate", async (request: FastifyRequest, reply: FastifyReply) => {
   const parsed = generateLessonSchema.parse(request.body);
 
-  const { plan } = generateLessonPlanMock({
+  const { plan } = await generateLessonPlanMock({
     learnerId: parsed.learnerId,
     tenantId: parsed.tenantId,
     subject: parsed.subject as any,

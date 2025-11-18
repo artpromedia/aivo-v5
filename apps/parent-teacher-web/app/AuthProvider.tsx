@@ -1,13 +1,48 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import {
-  loadAuthState,
-  saveAuthState,
-  clearAuthState,
-  createApiClient,
-  type AuthState
-} from "@aivo/auth";
+import { AivoApiClient } from "@aivo/api-client";
+
+type AuthState = {
+  accessToken: string | null;
+  user: {
+    id: string;
+    tenantId: string;
+    roles: string[];
+    email: string;
+    name?: string;
+  } | null;
+};
+
+const LOCAL_STORAGE_KEY = "aivo_auth_state";
+
+function loadAuthState(): AuthState {
+  if (typeof window === "undefined") {
+    return { accessToken: null, user: null };
+  }
+  try {
+    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return { accessToken: null, user: null };
+    return JSON.parse(raw) as AuthState;
+  } catch {
+    return { accessToken: null, user: null };
+  }
+}
+
+function saveAuthState(state: AuthState) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+}
+
+function clearAuthState() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(LOCAL_STORAGE_KEY);
+}
+
+function createApiClient(getToken: () => Promise<string | null>) {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+  return new AivoApiClient(baseUrl, getToken);
+}
 
 type AuthContextValue = {
   state: AuthState;

@@ -4,7 +4,7 @@ import { generateLessonPlanMock } from "./brainOrchestrator";
 // In a full test setup, this would be a proper Jest/Vitest test file.
 
 async function main() {
-  const { plan } = generateLessonPlanMock({
+  const { plan } = await generateLessonPlanMock({
     learnerId: "demo-learner",
     tenantId: "tenant-1",
     subject: "math" as any,

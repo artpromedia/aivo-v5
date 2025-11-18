@@ -72,6 +72,12 @@ importers:
 
   apps/admin-web:
     dependencies:
+      '@aivo/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@aivo/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       next:
         specifier: 14.2.0
         version: 14.2.0(@babel/core@7.28.5)(react-dom@18.3.0(react@18.3.0))(react@18.3.0)
@@ -171,6 +177,9 @@ importers:
       '@aivo/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@aivo/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@aivo/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -406,6 +415,9 @@ importers:
       '@aivo/brain-model':
         specifier: workspace:*
         version: link:../../packages/brain-model
+      '@aivo/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
       '@aivo/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -1366,7 +1378,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.22.26':
     resolution: {integrity: sha512-I689wc8Fn/AX7aUGiwrh3HnssiORMJtR2fpksX+JIe8Cj/EDleblYMSwRPd0025wrwOV9UN1KM/RuEt/QjCS3Q==}

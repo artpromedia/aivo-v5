@@ -6,18 +6,6 @@ import { AivoApiClient } from "@aivo/api-client";
 
 type RoleView = "parent" | "teacher";
 
-type MeResponse = {
-  user: {
-    id: string;
-    displayName: string;
-    role: string;
-  };
-  learner?: {
-    id: string;
-    displayName: string;
-  };
-};
-
 const client = new AivoApiClient(
   typeof window === "undefined" ? "http://localhost:4000" : process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000",
 );
@@ -31,13 +19,14 @@ export default function ParentTeacherPage() {
 
     const loadMe = async () => {
       try {
-        const me = await client.getMe<MeResponse>();
+        const me = await client.me();
         if (cancelled) return;
 
         if (me.learner) {
           setLearnerLabel(`${me.learner.displayName} (${me.learner.id})`);
         } else {
-          setLearnerLabel(me.user.displayName || me.user.id);
+          // Fallback to a simple user label derived from the auth token payload
+          setLearnerLabel(me.userId);
         }
       } catch (err) {
         if (!cancelled) {

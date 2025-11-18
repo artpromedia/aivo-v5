@@ -1,7 +1,12 @@
 import Fastify from "fastify";
 import { z } from "zod";
 import fetch from "node-fetch";
-import { prisma, findUserWithRolesByEmail } from "@aivo/persistence";
+import {
+  prisma,
+  findUserWithRolesByEmail,
+  getSubjectTimeseriesForLearner,
+  getAggregateTenantStats
+} from "@aivo/persistence";
 import {
   createDifficultyProposal as dbCreateDifficultyProposal,
   listPendingProposalsForLearner,
@@ -41,8 +46,12 @@ import type {
   SessionActivity,
   CaregiverLearnerOverview,
   Notification,
-  CaregiverSubjectView
+  CaregiverSubjectView,
+  LearnerAnalyticsOverview,
+  LearnerSubjectProgressOverview,
+  ExplainableDifficultySummary
 } from "@aivo/types";
+import type { GetTenantAnalyticsResponse } from "@aivo/api-client/src/analytics-contracts";
 import type {
   ListNotificationsResponse,
   MarkNotificationReadResponse
@@ -1034,6 +1043,139 @@ fastify.post("/caregiver/notifications/:id/read", async (request, reply) => {
   };
 
   const response: MarkNotificationReadResponse = { notification };
+  return reply.send(response);
+});
+
+// --- Analytics routes ------------------------------------------------------
+
+// GET /analytics/learners/:learnerId
+fastify.get("/analytics/learners/:learnerId", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  const params = z.object({ learnerId: z.string() }).parse(request.params);
+
+  // Allow parent, teacher, district_admin, platform_admin
+  try {
+    requireRole(user, ["parent", "teacher", "district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  const learnerId = params.learnerId;
+
+  const learner = await prisma.learner.findUnique({
+    where: { id: learnerId },
+    include: { brainProfile: true }
+  });
+
+  if (!learner) {
+    return reply.status(404).send({ error: "Learner not found" });
+  }
+
+  const brainProfile = learner.brainProfile as any | null;
+  const subjects: LearnerSubjectProgressOverview[] = [];
+
+  if (brainProfile) {
+    const subjectLevels = (brainProfile.subjectLevels as any[]) ?? [];
+    for (const lvl of subjectLevels) {
+      const snapshots = await getSubjectTimeseriesForLearner(learnerId, lvl.subject);
+      subjects.push({
+        subject: lvl.subject,
+        enrolledGrade: lvl.enrolledGrade,
+        currentAssessedGradeLevel: lvl.assessedGradeLevel,
+        timeseries: snapshots.map((s: any) => ({
+          date: s.date,
+          masteryScore: s.masteryScore,
+          minutesPracticed: s.minutesPracticed,
+          difficultyLevel: s.difficultyLevel
+        }))
+      });
+    }
+  }
+
+  const difficultySummaries: ExplainableDifficultySummary[] =
+    ((brainProfile?.subjectLevels as any[]) ?? []).map((lvl: any) => {
+      const diff = lvl.enrolledGrade - lvl.assessedGradeLevel;
+      let direction: "easier" | "maintain" | "harder" = "maintain";
+      let rationale =
+        "Learner is close to enrolled grade; keep current difficulty predictable and steady.";
+
+      if (diff >= 2) {
+        direction = "easier";
+        rationale =
+          "Learner is working below enrolled grade; AIVO keeps difficulty gentle and scaffolds concepts.";
+      } else if (diff <= -1) {
+        direction = "harder";
+        rationale =
+          "Learner is working above enrolled grade; AIVO may suggest slightly more challenging material when appropriate.";
+      }
+
+      const factors = [
+        {
+          label: "Baseline results",
+          description: "Functional grade level estimated from baseline assessment.",
+          weight: 0.5
+        },
+        {
+          label: "Recent session performance",
+          description: "Answer accuracy and completion rate over recent practice.",
+          weight: 0.3
+        },
+        {
+          label: "Neurodiversity accommodations",
+          description:
+            "We avoid sudden jumps in difficulty to keep the experience predictable and less overwhelming.",
+          weight: 0.2
+        }
+      ];
+
+      return {
+        subject: lvl.subject,
+        currentDifficultyLevel: lvl.assessedGradeLevel,
+        targetDifficultyLevel:
+          direction === "harder" ? lvl.assessedGradeLevel + 1 : lvl.assessedGradeLevel,
+        rationale,
+        factors
+      };
+    });
+
+  const analytics: LearnerAnalyticsOverview = {
+    learnerId,
+    subjects,
+    difficultySummaries
+  };
+
+  return reply.send({ analytics });
+});
+
+// GET /analytics/tenants/:tenantId
+fastify.get("/analytics/tenants/:tenantId", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  const params = z.object({ tenantId: z.string() }).parse(request.params);
+
+  // District and platform admins only
+  try {
+    requireRole(user, ["district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
+    return reply.status(403).send({ error: "Forbidden for this tenant" });
+  }
+
+  const stats = await getAggregateTenantStats(params.tenantId);
+
+  const response: GetTenantAnalyticsResponse = {
+    tenantId: params.tenantId,
+    learnersCount: stats.learnersCount,
+    avgMinutesPracticed: stats.avgMinutesPracticed,
+    avgMasteryScore: stats.avgMasteryScore
+  };
+
   return reply.send(response);
 });
 

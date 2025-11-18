@@ -200,6 +200,54 @@ export interface SubjectProgressSnapshot {
     totalMinutesThisWeek: number;
     notes?: string;
 }
+export type TelemetryEventType = "session_completed" | "baseline_completed" | "difficulty_proposal_created" | "difficulty_proposal_decided" | "lesson_generated";
+export interface TelemetryEvent {
+    id: string;
+    tenantId: string;
+    learnerId: string;
+    type: TelemetryEventType;
+    subject?: SubjectCode;
+    createdAt: string;
+    payload: unknown;
+}
+export interface SubjectProgressSnapshotPoint {
+    id: string;
+    learnerId: string;
+    subject: SubjectCode;
+    date: string;
+    masteryScore: number;
+    minutesPracticed: number;
+    difficultyLevel: number;
+}
+export interface LearnerProgressTimeseriesPoint {
+    date: string;
+    masteryScore: number;
+    minutesPracticed: number;
+    difficultyLevel: number;
+}
+export interface LearnerSubjectProgressOverview {
+    subject: SubjectCode;
+    enrolledGrade: number;
+    currentAssessedGradeLevel: number;
+    timeseries: LearnerProgressTimeseriesPoint[];
+}
+export interface ExplainableRecommendationFactor {
+    label: string;
+    description: string;
+    weight: number;
+}
+export interface ExplainableDifficultySummary {
+    subject: SubjectCode;
+    currentDifficultyLevel: number;
+    targetDifficultyLevel: number;
+    rationale: string;
+    factors: ExplainableRecommendationFactor[];
+}
+export interface LearnerAnalyticsOverview {
+    learnerId: string;
+    subjects: LearnerSubjectProgressOverview[];
+    difficultySummaries: ExplainableDifficultySummary[];
+}
 export type BrainDomain = "conceptual_understanding" | "procedural_fluency" | "strategic_reasoning" | "real_world_application" | "executive_function_support" | "self_regulation";
 export type LessonContentType = "calm_intro" | "worked_example" | "guided_practice" | "independent_practice" | "reflection_prompt" | "strategy_tip" | "sensory_break_suggestion";
 export type PracticeQuestionFormat = "multiple_choice" | "open_ended" | "fill_in_the_blank" | "step_by_step" | "sortable_steps";

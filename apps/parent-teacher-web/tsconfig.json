@@ -20,7 +20,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "typeRoots": ["./node_modules/@types", "./node_modules/@aivo/auth"]
   },
   "include": [
     "next-env.d.ts",

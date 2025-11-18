@@ -157,3 +157,31 @@ model Notification {
   relatedBaselineAssessmentId String?
   relatedSessionId            String?
 }
+
+model TelemetryEvent {
+  id        String   @id @default(cuid())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  learner   Learner  @relation(fields: [learnerId], references: [id])
+  learnerId String
+
+  type      String
+  subject   String?
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+model SubjectProgressSnapshot {
+  id        String   @id @default(cuid())
+  learner   Learner  @relation(fields: [learnerId], references: [id])
+  learnerId String
+
+  subject   String
+  date      String   // YYYY-MM-DD
+  masteryScore     Float
+  minutesPracticed Int
+  difficultyLevel  Int
+
+  @@unique([learnerId, subject, date], name: "learnerId_subject_date")
+}

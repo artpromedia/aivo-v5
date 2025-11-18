@@ -28,6 +28,10 @@ import type {
   MarkNotificationReadResponse
 } from "./caregiver-contracts";
 import type {
+  GetLearnerAnalyticsResponse,
+  GetTenantAnalyticsResponse
+} from "./analytics-contracts";
+import type {
   GetTodaySessionResponse,
   StartSessionRequest,
   StartSessionResponse,
@@ -196,5 +200,15 @@ export class AivoApiClient {
         method: "POST"
       }
     );
+  }
+
+  // Analytics
+
+  getLearnerAnalytics(learnerId: string) {
+    return this.request<GetLearnerAnalyticsResponse>(`/analytics/learners/${learnerId}`);
+  }
+
+  getTenantAnalytics(tenantId: string) {
+    return this.request<GetTenantAnalyticsResponse>(`/analytics/tenants/${tenantId}`);
   }
 }

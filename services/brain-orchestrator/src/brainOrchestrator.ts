@@ -131,7 +131,7 @@ export async function generateLessonPlanMock(
   let difficultySummary = "No difficulty data available yet.";
   if (brainProfile) {
     const recommendations = getDifficultyRecommendations(brainProfile);
-    const forSubject = recommendations.find((r) => r.subject === input.subject);
+    const forSubject = recommendations.find((r: { subject: SubjectCode }) => r.subject === input.subject);
     const rec = forSubject ?? recommendations[0];
     if (rec) {
       difficultySummary = `${rec.recommendedDifficulty.toUpperCase()} – ${rec.rationale}`;

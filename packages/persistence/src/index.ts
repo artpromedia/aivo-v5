@@ -187,3 +187,5 @@ export async function findUserWithRolesByEmail(
     roles: (assignments as any[]).map((a) => a.role as string)
   };
 }
+
+export * from "./analytics";

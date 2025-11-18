@@ -2,6 +2,7 @@
   "name": "@aivo/brain-orchestrator",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "dist/server.js",
   "types": "dist/server.d.ts",
   "scripts": {
@@ -14,7 +15,8 @@
     "zod": "^3.23.8",
     "node-fetch": "^3.3.2",
     "@aivo/types": "workspace:*",
-    "@aivo/brain-model": "workspace:*"
+    "@aivo/brain-model": "workspace:*",
+    "@aivo/persistence": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

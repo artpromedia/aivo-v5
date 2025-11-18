@@ -1,16 +1,18 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["DOM", "ES2022"],
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "outDir": "dist",
     "rootDir": "src",
-    "moduleResolution": "node",
-    "module": "commonjs",
     "types": ["node"],
-    "esModuleInterop": true
+    "baseUrl": ".."
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../../packages/types" },
-    { "path": "../../packages/brain-model" }
-  ]
+  "include": ["src"]
 }
