@@ -1,128 +1,147 @@
-# Aivo v5 - AI Chatbot Application
+## Aivo v5 – Agentic AI Learning Platform Monorepo
 
-A modern AI-powered chatbot application built with Node.js and Express.
+This repository contains the Aivo v5 agentic AI learning platform implemented as a **Turborepo + pnpm monorepo**, not a single Node/Express app.
 
-## Features
+At a high level, the system provides:
 
+- Multi-tenant, role-based admin experiences (platform admin, district admin).
+- Learner- and parent/teacher-facing web and mobile apps.
+- Backend services for model dispatch, baseline assessment, and an API gateway.
+- Shared packages for types, UI components, and brain/model logic.
+
+## Repository layout
+
+- `apps/` – Next.js frontends (App Router)
+   - `web` – marketing / main web app
+   - `learner-web` – learner-facing PWA
+   - `parent-teacher-web` – parent/teacher web app
+   - `admin-web` – unified admin console (platform + district admin flows)
+   - `platform-admin-web` – independent platform admin app (optional)
+   - `district-admin-web` – independent district admin app (optional)
+- `mobile/` – Expo React Native apps
+   - `learner-mobile`
+   - `parent-teacher-mobile`
+- `packages/` – shared libraries
+   - `@aivo/types` – domain types (multi-tenancy, admin, assessments, etc.)
+   - `@aivo/api-client` – typed client for backend APIs
+   - `@aivo/ui` – shared UI components and theme
+   - `@aivo/brain-model` – brain/model logic
+- `services/` – backend services
+   - `api-gateway` – Fastify gateway, auth context, admin APIs, and routing
+   - `baseline-assessment` – baseline assessment generator using model-dispatch
+   - `model-dispatch` – provider failover and routing for LLM calls
+- `prisma/` – Prisma schema and migrations
 
 ## Prerequisites
 
+- Node.js **>= 20**
+- `pnpm` installed globally (for example: `npm install -g pnpm`)
 
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone git@github.com:artpromedia/aivo-v5.git
-   cd aivo-v5
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Configure environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-## Usage
-
-### Development
-```bash
-npm run dev
-```
-
-### Production
-```bash
-npm start
-```
-
-### Testing
-```bash
-npm test
-```
-
-### Linting
-```bash
-npm run lint
-```
-
-## API Endpoints
-
-
-## Environment Variables
-
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details.
-%AIVO Monorepo%
-
-This repository contains the AIVO Agentic AI Learning Platform monorepo scaffold.
-
-Overview:
-
-- apps/ - Next.js frontends (marketing site, learner PWA, parent/teacher app, admin app)
-- mobile/ - Expo React Native apps (learner, parent/teacher)
-- packages/ - Shared packages: `@aivo/types`, `@aivo/ui`, `@aivo/brain-model`, etc.
-- services/ - Backend services: model-dispatch, baseline-assessment, orchestrator, api-gateway
-
-Quick start
-
-1. Install dependencies:
+## Install dependencies
 
 ```powershell
 pnpm install
 ```
 
-2. Start everything in dev (uses Turborepo):
+## Running in development
+
+Start **everything** (all apps + services) using Turborepo:
 
 ```powershell
 pnpm dev
 ```
 
-To run specific admin apps independently:
+Common dev entry points:
 
-- Platform Admin UI (tenants overview):
+- API Gateway: `http://localhost:4000`
+- Model Dispatch service: `http://localhost:4001`
+- Baseline Assessment service: `http://localhost:4002`
+- Web apps: Next.js apps start on `3000`+ and auto-increment if a port is in use. Check the console output for the exact URL, for example:
+   - `platform-admin-web`: `http://localhost:3001`
+   - `district-admin-web`: `http://localhost:3002`
+   - `learner-web`: `http://localhost:3003`
+   - `parent-teacher-web`: `http://localhost:3004`
+   - `web`: `http://localhost:3005`
+   - `admin-web`: `http://localhost:3006`
 
-   ```powershell
-   cd apps/platform-admin-web
-   pnpm dev
-   ```
+### Running specific apps
 
-- District Admin UI (districts & schools overview):
+Platform Admin UI (tenants overview):
 
-   ```powershell
-   cd apps/district-admin-web
-   pnpm dev
-   ```
+```powershell
+cd apps/platform-admin-web
+pnpm dev
+```
 
-3. Or start only the web apps:
+District Admin UI (districts & schools overview):
+
+```powershell
+cd apps/district-admin-web
+pnpm dev
+```
+
+Learner web app:
+
+```powershell
+cd apps/learner-web
+pnpm dev
+```
+
+Parent/Teacher web app:
+
+```powershell
+cd apps/parent-teacher-web
+pnpm dev
+```
+
+Main web app:
+
+```powershell
+cd apps/web
+pnpm dev
+```
+
+Admin web (unified console):
+
+```powershell
+cd apps/admin-web
+pnpm dev
+```
+
+### Only web apps via Turborepo
 
 ```powershell
 pnpm dev:web
 ```
 
-Notes
+## Linting and tests
 
-- Node.js >= 20 is recommended.
-- Uses pnpm workspaces and Turborepo for task orchestration.
-- Tailwind, ESLint, and Prettier are configured at the root.
+Run lint across the monorepo:
 
-Where to look next
+```powershell
+pnpm lint
+```
 
-- `apps/learner-web` — Learner-facing PWA (Next.js App Router)
-- `services/model-dispatch` — Provider failover for LLM calls
-- `services/baseline-assessment` — Baseline assessment generator using model-dispatch
+Run tests (where configured):
 
-If you want, I can make the initial git commit and set the remote to `git@github.com:artpromedia/aivo-v5.git`.
+```powershell
+pnpm test
+```
+
+## Notes
+
+- Uses **pnpm workspaces** and **Turborepo** for orchestration.
+- Next.js, Tailwind CSS, ESLint, and Prettier are configured at the root.
+- Admin flows use a dev-only middleware/header-based mock auth (`x-aivo-user`) for platform and district admin roles.
+
+## Contributing
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Add tests where appropriate.
+5. Open a pull request.
+
+## License
+
+MIT License – see the `LICENSE` file for details.
