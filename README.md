@@ -91,6 +91,22 @@ pnpm install
 pnpm dev
 ```
 
+To run specific admin apps independently:
+
+- Platform Admin UI (tenants overview):
+
+   ```powershell
+   cd apps/platform-admin-web
+   pnpm dev
+   ```
+
+- District Admin UI (districts & schools overview):
+
+   ```powershell
+   cd apps/district-admin-web
+   pnpm dev
+   ```
+
 3. Or start only the web apps:
 
 ```powershell

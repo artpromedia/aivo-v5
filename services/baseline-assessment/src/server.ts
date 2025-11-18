@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import { z } from "zod";
-import type { Region, Subject } from "@aivo/types";
+import type { Region, SubjectCode, AssessmentItem, BaselineAssessment } from "@aivo/types";
 import fetch from "node-fetch";
 
 const fastify = Fastify({ logger: true });
@@ -10,7 +10,7 @@ const generateSchema = z.object({
   tenantId: z.string(),
   region: z.custom<Region>(),
   currentGrade: z.number().int().min(0).max(12),
-  subjects: z.array(z.custom<Subject>())
+  subjects: z.array(z.custom<SubjectCode>())
 });
 
 fastify.post("/generate", async (request, reply) => {
@@ -30,6 +30,7 @@ Return JSON with an array "items", each having:
   - id
   - subject
   - stem
+  - type ("multiple_choice" | "short_answer" | "open_ended")
   - options (if multiple choice)
   - correctAnswer (if applicable)
   - accessibilityNotes
@@ -50,14 +51,42 @@ Return JSON with an array "items", each having:
 
   const data = await res.json();
 
-  return reply.send({
-    rawModelResponse: data,
-    // TODO: parse/validate JSON when wired to a real model
-    note: "In production, parse the model response into a structured assessment schema."
-  });
+  // In production, parse the model response into real items.
+  // For now, stub a single example item.
+  const items: AssessmentItem[] = [
+    {
+      id: "item-1",
+      subject: body.subjects[0] ?? "math",
+      type: "multiple_choice",
+      stem: "What is 3 + 4?",
+      options: ["5", "6", "7", "8"],
+      correctAnswer: "7",
+      accessibilityNotes: "Read aloud; allow finger counting.",
+      estimatedDifficulty: 1
+    }
+  ];
+
+  const assessment: BaselineAssessment = {
+    id: `baseline-${Date.now()}`,
+    learnerId: body.learnerId,
+    tenantId: body.tenantId,
+    region: body.region,
+    grade: body.currentGrade,
+    subjects: body.subjects,
+    items,
+    createdAt: new Date().toISOString(),
+    status: "draft"
+  };
+
+  return reply.send({ assessment, rawModelResponse: data });
 });
 
-fastify.listen({ port: 4002, host: "0.0.0.0" }).catch((err) => {
-  fastify.log.error(err);
-  process.exit(1);
-});
+fastify
+  .listen({ port: 4002, host: "0.0.0.0" })
+  .then(() => {
+    fastify.log.info("Baseline assessment service listening on http://0.0.0.0:4002");
+  })
+  .catch((err) => {
+    fastify.log.error(err);
+    process.exit(1);
+  });

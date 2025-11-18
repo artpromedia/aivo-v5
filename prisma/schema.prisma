@@ -1,0 +1,119 @@
+// Prisma schema for AIVO core entities (learners, baseline assessments, difficulty proposals)
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Region {
+  north_america
+  africa
+  europe
+  australia
+  middle_east
+  asia
+}
+
+enum GradeBand {
+  k_5
+  six_8
+  nine_12
+}
+
+enum SubjectCode {
+  math
+  ela
+  reading
+  writing
+  science
+  social_studies
+  sel
+  speech
+  other
+}
+
+enum DifficultyChangeDirection {
+  easier
+  harder
+}
+
+enum DifficultyProposalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BaselineStatus {
+  draft
+  in_progress
+  completed
+}
+
+model Learner {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String
+  displayName String
+  currentGrade Int
+  region      Region
+  createdAt   DateTime @default(now())
+
+  brainProfile        LearnerBrainProfile?
+  baselineAssessments BaselineAssessment[]
+  difficultyProposals DifficultyChangeProposal[]
+}
+
+model LearnerBrainProfile {
+  id             String      @id @default(uuid())
+  learnerId      String      @unique
+  tenantId       String
+  region         Region
+  currentGrade   Int
+  gradeBand      GradeBand
+  subjectLevels  Json
+  neurodiversity Json
+  preferences    Json
+  lastUpdatedAt  DateTime    @updatedAt
+
+  learner Learner @relation(fields: [learnerId], references: [id])
+}
+
+model BaselineAssessment {
+  id        String         @id @default(uuid())
+  learnerId String
+  tenantId  String
+  region    Region
+  grade     Int
+  subjects  SubjectCode[]
+  items     Json
+  createdAt DateTime       @default(now())
+  status    BaselineStatus @default(draft)
+
+  learner    Learner                  @relation(fields: [learnerId], references: [id])
+  proposals  DifficultyChangeProposal[]
+}
+
+model DifficultyChangeProposal {
+  id                      String                     @id @default(uuid())
+  learnerId               String
+  subject                 SubjectCode
+  fromAssessedGradeLevel  Int
+  toAssessedGradeLevel    Int
+  direction               DifficultyChangeDirection
+  rationale               String
+  createdBy               String
+  createdAt               DateTime                   @default(now())
+  status                  DifficultyProposalStatus   @default(pending)
+  decidedByUserId         String?
+  decidedAt               DateTime?
+  decisionNotes           String?
+  sourceAssessmentId      String?
+
+  learner          Learner?            @relation(fields: [learnerId], references: [id])
+  sourceAssessment BaselineAssessment? @relation(fields: [sourceAssessmentId], references: [id])
+}
