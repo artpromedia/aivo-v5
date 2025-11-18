@@ -5,7 +5,9 @@ import type {
   Learner,
   LearnerBrainProfile,
   SubjectCode,
-  Region
+  Region,
+  LessonPlan,
+  BrainDomain
 } from "@aivo/types";
 
 // Auth
@@ -14,8 +16,13 @@ export interface MeResponse {
   userId: string;
   tenantId: string;
   roles: string[];
+  learner?: {
+    id: string;
+    displayName: string;
+    subjects: string[];
+    region?: Region;
+  };
 }
-
 // Learners
 
 export interface CreateLearnerRequest {
@@ -85,18 +92,13 @@ export interface ListDifficultyProposalsResponse {
   proposals: DifficultyChangeProposal[];
 }
 
-// Lessons / tutoring (simple starter contract)
-
 export interface GenerateLessonPlanRequest {
   learnerId: string;
   subject: SubjectCode;
+  region: Region;
+  domain?: BrainDomain;
 }
 
 export interface GenerateLessonPlanResponse {
-  id: string;
-  subject: SubjectCode;
-  title: string;
-  objectives: string[];
-  activities: string[];
-  accessibilityNotes: string;
+  plan: LessonPlan;
 }

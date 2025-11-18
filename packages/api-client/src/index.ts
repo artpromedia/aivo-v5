@@ -22,6 +22,13 @@ import type {
   ListSchoolsResponse,
   ListRoleAssignmentsResponse
 } from "./admin-contracts";
+import type {
+  GetTodaySessionResponse,
+  StartSessionRequest,
+  StartSessionResponse,
+  UpdateActivityStatusRequest,
+  UpdateActivityStatusResponse
+} from "./session-contracts";
 
 export class AivoApiClient {
   constructor(private baseUrl: string, private getToken?: () => Promise<string | null>) {}
@@ -136,6 +143,32 @@ export class AivoApiClient {
   listRoleAssignments(tenantId: string) {
     return this.request<ListRoleAssignmentsResponse>(
       `/admin/tenants/${tenantId}/roles`
+    );
+  }
+
+  // Sessions
+
+  getTodaySession(learnerId: string, subject: string) {
+    const search = new URLSearchParams({ learnerId, subject });
+    return this.request<GetTodaySessionResponse>(
+      `/sessions/today?${search.toString()}`
+    );
+  }
+
+  startSession(body: StartSessionRequest) {
+    return this.request<StartSessionResponse>("/sessions/start", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  }
+
+  updateActivityStatus(body: UpdateActivityStatusRequest) {
+    return this.request<UpdateActivityStatusResponse>(
+      `/sessions/${body.sessionId}/activities/${body.activityId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ status: body.status })
+      }
     );
   }
 }

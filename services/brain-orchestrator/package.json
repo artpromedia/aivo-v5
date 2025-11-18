@@ -1,0 +1,24 @@
+{
+  "name": "@aivo/brain-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "zod": "^3.23.8",
+    "node-fetch": "^3.3.2",
+    "@aivo/types": "workspace:*",
+    "@aivo/brain-model": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "ts-node-dev": "^2.0.0",
+    "@types/node": "^22.9.0"
+  }
+}

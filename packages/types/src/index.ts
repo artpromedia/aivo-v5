@@ -234,3 +234,110 @@ export interface RoleAssignment {
   schoolId?: string | null;
   role: Role;
 }
+
+// Session & activity modeling
+
+export type ActivityType =
+  | "micro_lesson"
+  | "guided_practice"
+  | "calm_check_in"
+  | "reflection"
+  | "gameified_practice";
+
+export type ActivityStatus = "pending" | "in_progress" | "completed" | "skipped";
+
+export interface SessionActivity {
+  id: string;
+  sessionId: string;
+  learnerId: string;
+  subject: SubjectCode;
+  type: ActivityType;
+  title: string;
+  instructions: string;
+  estimatedMinutes: number;
+  status: ActivityStatus;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export type SessionStatus = "planned" | "active" | "completed" | "abandoned";
+
+export interface LearnerSession {
+  id: string;
+  learnerId: string;
+  tenantId: string;
+  date: string; // YYYY-MM-DD
+  subject: SubjectCode;
+  status: SessionStatus;
+  plannedMinutes: number;
+  actualMinutes?: number;
+  activities: SessionActivity[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Progress snapshot
+
+export interface SubjectProgressSnapshot {
+  learnerId: string;
+  subject: SubjectCode;
+  date: string; // YYYY-MM-DD
+  masteryScore: number; // 0–1, smoothed
+  streakDays: number;
+  totalMinutesThisWeek: number;
+  notes?: string;
+}
+
+// --- Brain domains and lesson content ---
+
+export type BrainDomain =
+  | "conceptual_understanding"
+  | "procedural_fluency"
+  | "strategic_reasoning"
+  | "real_world_application"
+  | "executive_function_support"
+  | "self_regulation";
+
+export type LessonContentType =
+  | "calm_intro"
+  | "worked_example"
+  | "guided_practice"
+  | "independent_practice"
+  | "reflection_prompt"
+  | "strategy_tip"
+  | "sensory_break_suggestion";
+
+export type PracticeQuestionFormat =
+  | "multiple_choice"
+  | "open_ended"
+  | "fill_in_the_blank"
+  | "step_by_step"
+  | "sortable_steps";
+
+export interface LessonBlock {
+  id: string;
+  order: number;
+  type: LessonContentType;
+  domain: BrainDomain;
+  title: string;
+  prompt: string;
+  studentFacingText: string;
+  example?: string;
+  practiceQuestion?: string;
+  practiceFormat?: PracticeQuestionFormat;
+  accessibilityNotes?: string;
+  estimatedMinutes?: number;
+}
+
+export interface LessonPlan {
+  id: string;
+  learnerId: string;
+  tenantId: string;
+  subject: SubjectCode;
+  region: Region;
+  domain?: BrainDomain;
+  title: string;
+  objective: string;
+  blocks: LessonBlock[];
+  createdAt: string;
+}

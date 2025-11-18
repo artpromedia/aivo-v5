@@ -10,7 +10,10 @@ import type {
   CreateDifficultyProposalRequest,
   CreateDifficultyProposalResponse,
   ListDifficultyProposalsResponse,
-  DecideOnDifficultyProposalResponse
+  DecideOnDifficultyProposalResponse,
+  GenerateLessonPlanRequest,
+  GenerateLessonPlanResponse,
+  GetLearnerResponse
 } from "@aivo/api-client/src/contracts";
 import type {
   ListTenantsResponse,
@@ -19,7 +22,15 @@ import type {
   ListSchoolsResponse,
   ListRoleAssignmentsResponse
 } from "@aivo/api-client/src/admin-contracts";
-import type { Tenant, TenantConfig, District, School, RoleAssignment } from "@aivo/types";
+import type {
+  Tenant,
+  TenantConfig,
+  District,
+  School,
+  RoleAssignment,
+  LearnerSession,
+  SessionActivity
+} from "@aivo/types";
 import { getMockUserFromHeader, requireRole } from "./authContext";
 
 const fastify = Fastify({ logger: true });
@@ -33,11 +44,90 @@ fastify.addHook("preHandler", async (request, _reply) => {
 
 fastify.get("/me", async (request) => {
   const user = (request as any).user;
+
+  // For now we expose a single mock learner linked to this user.
+  // Later this can be a list or pulled from the real DB.
+  const mockLearnerId = "demo-learner";
+
   return {
     userId: user.userId,
     tenantId: user.tenantId,
-    roles: user.roles
+    roles: user.roles,
+    learner: {
+      id: mockLearnerId,
+      displayName: "Demo Learner",
+      subjects: ["math"],
+      region: "north_america"
+    }
   };
+});
+
+// Simple mock brain-profile endpoint so brain-orchestrator (or other services)
+// can retrieve a LearnerBrainProfile without reaching directly into the DB.
+// GET /brain-profile/:learnerId
+fastify.get("/brain-profile/:learnerId", async (request, reply) => {
+  const params = z.object({ learnerId: z.string() }).parse(request.params);
+
+  // In a real system, this would load from Postgres via Prisma.
+  // For now we return a static-but-plausible brain profile.
+  const profile: GetLearnerResponse["brainProfile"] = {
+    learnerId: params.learnerId,
+    tenantId: "demo-tenant",
+    region: "north_america",
+    currentGrade: 7,
+    gradeBand: "6_8",
+    subjectLevels: [
+      {
+        subject: "math",
+        enrolledGrade: 7,
+        assessedGradeLevel: 5,
+        masteryScore: 0.6
+      }
+    ],
+    neurodiversity: {
+      autismSpectrum: true,
+      sensorySensitivity: true,
+      prefersLowStimulusUI: true
+    },
+    preferences: {
+      prefersStepByStep: true,
+      prefersShortSessions: true
+    },
+    lastUpdatedAt: new Date().toISOString()
+  };
+
+  return reply.send({ brainProfile: profile });
+});
+
+// Lessons / brain-orchestrator proxy
+
+fastify.post("/lessons/generate", async (request, reply) => {
+  const body = request.body as GenerateLessonPlanRequest;
+
+  const res = await fetch("http://brain-orchestrator:4003/lessons/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      learnerId: body.learnerId,
+      tenantId: "demo-tenant", // TODO: derive from auth/user
+      subject: body.subject,
+      region: body.region,
+      domain: body.domain
+    })
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    fastify.log.error({ text }, "brain-orchestrator /lessons/generate failed");
+    return reply.status(502).send({ error: "Failed to generate lesson plan" });
+  }
+
+  const data = (await res.json()) as GenerateLessonPlanResponse;
+  const response: GenerateLessonPlanResponse = {
+    plan: data.plan
+  };
+
+  return reply.send(response);
 });
 
 // Baseline assessment routes
@@ -358,6 +448,213 @@ const mockRoleAssignments: RoleAssignment[] = [
     role: "teacher"
   }
 ];
+
+// --- In-memory sessions (mock) ---
+
+const mockSessions: LearnerSession[] = [];
+
+// Helper to create a calm, short session from scratch
+function createMockSession(
+  learnerId: string,
+  tenantId: string,
+  subject: string
+): LearnerSession {
+  const id = `session-${Date.now()}`;
+  const date = new Date().toISOString().slice(0, 10);
+
+  // TODO (later): Call brain-orchestrator/model-dispatch here to generate
+  // personalised activities based on the learner's brain profile and
+  // curriculum for this subject, e.g.:
+  //
+  // const brainProfile = await fetchBrainProfile(learnerId);
+  // const plan = await fetch("http://brain-orchestrator:PORT/sessions/plan", { ... });
+  // const activitiesFromBrain = plan.activities.map( ... );
+  //
+  // For now we keep a simple, hand-crafted sequence that follows the
+  // same shape the orchestrator would return.
+
+  const activities: SessionActivity[] = [
+    {
+      id: `${id}-act-1`,
+      sessionId: id,
+      learnerId,
+      subject: subject as any,
+      type: "calm_check_in",
+      title: "Calm Check-In",
+      instructions:
+        "Take a deep breath. On a scale from 1 to 5, how ready do you feel to learn right now?",
+      estimatedMinutes: 2,
+      status: "pending"
+    },
+    {
+      id: `${id}-act-2`,
+      sessionId: id,
+      learnerId,
+      subject: subject as any,
+      type: "micro_lesson",
+      title: "Micro Lesson",
+      instructions:
+        "We will review one small idea. You’ll see an example, then try one similar question.",
+      estimatedMinutes: 5,
+      status: "pending"
+    },
+    {
+      id: `${id}-act-3`,
+      sessionId: id,
+      learnerId,
+      subject: subject as any,
+      type: "guided_practice",
+      title: "Guided Practice",
+      instructions:
+        "Try 2–3 practice items. You can ask for a hint anytime. If it feels too hard, you can skip one.",
+      estimatedMinutes: 7,
+      status: "pending"
+    },
+    {
+      id: `${id}-act-4`,
+      sessionId: id,
+      learnerId,
+      subject: subject as any,
+      type: "reflection",
+      title: "Reflection",
+      instructions:
+        "What felt okay? What felt too hard? Choose one thing you’d like AIVO to remember for next time.",
+      estimatedMinutes: 3,
+      status: "pending"
+    }
+  ];
+
+  const now = new Date().toISOString();
+
+  const session: LearnerSession = {
+    id,
+    learnerId,
+    tenantId,
+    date,
+    subject: subject as any,
+    status: "planned",
+    plannedMinutes: activities.reduce((sum, a) => sum + a.estimatedMinutes, 0),
+    activities,
+    createdAt: now,
+    updatedAt: now
+  };
+
+  return session;
+}
+
+// --- Session routes ---
+
+// GET /sessions/today?learnerId=...&subject=...
+fastify.get("/sessions/today", async (request, reply) => {
+  const query = z
+    .object({
+      learnerId: z.string(),
+      subject: z.string()
+    })
+    .parse(request.query);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const existing = mockSessions.find(
+    (s) =>
+      s.learnerId === query.learnerId &&
+      s.subject === (query.subject as any) &&
+      s.date === today
+  );
+
+  return reply.send({ session: existing ?? null });
+});
+
+// POST /sessions/start
+fastify.post("/sessions/start", async (request, reply) => {
+  const user = (request as any).user;
+  const body = z
+    .object({
+      learnerId: z.string(),
+      subject: z.string()
+    })
+    .parse(request.body);
+
+  const today = new Date().toISOString().slice(0, 10);
+  let session = mockSessions.find(
+    (s) =>
+      s.learnerId === body.learnerId &&
+      s.subject === (body.subject as any) &&
+      s.date === today
+  );
+
+  if (!session) {
+    session = createMockSession(body.learnerId, user.tenantId, body.subject);
+    mockSessions.push(session);
+  }
+
+  if (session.status === "planned") {
+    session.status = "active";
+    session.updatedAt = new Date().toISOString();
+  }
+
+  return reply.send({ session });
+});
+
+// PATCH /sessions/:sessionId/activities/:activityId
+fastify.patch("/sessions/:sessionId/activities/:activityId", async (request, reply) => {
+  const params = z
+    .object({
+      sessionId: z.string(),
+      activityId: z.string()
+    })
+    .parse(request.params);
+
+  const body = z
+    .object({
+      status: z.enum(["in_progress", "completed", "skipped"])
+    })
+    .parse(request.body);
+
+  const session = mockSessions.find((s) => s.id === params.sessionId);
+  if (!session) {
+    return reply.status(404).send({ error: "Session not found" });
+  }
+
+  const activity = session.activities.find((a) => a.id === params.activityId);
+  if (!activity) {
+    return reply.status(404).send({ error: "Activity not found" });
+  }
+
+  const now = new Date().toISOString();
+
+  if (body.status === "in_progress" && activity.status === "pending") {
+    activity.status = "in_progress";
+    activity.startedAt = now;
+  } else if (body.status === "completed") {
+    activity.status = "completed";
+    if (!activity.startedAt) {
+      activity.startedAt = now;
+    }
+    activity.completedAt = now;
+  } else if (body.status === "skipped") {
+    activity.status = "skipped";
+    if (!activity.startedAt) {
+      activity.startedAt = now;
+    }
+    activity.completedAt = now;
+  }
+
+  const allDone = session.activities.every(
+    (a) => a.status === "completed" || a.status === "skipped"
+  );
+  if (allDone) {
+    session.status = "completed";
+    session.actualMinutes = session.activities.reduce(
+      (sum, a) => sum + a.estimatedMinutes,
+      0
+    );
+  }
+
+  session.updatedAt = now;
+
+  const response = { session };
+  return reply.send(response);
+});
 
 // --- Admin routes ---
 

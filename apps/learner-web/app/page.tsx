@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ThemeProviderByGrade, useAivoTheme } from "@aivo/ui";
 import { getGradeBand } from "@aivo/brain-model";
 
@@ -38,11 +39,12 @@ function LearnerHome() {
           When you feel ready, we’ll ask your parent or teacher if we can make it a bit more
           challenging.
         </p>
-        <button
-          className="mt-6 w-full rounded-pill bg-coral px-4 py-3 text-sm font-semibold text-white shadow-soft-coral transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-coral"
+        <Link
+          href="/session"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-pill bg-coral px-4 py-3 text-sm font-semibold text-white shadow-soft-coral transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-coral"
         >
-          Start today&apos;s calm practice
-        </button>
+          Start today&apos;s calm session
+        </Link>
       </section>
     </main>
   );
