@@ -210,6 +210,57 @@ export interface CurriculumConfig {
   subjects: SubjectCode[];
 }
 
+// Content Authoring & Curriculum Management
+
+export interface CurriculumTopic {
+  id: string;
+  tenantId: string;
+  subject: SubjectCode;
+  grade: number;
+  region: Region;
+  standard: CurriculumStandard;
+  code?: string; // e.g., CCSS.MATH.CONTENT.7.EE.B.3
+  title: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ContentItemType =
+  | "explanation"
+  | "worked_example"
+  | "practice_question"
+  | "reflection_prompt";
+
+export type ContentItemStatus =
+  | "draft"
+  | "under_review"
+  | "approved"
+  | "deprecated";
+
+export interface ContentItem {
+  id: string;
+  tenantId: string;
+  topicId: string;
+  subject: SubjectCode;
+  grade: number;
+  type: ContentItemType;
+  title: string;
+  body: string;
+  // Optional structure for questions
+  questionFormat?: PracticeQuestionFormat;
+  options?: string[];
+  correctAnswer?: string;
+  accessibilityNotes?: string;
+  status: ContentItemStatus;
+  createdByUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  // Simple AI origin hints
+  aiGenerated?: boolean;
+  aiModel?: string;
+}
+
 export interface District {
   id: string;
   tenantId: string;
@@ -274,6 +325,32 @@ export interface LearnerSession {
   activities: SessionActivity[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SessionPlanInsights {
+  objective: string;
+  tone: string;
+  difficultySummary: string;
+  calmingStrategies: string[];
+  recommendedMinutes: number;
+}
+
+export interface AgentToolTrace {
+  stepId: string;
+  label: string;
+  toolName: string;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  notes?: string;
+  error?: string;
+  savedKeys?: string[];
+}
+
+export interface SessionPlanRun {
+  plan: LearnerSession;
+  insights: SessionPlanInsights;
+  trace: AgentToolTrace[];
 }
 
 // Progress snapshot
@@ -455,4 +532,76 @@ export interface CaregiverLearnerOverview {
   lastBaselineSummary?: BaselineResultSummary;
   recentSessionDates: string[]; // e.g., last 5 dates a session was completed
   pendingDifficultyProposals: DifficultyChangeProposal[];
+}
+
+// Lightweight summaries for caregiver mobile dashboards
+
+export interface NotificationSummary {
+  id: string;
+  title: string;
+  body: string;
+  createdAtFriendly: string;
+}
+
+export interface DifficultyProposalSummary {
+  id: string;
+  learnerName: string;
+  subjectLabel: string;
+  currentDifficultyLabel: string;
+  proposedDifficultyLabel: string;
+  createdAtFriendly: string;
+}
+
+// --- Experiments & Feedback for A/B testing & evaluation ---
+
+export type ExperimentStatus = "draft" | "running" | "paused" | "completed";
+
+export interface ExperimentVariant {
+  id: string;
+  key: string; // e.g. "prompt_v1", "prompt_v2"
+  label: string;
+  description?: string;
+}
+
+export interface Experiment {
+  id: string;
+  tenantId: string;
+  key: string; // e.g. "tutor_prompt_style"
+  name: string;
+  description?: string;
+  status: ExperimentStatus;
+  variants: ExperimentVariant[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExperimentAssignment {
+  learnerId: string;
+  experimentId: string;
+  variantKey: string;
+  assignedAt: string;
+}
+
+export type FeedbackTargetType =
+  | "tutor_turn"
+  | "session_plan"
+  | "content_item"
+  | "difficulty_decision";
+
+export type FeedbackRole = "learner" | "parent" | "teacher" | "admin";
+
+export interface Feedback {
+  id: string;
+  tenantId: string;
+  learnerId?: string;
+  userId?: string;
+  targetType: FeedbackTargetType;
+  targetId: string; // e.g. TutorChatTurn.id, Session.id, ContentItem.id, DifficultyProposal.id
+  role: FeedbackRole;
+  rating: number; // -1, 0, 1 or 1-5 scale (first version: use 1–5)
+  label?: string; // e.g. "helpful", "too_easy", "too_hard"
+  comment?: string;
+  experimentKey?: string;
+  variantKey?: string;
+  createdAt: string;
 }

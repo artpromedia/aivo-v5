@@ -24,6 +24,8 @@ model Tenant {
   contentItems     ContentItem[]
   roleAssignments  RoleAssignment[]
   telemetryEvents  TelemetryEvent[]
+  experiments      Experiment[]
+  feedbacks        Feedback[]
 }
 
 model User {
@@ -39,6 +41,7 @@ model User {
   learners  Learner[]   @relation("LearnerOwner")
   notices   Notification[] @relation("NotificationRecipient")
   contentItems ContentItem[]
+  feedbacks Feedback[]
 }
 
 model RoleAssignment {
@@ -71,6 +74,8 @@ model Learner {
   notices      Notification[]
   telemetryEvents TelemetryEvent[]
   progressSnapshots SubjectProgressSnapshot[]
+  experimentAssignments ExperimentAssignment[]
+  feedbacks    Feedback[]
 }
 
 model BrainProfile {
@@ -240,4 +245,58 @@ model ContentItem {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
+}
+
+model Experiment {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+
+  key         String
+  name        String
+  description String?
+  status      String   // "draft" | "running" | "paused" | "completed"
+
+  variants    Json     // [{id, key, label, description}]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  assignments ExperimentAssignment[]
+}
+
+model ExperimentAssignment {
+  id           String     @id @default(cuid())
+  experiment   Experiment @relation(fields: [experimentId], references: [id])
+  experimentId String
+
+  learner      Learner    @relation(fields: [learnerId], references: [id])
+  learnerId    String
+
+  variantKey   String
+  assignedAt   DateTime @default(now())
+
+  @@unique([experimentId, learnerId], name: "experimentId_learnerId")
+}
+
+model Feedback {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+
+  learner     Learner? @relation(fields: [learnerId], references: [id])
+  learnerId   String?
+
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+
+  targetType  String
+  targetId    String
+  role        String
+  rating      Int
+  label       String?
+  comment     String?
+  experimentKey String?
+  variantKey  String?
+
+  createdAt   DateTime @default(now())
 }

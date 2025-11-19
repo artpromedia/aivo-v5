@@ -20,7 +20,9 @@ import {
   updateCurriculumTopic,
   listContentItemsForTopic,
   createContentItem,
-  updateContentItem as dbUpdateContentItem
+  updateContentItem as dbUpdateContentItem,
+  recordFeedback as dbRecordFeedback,
+  aggregateFeedbackForTarget
 } from "@aivo/persistence";
 import type {
   GenerateBaselineRequest,
@@ -49,6 +51,10 @@ import type {
   GenerateDraftContentRequest,
   GenerateDraftContentResponse
 } from "@aivo/api-client/src/content-contracts";
+import type {
+  RecordFeedbackResponse,
+  AggregateFeedbackResponse
+} from "@aivo/api-client/src/feedback-contracts";
 import type {
   ListTenantsResponse,
   GetTenantConfigResponse,
@@ -1450,6 +1456,85 @@ fastify.post("/content/generate-draft", async (request, reply) => {
     requiresReview: true,
     message: "Draft content generated. Please review and approve before use."
   });
+});
+
+// --- Feedback & Evaluation Routes ---
+
+fastify.post("/feedback", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const feedbackSchema = z.object({
+    targetType: z.enum(["tutor_turn", "session_plan", "content_item", "difficulty_decision"]),
+    targetId: z.string(),
+    rating: z.number().min(1).max(5),
+    label: z.string().optional(),
+    comment: z.string().optional()
+  });
+
+  const body = feedbackSchema.parse(request.body);
+
+  // For now, experiment tagging is not automatic; left empty.
+  const feedback = await dbRecordFeedback({
+    tenantId: user.tenantId,
+    learnerId: undefined, // can be filled when learner context is known
+    userId: user.userId,
+    targetType: body.targetType,
+    targetId: body.targetId,
+    role: "learner", // or derive from user.roles; for now default
+    rating: body.rating,
+    label: body.label,
+    comment: body.comment
+  });
+
+  const response = {
+    feedback: {
+      id: feedback.id,
+      tenantId: feedback.tenantId,
+      learnerId: feedback.learnerId ?? undefined,
+      userId: feedback.userId ?? undefined,
+      targetType: feedback.targetType as any,
+      targetId: feedback.targetId,
+      role: feedback.role as any,
+      rating: feedback.rating,
+      label: feedback.label ?? undefined,
+      comment: feedback.comment ?? undefined,
+      experimentKey: feedback.experimentKey ?? undefined,
+      variantKey: feedback.variantKey ?? undefined,
+      createdAt: feedback.createdAt.toISOString()
+    }
+  };
+
+  return reply.send(response);
+});
+
+fastify.get("/feedback/aggregate", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const query = z
+    .object({
+      targetType: z.string(),
+      targetId: z.string()
+    })
+    .parse(request.query);
+
+  const agg = await aggregateFeedbackForTarget({
+    tenantId: user.tenantId,
+    targetType: query.targetType,
+    targetId: query.targetId
+  });
+
+  const response = {
+    count: agg.count,
+    avgRating: agg.avgRating
+  };
+
+  return reply.send(response);
 });
 
 fastify

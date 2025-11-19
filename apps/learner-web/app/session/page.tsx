@@ -1,30 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AivoApiClient } from "@aivo/api-client";
-import type { LearnerSession, LessonPlan, SessionActivity, SubjectCode } from "@aivo/types";
+import type { LearnerSession, SessionActivity, SessionPlanRun, SubjectCode } from "@aivo/types";
 
 const client = new AivoApiClient("http://localhost:4000");
+type MePayload = Awaited<ReturnType<typeof client.me>>;
 
 export default function SessionPage() {
 	const [session, setSession] = useState<LearnerSession | null>(null);
-	const [me, setMe] = useState<ReturnType<typeof client.me> extends Promise<infer T> ? T | null : null>(null);
-	const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
+	const [me, setMe] = useState<MePayload | null>(null);
+	const [sessionPlan, setSessionPlan] = useState<SessionPlanRun | null>(null);
+	const [planLoading, setPlanLoading] = useState(false);
+	const [planError, setPlanError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [starting, setStarting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [showBreakMessage, setShowBreakMessage] = useState(false);
 	const [updatingActivityId, setUpdatingActivityId] = useState<string | null>(null);
 
-	function getPrimarySubject(learnerSubjects: string[] | undefined): SubjectCode {
+	const getPrimarySubject = useCallback((learnerSubjects: string[] | undefined): SubjectCode => {
 		const fallback: SubjectCode = "math";
 		if (!learnerSubjects || learnerSubjects.length === 0) return fallback;
 		const raw = learnerSubjects[0];
 		const allowed: SubjectCode[] = ["math", "ela"];
 		return (allowed as string[]).includes(raw) ? (raw as SubjectCode) : fallback;
-	}
+	}, []);
 
-	async function loadSession() {
+	const loadSessionPlan = useCallback(
+		async (existingMe?: MePayload) => {
+			setPlanLoading(true);
+			setPlanError(null);
+			try {
+				const resolvedMe = existingMe ?? me ?? (await client.me());
+				if (!me && !existingMe) {
+					setMe(resolvedMe);
+				}
+				const learnerId = resolvedMe.learner?.id ?? "demo-learner";
+				const subject = getPrimarySubject(resolvedMe.learner?.subjects);
+				const region = resolvedMe.learner?.region ?? "north_america";
+				const plan = await client.planSession({
+					learnerId,
+					subject,
+					region
+				});
+				setSessionPlan(plan.run);
+			} catch (e) {
+				setPlanError((e as Error).message);
+			} finally {
+				setPlanLoading(false);
+			}
+		},
+		[getPrimarySubject, me]
+	);
+
+	const loadSession = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -34,12 +64,13 @@ export default function SessionPage() {
 			const subject = getPrimarySubject(meRes.learner?.subjects);
 			const res = await client.getTodaySession(learnerId, subject);
 			setSession(res.session);
+			await loadSessionPlan(meRes);
 		} catch (e) {
 			setError((e as Error).message);
 		} finally {
 			setLoading(false);
 		}
-	}
+	}, [getPrimarySubject, loadSessionPlan]);
 
 	async function handleStartSession() {
 		setStarting(true);
@@ -54,6 +85,7 @@ export default function SessionPage() {
 				subject
 			});
 			setSession(res.session);
+			await loadSessionPlan(meRes);
 		} catch (e) {
 			setError((e as Error).message);
 		} finally {
@@ -66,29 +98,6 @@ export default function SessionPage() {
 		status: "in_progress" | "completed"
 	) {
 		if (!session) return;
-
-		// When a micro-lesson starts, fetch a calm lesson plan.
-		if (status === "in_progress" && activity.type === "micro_lesson") {
-			setError(null);
-			try {
-				const meRes = me ?? (await client.me());
-				if (!me) setMe(meRes);
-				const learnerId = meRes.learner?.id ?? "demo-learner";
-				const subject =
-					meRes.learner?.subjects && meRes.learner.subjects.length > 0
-						? getPrimarySubject(meRes.learner.subjects)
-						: (activity.subject as SubjectCode);
-				const region = meRes.learner?.region ?? "north_america";
-				const { plan } = await client.generateLessonPlan({
-					learnerId,
-					subject,
-					region
-				});
-				setLessonPlan(plan);
-			} catch (e) {
-				setError((e as Error).message);
-			}
-		}
 		setUpdatingActivityId(activity.id);
 		setError(null);
 		try {
@@ -107,7 +116,7 @@ export default function SessionPage() {
 
 	useEffect(() => {
 		void loadSession();
-	}, []);
+	}, [loadSession]);
 
 	const todayLabel = new Date().toLocaleDateString(undefined, {
 		month: "short",
@@ -259,47 +268,109 @@ export default function SessionPage() {
 							})}
 						</ul>
 
-						{lessonPlan && (
-							<div className="mt-4 rounded-xl bg-slate-900/80 border border-slate-700 p-3 space-y-2">
-								<h2 className="text-sm font-semibold text-slate-50">
-									{lessonPlan.title}
-								</h2>
-								<p className="text-[11px] text-slate-300">
-									Objective: {lessonPlan.objective}
-								</p>
-								<ul className="mt-2 space-y-2">
-									{lessonPlan.blocks.map((block) => (
-										<li
-											key={block.id}
-											className="rounded-lg border border-slate-700 bg-slate-900/70 p-2"
-										>
+						{(planLoading || sessionPlan || planError) && (
+							<div className="mt-4 rounded-xl bg-slate-900/80 border border-slate-700 p-3 space-y-3">
+								<div className="flex items-center justify-between">
+									<div>
+										<h2 className="text-sm font-semibold text-slate-50">Today&apos;s calm plan preview</h2>
+										{sessionPlan && (
+											<div className="flex gap-2 mt-1">
+												<button
+													type="button"
+													onClick={async () => {
+														try {
+															await client.recordFeedback({
+																targetType: "session_plan",
+																targetId: sessionPlan.plan.id,
+																rating: 5,
+																label: "helpful_plan"
+															});
+														} catch (e) {
+															console.error(e);
+														}
+													}}
+													className="text-[10px] text-slate-400 hover:text-emerald-300"
+												>
+													👍 Good plan
+												</button>
+												<button
+													type="button"
+													onClick={async () => {
+														try {
+															await client.recordFeedback({
+																targetType: "session_plan",
+																targetId: sessionPlan.plan.id,
+																rating: 2,
+																label: "needs_improvement"
+															});
+														} catch (e) {
+															console.error(e);
+														}
+													}}
+													className="text-[10px] text-slate-400 hover:text-red-300"
+												>
+													👎 Needs work
+												</button>
+											</div>
+										)}
+									</div>
+									<span className="text-[10px] text-slate-400">Powered by AIVO workflow</span>
+								</div>
+								{planLoading && (
+									<p className="text-[11px] text-slate-400">Preparing a gentle plan…</p>
+								)}
+								{planError && (
+									<p className="text-[11px] text-red-400">Plan error: {planError}</p>
+								)}
+								{sessionPlan && (
+									<div className="space-y-3">
+										<p className="text-[11px] text-slate-300">
+											Objective: {sessionPlan.insights.objective}
+										</p>
+										<p className="text-[11px] text-slate-300">
+											Tone: {sessionPlan.insights.tone}
+										</p>
+										<p className="text-[11px] text-slate-300">
+											Difficulty: {sessionPlan.insights.difficultySummary}
+										</p>
+										<div>
 											<p className="text-[10px] uppercase tracking-wide text-slate-400">
-												{block.type.replace("_", " ")}
+												Calming strategies
 											</p>
-											<p className="text-xs font-semibold text-slate-50">
-												{block.title}
+											<ul className="mt-1 list-disc pl-4 text-[11px] text-slate-200 space-y-1">
+												{sessionPlan.insights.calmingStrategies.map((strategy: string, idx: number) => (
+													<li key={`${strategy}-${idx}`}>{strategy}</li>
+												))}
+											</ul>
+										</div>
+										<div>
+											<p className="text-[10px] uppercase tracking-wide text-slate-400">
+												Planned activities (~{sessionPlan.plan.plannedMinutes} min)
 											</p>
-											<p className="mt-1 text-[11px] text-slate-300">
-												{block.studentFacingText}
-											</p>
-											{block.example && (
-												<p className="mt-1 text-[11px] text-slate-200">
-													Example: {block.example}
-												</p>
-											)}
-											{block.practiceQuestion && (
-												<p className="mt-1 text-[11px] text-slate-200">
-													Try: {block.practiceQuestion}
-												</p>
-											)}
-											{typeof block.estimatedMinutes === "number" && (
-												<p className="mt-1 text-[10px] text-slate-500">
-													~{block.estimatedMinutes} min
-												</p>
-											)}
-										</li>
-									))}
-								</ul>
+											<ul className="mt-1 space-y-2">
+												{sessionPlan.plan.activities.map((activity: SessionActivity) => (
+													<li
+														key={activity.id}
+														className="rounded-lg border border-slate-700 bg-slate-900/70 p-2"
+													>
+														<p className="text-[10px] uppercase tracking-wide text-slate-400">
+															{activity.type.replace("_", " ")}
+														</p>
+														<p className="text-xs font-semibold text-slate-50">
+															{activity.title}
+														</p>
+														<p className="mt-1 text-[11px] text-slate-300">
+															{activity.instructions}
+														</p>
+														<p className="mt-1 text-[10px] text-slate-500">
+															~{activity.estimatedMinutes} min • Subject: {activity.subject.toUpperCase()}
+														</p>
+													</li>
+												))}
+											</ul>
+										</div>
+									</div>
+								)}
 							</div>
 						)}
 					</div>

@@ -55,6 +55,11 @@ import type {
   GenerateDraftContentRequest,
   GenerateDraftContentResponse
 } from "./content-contracts";
+import type {
+  RecordFeedbackRequest,
+  RecordFeedbackResponse,
+  AggregateFeedbackResponse
+} from "./feedback-contracts";
 
 export class AivoApiClient {
   constructor(private baseUrl: string, private getToken?: () => Promise<string | null>) {}
@@ -314,5 +319,21 @@ export class AivoApiClient {
       method: "POST",
       body: JSON.stringify(body)
     });
+  }
+
+  // Feedback & evaluation
+
+  recordFeedback(body: RecordFeedbackRequest) {
+    return this.request<RecordFeedbackResponse>("/feedback", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  }
+
+  getFeedbackAggregate(targetType: string, targetId: string) {
+    const search = new URLSearchParams({ targetType, targetId });
+    return this.request<AggregateFeedbackResponse>(
+      `/feedback/aggregate?${search.toString()}`
+    );
   }
 }

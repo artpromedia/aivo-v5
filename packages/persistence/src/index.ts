@@ -181,4 +181,5 @@ export async function findUserWithRolesByEmail(
 
 export * from "./analytics";
 export * from "./content";
+export * from "./experiments";
 export { prisma } from "./client";
