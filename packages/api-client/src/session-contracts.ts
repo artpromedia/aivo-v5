@@ -1,4 +1,4 @@
-import type { LearnerSession } from "@aivo/types";
+import type { LearnerSession, SessionPlanRun } from "@aivo/types";
 
 export interface GetTodaySessionRequest {
   learnerId: string;
@@ -26,4 +26,14 @@ export interface UpdateActivityStatusRequest {
 
 export interface UpdateActivityStatusResponse {
   session: LearnerSession;
+}
+
+export interface PlanSessionRequest {
+  learnerId: string;
+  subject: string;
+  region: string;
+}
+
+export interface PlanSessionResponse {
+  run: SessionPlanRun;
 }

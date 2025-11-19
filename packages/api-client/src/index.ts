@@ -25,6 +25,7 @@ import type {
 import type {
   GetCaregiverLearnerOverviewResponse,
   ListNotificationsResponse,
+  ListDifficultyProposalsResponse as CaregiverDifficultyProposalsResponse,
   MarkNotificationReadResponse
 } from "./caregiver-contracts";
 import type {
@@ -36,8 +37,24 @@ import type {
   StartSessionRequest,
   StartSessionResponse,
   UpdateActivityStatusRequest,
-  UpdateActivityStatusResponse
+  UpdateActivityStatusResponse,
+  PlanSessionRequest,
+  PlanSessionResponse
 } from "./session-contracts";
+import type {
+  ListCurriculumTopicsResponse,
+  CreateCurriculumTopicRequest,
+  CreateCurriculumTopicResponse,
+  UpdateCurriculumTopicRequest,
+  UpdateCurriculumTopicResponse,
+  ListContentItemsResponse,
+  CreateContentItemRequest,
+  CreateContentItemResponse,
+  UpdateContentItemRequest,
+  UpdateContentItemResponse,
+  GenerateDraftContentRequest,
+  GenerateDraftContentResponse
+} from "./content-contracts";
 
 export class AivoApiClient {
   constructor(private baseUrl: string, private getToken?: () => Promise<string | null>) {}
@@ -181,6 +198,13 @@ export class AivoApiClient {
     );
   }
 
+  planSession(body: PlanSessionRequest) {
+    return this.request<PlanSessionResponse>("/sessions/plan", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  }
+
   // Caregiver views
 
   getCaregiverLearnerOverview(learnerId: string) {
@@ -202,6 +226,16 @@ export class AivoApiClient {
     );
   }
 
+  respondToDifficultyProposal(body: { proposalId: string; decision: "approve" | "reject" }) {
+    return this.request<DecideOnDifficultyProposalResponse>(
+      `/difficulty/proposals/${body.proposalId}/decision`,
+      {
+        method: "POST",
+        body: JSON.stringify({ approve: body.decision === "approve" })
+      }
+    );
+  }
+
   // Analytics
 
   getLearnerAnalytics(learnerId: string) {
@@ -210,5 +244,75 @@ export class AivoApiClient {
 
   getTenantAnalytics(tenantId: string) {
     return this.request<GetTenantAnalyticsResponse>(`/analytics/tenants/${tenantId}`);
+  }
+
+  // Curriculum topics
+
+  listCurriculumTopics() {
+    return this.request<ListCurriculumTopicsResponse>("/content/topics");
+  }
+
+  createCurriculumTopic(body: CreateCurriculumTopicRequest) {
+    return this.request<CreateCurriculumTopicResponse>("/content/topics", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  }
+
+  updateCurriculumTopic(body: UpdateCurriculumTopicRequest) {
+    return this.request<UpdateCurriculumTopicResponse>(
+      `/content/topics/${body.topicId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: body.title,
+          description: body.description,
+          code: body.code
+        })
+      }
+    );
+  }
+
+  // Content items
+
+  listContentItems(topicId: string) {
+    const search = new URLSearchParams({ topicId });
+    return this.request<ListContentItemsResponse>(
+      `/content/items?${search.toString()}`
+    );
+  }
+
+  createContentItem(body: CreateContentItemRequest) {
+    return this.request<CreateContentItemResponse>("/content/items", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  }
+
+  updateContentItem(body: UpdateContentItemRequest) {
+    return this.request<UpdateContentItemResponse>(
+      `/content/items/${body.itemId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: body.title,
+          body: body.body,
+          status: body.status,
+          questionFormat: body.questionFormat,
+          options: body.options,
+          correctAnswer: body.correctAnswer,
+          accessibilityNotes: body.accessibilityNotes
+        })
+      }
+    );
+  }
+
+  // AI-assisted content generation
+
+  generateDraftContent(body: GenerateDraftContentRequest) {
+    return this.request<GenerateDraftContentResponse>("/content/generate-draft", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
   }
 }

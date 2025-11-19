@@ -1,15 +1,5 @@
-import {
-  PrismaClient,
-  DifficultyChangeDirection,
-  DifficultyProposalStatus,
-  SubjectCode,
-  Region,
-  GradeBand,
-  BaselineStatus,
-  Prisma
-} from "@prisma/client";
-
-export const prisma = new PrismaClient();
+import { Prisma } from "@prisma/client";
+import { prisma } from "./client";
 
 export async function getLearnerWithBrainProfile(learnerId: string) {
   return prisma.learner.findUnique({
@@ -21,14 +11,14 @@ export async function getLearnerWithBrainProfile(learnerId: string) {
 export async function upsertBrainProfile(args: {
   learnerId: string;
   tenantId: string;
-  region: Region;
+  region: string;
   currentGrade: number;
-  gradeBand: GradeBand;
+  gradeBand: string;
   subjectLevels: Prisma.InputJsonValue;
   neurodiversity: Prisma.InputJsonValue;
   preferences: Prisma.InputJsonValue;
 }) {
-  return prisma.learnerBrainProfile.upsert({
+  return (prisma as any).brainProfile.upsert({
     where: { learnerId: args.learnerId },
     create: {
       learnerId: args.learnerId,
@@ -56,32 +46,33 @@ export async function upsertBrainProfile(args: {
 export async function createDifficultyProposal(args: {
   learnerId: string;
   tenantId: string;
-  subject: SubjectCode;
+  subject: string;
   fromLevel: number;
   toLevel: number;
-  direction: DifficultyChangeDirection;
+  direction: string;
   rationale: string;
   createdBy: "system" | "teacher" | "parent";
 }) {
-  return prisma.difficultyChangeProposal.create({
+  return prisma.difficultyProposal.create({
     data: {
       learnerId: args.learnerId,
+      tenantId: args.tenantId,
       subject: args.subject,
-      fromAssessedGradeLevel: args.fromLevel,
-      toAssessedGradeLevel: args.toLevel,
+      fromLevel: args.fromLevel,
+      toLevel: args.toLevel,
       direction: args.direction,
       rationale: args.rationale,
       createdBy: args.createdBy,
-      status: DifficultyProposalStatus.pending
+      status: "pending"
     }
   });
 }
 
 export async function listPendingProposalsForLearner(learnerId: string) {
-  return prisma.difficultyChangeProposal.findMany({
+  return prisma.difficultyProposal.findMany({
     where: {
       learnerId,
-      status: DifficultyProposalStatus.pending
+      status: "pending"
     }
   });
 }
@@ -92,13 +83,13 @@ export async function decideOnProposal(args: {
   decidedById: string;
   notes?: string;
 }) {
-  return prisma.difficultyChangeProposal.update({
+  return prisma.difficultyProposal.update({
     where: { id: args.proposalId },
     data: {
-      status: args.approve ? DifficultyProposalStatus.approved : DifficultyProposalStatus.rejected,
-      decidedByUserId: args.decidedById,
+      status: args.approve ? "approved" : "rejected",
+      decidedById: args.decidedById,
       decidedAt: new Date(),
-      decisionNotes: args.notes
+      decisionNotes: args.notes ?? null
     }
   });
 }
@@ -116,11 +107,11 @@ export async function createNotification(args: {
   // Temporary compatibility layer: Notification is not yet modeled in the
   // generated Prisma client types. Persist a JSON blob on the learner's
   // baseline assessment as an interim store so callers don't break.
-  return prisma.baselineAssessment.create({
+  return (prisma as any).baselineAssessment.create({
     data: {
       learnerId: args.learnerId,
       tenantId: args.tenantId,
-      region: Region.north_america,
+      region: "north_america",
       grade: 0,
       subjects: [],
       items: {
@@ -137,7 +128,7 @@ export async function createNotification(args: {
           relatedDifficultyProposalId: args.relatedDifficultyProposalId ?? null
         }
       },
-      status: BaselineStatus.draft
+      status: "draft"
     }
   });
 }
@@ -145,7 +136,7 @@ export async function createNotification(args: {
 export async function listNotificationsForUser(userId: string) {
   // Temporary stub: notifications are currently stored as synthetic baseline
   // assessments with items.kind === "notification".
-  const rows = await prisma.baselineAssessment.findMany({
+  const rows = await (prisma as any).baselineAssessment.findMany({
     where: {
       items: {
         path: ["kind"],
@@ -155,7 +146,7 @@ export async function listNotificationsForUser(userId: string) {
     orderBy: { createdAt: "desc" }
   });
 
-  return rows.map((row) => row.items);
+  return rows.map((row: any) => row.items);
 }
 
 export async function markNotificationRead(notificationId: string, userId: string) {
@@ -189,3 +180,5 @@ export async function findUserWithRolesByEmail(
 }
 
 export * from "./analytics";
+export * from "./content";
+export { prisma } from "./client";

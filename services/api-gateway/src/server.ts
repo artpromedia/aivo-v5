@@ -14,7 +14,13 @@ import {
   createNotification as dbCreateNotification,
   listNotificationsForUser,
   markNotificationRead as dbMarkNotificationRead,
-  getLearnerWithBrainProfile
+  getLearnerWithBrainProfile,
+  listCurriculumTopicsForTenant,
+  createCurriculumTopic,
+  updateCurriculumTopic,
+  listContentItemsForTopic,
+  createContentItem,
+  updateContentItem as dbUpdateContentItem
 } from "@aivo/persistence";
 import type {
   GenerateBaselineRequest,
@@ -29,6 +35,20 @@ import type {
   GenerateLessonPlanResponse,
   GetLearnerResponse
 } from "@aivo/api-client/src/contracts";
+import type {
+  ListCurriculumTopicsResponse,
+  CreateCurriculumTopicRequest,
+  CreateCurriculumTopicResponse,
+  UpdateCurriculumTopicRequest,
+  UpdateCurriculumTopicResponse,
+  ListContentItemsResponse,
+  CreateContentItemRequest,
+  CreateContentItemResponse,
+  UpdateContentItemRequest,
+  UpdateContentItemResponse,
+  GenerateDraftContentRequest,
+  GenerateDraftContentResponse
+} from "@aivo/api-client/src/content-contracts";
 import type {
   ListTenantsResponse,
   GetTenantConfigResponse,
@@ -46,10 +66,12 @@ import type {
   SessionActivity,
   CaregiverLearnerOverview,
   Notification,
+  NotificationSummary,
   CaregiverSubjectView,
   LearnerAnalyticsOverview,
   LearnerSubjectProgressOverview,
-  ExplainableDifficultySummary
+  ExplainableDifficultySummary,
+  SessionPlanRun
 } from "@aivo/types";
 import type { GetTenantAnalyticsResponse } from "@aivo/api-client/src/analytics-contracts";
 import type {
@@ -60,6 +82,7 @@ import { getUserFromRequest, requireRole, type RequestUser } from "./authContext
 import { signAccessToken, type Role } from "@aivo/auth";
 
 const fastify = Fastify({ logger: true });
+const prismaAny = prisma as any;
 
 const DEV_JWT_SECRET = process.env.JWT_SECRET || "dev-secret-aivo";
 
@@ -196,6 +219,39 @@ fastify.post("/lessons/generate", async (request, reply) => {
   return reply.send(response);
 });
 
+fastify.post("/sessions/plan", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+
+  try {
+    requireRole(user, ["learner"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  const body = planSessionSchema.parse(request.body ?? {});
+  const tenantId = user?.tenantId ?? "demo-tenant";
+
+  const orchestratorRes = await fetch("http://brain-orchestrator:4003/sessions/plan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      learnerId: body.learnerId,
+      tenantId,
+      subject: body.subject,
+      region: body.region
+    })
+  });
+
+  if (!orchestratorRes.ok) {
+    const text = await orchestratorRes.text();
+    fastify.log.error({ text }, "brain-orchestrator /sessions/plan failed");
+    return reply.status(502).send({ error: "Failed to plan session" });
+  }
+
+  const payload = (await orchestratorRes.json()) as { run: SessionPlanRun };
+  return reply.send(payload);
+});
+
 // Baseline assessment routes
 
 fastify.post("/baseline/generate", async (request, reply) => {
@@ -246,21 +302,21 @@ fastify.post("/baseline/submit", async (request, reply) => {
   const learnerId = "demo-learner";
 
   // Ensure learner exists (simple upsert by id for now)
-  const learner = await prisma.learner.upsert({
+  const learner = await (prisma as any).learner.upsert({
     where: { id: learnerId },
     update: {},
     create: {
       id: learnerId,
       tenantId,
-      userId: learnerId, // TODO: link to real user
+      ownerId: learnerId, // TODO: link to real user
       displayName: learnerId,
       currentGrade: 7, // TODO: from learner
       region: "north_america"
     }
   });
 
-  // Persist baseline assessment
-  const assessment = await prisma.baselineAssessment.create({
+  // Persist baseline assessment (using prismaAny since baselineAssessment not in current schema)
+  const assessment = await (prisma as any).baselineAssessment.create({
     data: {
       learnerId: learner.id,
       tenantId,
@@ -330,10 +386,8 @@ fastify.post("/difficulty/proposals", async (request, reply) => {
     id: created.id,
     learnerId: created.learnerId,
     subject: created.subject as any,
-    fromAssessedGradeLevel:
-      (created as any).fromLevel ?? created.fromAssessedGradeLevel,
-    toAssessedGradeLevel:
-      (created as any).toLevel ?? created.toAssessedGradeLevel,
+    fromAssessedGradeLevel: (created as any).fromLevel,
+    toAssessedGradeLevel: (created as any).toLevel,
     direction: created.direction as any,
     rationale: created.rationale,
     createdBy: created.createdBy as any,
@@ -370,22 +424,23 @@ fastify.get("/difficulty/proposals", async (request, reply) => {
 
   const records = query.learnerId
     ? await listPendingProposalsForLearner(query.learnerId)
-    : await prisma.difficultyChangeProposal.findMany();
+    : await prismaAny.difficultyProposal.findMany();
 
   const response: ListDifficultyProposalsResponse = {
     proposals: records.map((p: any) => ({
       id: p.id,
       learnerId: p.learnerId,
       subject: p.subject as any,
-      fromAssessedGradeLevel: (p as any).fromLevel ?? p.fromAssessedGradeLevel,
-      toAssessedGradeLevel: (p as any).toLevel ?? p.toAssessedGradeLevel,
+      fromAssessedGradeLevel: (p as any).fromLevel ?? p.fromLevel,
+      toAssessedGradeLevel: (p as any).toLevel ?? p.toLevel,
       direction: p.direction as any,
       rationale: p.rationale,
       createdBy: p.createdBy as any,
       createdAt: p.createdAt.toISOString(),
       status: p.status as any,
       decidedByUserId: (p as any).decidedById ?? p.decidedByUserId ?? undefined,
-      decidedAt: (p as any).decidedAt?.toISOString() ??
+      decidedAt:
+        (p as any).decidedAt?.toISOString() ??
         (p.decidedAt ? p.decidedAt.toISOString() : undefined),
       decisionNotes: (p as any).decisionNotes ?? p.decisionNotes ?? undefined
     }))
@@ -416,18 +471,16 @@ fastify.post("/difficulty/proposals/:id/decision", async (request, reply) => {
     id: updated.id,
     learnerId: updated.learnerId,
     subject: updated.subject as any,
-    fromAssessedGradeLevel: (updated as any).fromLevel ?? updated.fromAssessedGradeLevel,
-    toAssessedGradeLevel: (updated as any).toLevel ?? updated.toAssessedGradeLevel,
+    fromAssessedGradeLevel: (updated as any).fromLevel,
+    toAssessedGradeLevel: (updated as any).toLevel,
     direction: updated.direction as any,
     rationale: updated.rationale,
     createdBy: updated.createdBy as any,
     createdAt: updated.createdAt.toISOString(),
     status: updated.status as any,
-    decidedByUserId: (updated as any).decidedById ?? updated.decidedByUserId ?? undefined,
-    decidedAt:
-      (updated as any).decidedAt?.toISOString() ??
-      (updated.decidedAt ? updated.decidedAt.toISOString() : undefined),
-    decisionNotes: (updated as any).decisionNotes ?? updated.decisionNotes ?? undefined
+    decidedByUserId: (updated as any).decidedById ?? undefined,
+    decidedAt: (updated as any).decidedAt?.toISOString() ?? undefined,
+    decisionNotes: (updated as any).decisionNotes ?? undefined
   };
 
   const response: DecideOnDifficultyProposalResponse = { proposal };
@@ -550,6 +603,12 @@ const mockRoleAssignments: RoleAssignment[] = [
 // --- In-memory sessions (mock) ---
 
 const mockSessions: LearnerSession[] = [];
+
+const planSessionSchema = z.object({
+  learnerId: z.string(),
+  subject: z.string(),
+  region: z.string().default("north_america")
+});
 
 // Helper to create a calm, short session from scratch
 function createMockSession(
@@ -943,7 +1002,7 @@ fastify.get("/caregiver/learners/:learnerId/overview", async (request, reply) =>
   });
 
   // For now, query difficulty proposals via Prisma and filter to pending
-  const records = await prisma.difficultyChangeProposal.findMany({
+  const records = await prismaAny.difficultyProposal.findMany({
     where: { learnerId }
   });
 
@@ -953,14 +1012,14 @@ fastify.get("/caregiver/learners/:learnerId/overview", async (request, reply) =>
       id: p.id,
       learnerId: p.learnerId,
       subject: p.subject as any,
-      fromAssessedGradeLevel: p.fromAssessedGradeLevel,
-      toAssessedGradeLevel: p.toAssessedGradeLevel,
+      fromAssessedGradeLevel: (p as any).fromLevel ?? p.fromLevel,
+      toAssessedGradeLevel: (p as any).toLevel ?? p.toLevel,
       direction: p.direction as any,
       rationale: p.rationale,
       createdBy: p.createdBy as any,
       createdAt: p.createdAt.toISOString(),
       status: p.status as any,
-      decidedByUserId: p.decidedByUserId ?? undefined,
+      decidedByUserId: (p as any).decidedById ?? p.decidedByUserId ?? undefined,
       decidedAt: p.decidedAt ? p.decidedAt.toISOString() : undefined,
       decisionNotes: p.decisionNotes ?? undefined
     }));
@@ -989,23 +1048,17 @@ fastify.get("/caregiver/notifications", async (request, reply) => {
 
   const records = await listNotificationsForUser(user.userId);
 
-  const notifications: Notification[] = records.map((n: any) => ({
+  const items: NotificationSummary[] = records.map((n: any) => ({
     id: n.id,
-    tenantId: n.tenantId,
-    learnerId: n.learnerId,
-    recipientUserId: n.recipientUserId,
-    audience: n.audience as any,
-    type: n.type as any,
     title: n.title,
     body: n.body,
-    createdAt: n.createdAt.toISOString(),
-    status: n.status as any,
-    relatedDifficultyProposalId: n.relatedDifficultyProposalId ?? undefined,
-    relatedBaselineAssessmentId: n.relatedBaselineAssessmentId ?? undefined,
-    relatedSessionId: n.relatedSessionId ?? undefined
+    createdAtFriendly: n.createdAt.toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    })
   }));
 
-  const response: ListNotificationsResponse = { notifications };
+  const response: ListNotificationsResponse = { items };
   return reply.send(response);
 });
 
@@ -1179,6 +1232,226 @@ fastify.get("/analytics/tenants/:tenantId", async (request, reply) => {
   return reply.send(response);
 });
 
+// =============================
+// Content Management Routes
+// =============================
+
+// List curriculum topics for tenant
+fastify.get("/content/topics", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Teachers, district admins, and platform admins can view curriculum topics
+  try {
+    requireRole(user, ["teacher", "district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const topics = await listCurriculumTopicsForTenant(user.tenantId);
+  return reply.send({ topics: topics as any });
+});
+
+// Create a curriculum topic
+fastify.post("/content/topics", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Only district admins and platform admins can create curriculum topics
+  try {
+    requireRole(user, ["district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const { subject, grade, region, standard, code, title, description } = request.body as any;
+  
+  const topic = await createCurriculumTopic({
+    tenantId: user.tenantId,
+    subject,
+    grade,
+    region,
+    standard,
+    code,
+    title,
+    description
+  });
+
+  return reply.send({ topic: topic as any });
+});
+
+// Update a curriculum topic
+fastify.patch("/content/topics/:topicId", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Only district admins and platform admins can update curriculum topics
+  try {
+    requireRole(user, ["district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const params = z.object({ topicId: z.string() }).parse(request.params);
+  const { code, title, description } = request.body as any;
+
+  const topic = await updateCurriculumTopic(params.topicId, {
+    code,
+    title,
+    description
+  });
+
+  return reply.send({ topic: topic as any });
+});
+
+// List content items for a topic
+fastify.get("/content/items", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Teachers, district admins, and platform admins can view content items
+  try {
+    requireRole(user, ["teacher", "district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const query = z.object({ topicId: z.string() }).parse(request.query);
+  const items = await listContentItemsForTopic(query.topicId);
+  
+  return reply.send({ items: items as any });
+});
+
+// Create a content item
+fastify.post("/content/items", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Teachers, district admins, and platform admins can create content items
+  try {
+    requireRole(user, ["teacher", "district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const {
+    topicId,
+    subject,
+    grade,
+    type,
+    title,
+    status
+  } = request.body as any;
+
+  const item = await createContentItem({
+    tenantId: user.tenantId,
+    topicId,
+    subject,
+    grade,
+    type,
+    title,
+    body: "",
+    questionFormat: undefined,
+    options: undefined,
+    correctAnswer: undefined,
+    accessibilityNotes: undefined,
+    status: status || "draft",
+    createdByUserId: user.userId,
+    aiGenerated: false,
+    aiModel: undefined
+  });
+
+  return reply.send({ item: item as any });
+});
+
+// Update a content item
+fastify.patch("/content/items/:itemId", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Teachers, district admins, and platform admins can update content items
+  try {
+    requireRole(user, ["teacher", "district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const params = z.object({ itemId: z.string() }).parse(request.params);
+  const { title, status } = request.body as any;
+
+  const item = await dbUpdateContentItem(params.itemId, {
+    title,
+    status
+  });
+
+  return reply.send({ item: item as any });
+});
+
+// Generate draft content using AI
+fastify.post("/content/generate-draft", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  
+  // Teachers, district admins, and platform admins can generate draft content
+  try {
+    requireRole(user, ["teacher", "district_admin", "platform_admin"]);
+  } catch (err: any) {
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  const { topicId, subject, grade, type } = request.body as any;
+  const prompt = "Generate content for this topic";
+
+  // TODO: Call model-dispatch service to generate content based on prompt
+  // For now, create a placeholder draft item
+  const generatedText = `[AI Generated Content]\n\nPrompt: ${prompt}\n\nThis is a placeholder. Integrate with model-dispatch service for actual AI generation.`;
+
+  const item = await createContentItem({
+    tenantId: user.tenantId,
+    topicId,
+    subject,
+    grade,
+    type,
+    title: `AI-Generated ${type}`,
+    body: type === "explanation" || type === "example" ? generatedText : "",
+    questionFormat: type === "practice" ? "multiple_choice" : undefined,
+    options: type === "practice" ? { distractors: ["Option A", "Option B", "Option C"] } : undefined,
+    correctAnswer: type === "practice" ? "Placeholder answer" : undefined,
+    accessibilityNotes: undefined,
+    status: "draft",
+    createdByUserId: user.userId,
+    aiGenerated: true,
+    aiModel: "placeholder-model"
+  });
+
+  return reply.send({ 
+    item: item as any,
+    requiresReview: true,
+    message: "Draft content generated. Please review and approve before use."
+  });
+});
+
 fastify
   .listen({ port: 4000, host: "0.0.0.0" })
   .then(() => {
@@ -1187,17 +1460,18 @@ fastify
     // the same ID is used.
     void (async () => {
       try {
-        const existing = await prisma.difficultyChangeProposal.findFirst({
+        const existing = await prismaAny.difficultyProposal.findFirst({
           where: { id: "demo-proposal-1" }
         });
         if (!existing) {
-          await prisma.difficultyChangeProposal.create({
+          await prismaAny.difficultyProposal.create({
             data: {
               id: "demo-proposal-1",
               learnerId: "demo-learner",
+              tenantId: "demo-tenant",
               subject: "math" as any,
-              fromAssessedGradeLevel: 5,
-              toAssessedGradeLevel: 6,
+              fromLevel: 5,
+              toLevel: 6,
               direction: "harder" as any,
               rationale:
                 "AIVO noticed strong mastery at the current level and suggests a gentle step up.",

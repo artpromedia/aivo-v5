@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = env("DATABASE_PROVIDER") // e.g. "postgresql" or "sqlite"
+  provider = "postgresql" // Default to Postgres; update here only if you intentionally change databases
   url      = env("DATABASE_URL")
 }
 
@@ -20,6 +20,10 @@ model Tenant {
   proposals  DifficultyProposal[]
   sessions   Session[]
   notices    Notification[]
+  curriculumTopics CurriculumTopic[]
+  contentItems     ContentItem[]
+  roleAssignments  RoleAssignment[]
+  telemetryEvents  TelemetryEvent[]
 }
 
 model User {
@@ -34,6 +38,7 @@ model User {
   roles     RoleAssignment[]
   learners  Learner[]   @relation("LearnerOwner")
   notices   Notification[] @relation("NotificationRecipient")
+  contentItems ContentItem[]
 }
 
 model RoleAssignment {
@@ -64,6 +69,8 @@ model Learner {
   sessions     Session[]
   proposals    DifficultyProposal[]
   notices      Notification[]
+  telemetryEvents TelemetryEvent[]
+  progressSnapshots SubjectProgressSnapshot[]
 }
 
 model BrainProfile {
@@ -184,4 +191,53 @@ model SubjectProgressSnapshot {
   difficultyLevel  Int
 
   @@unique([learnerId, subject, date], name: "learnerId_subject_date")
+}
+
+model CurriculumTopic {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+
+  subject     String
+  grade       Int
+  region      String
+  standard    String
+  code        String?
+  title       String
+  description String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  contentItems ContentItem[]
+}
+
+model ContentItem {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+
+  topic       CurriculumTopic @relation(fields: [topicId], references: [id])
+  topicId     String
+
+  subject     String
+  grade       Int
+  type        String
+  title       String
+  body        String
+
+  questionFormat String?
+  options        Json?
+  correctAnswer  String?
+  accessibilityNotes String?
+
+  status      String
+  createdBy   User     @relation(fields: [createdByUserId], references: [id])
+  createdByUserId String
+
+  aiGenerated Boolean  @default(false)
+  aiModel     String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
 }
