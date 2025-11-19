@@ -8,8 +8,22 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "5.0",
+    "baseUrl": ".",
+    "paths": {
+      "@aivo/types": ["packages/types/src"],
+      "@aivo/brain-model": ["packages/brain-model/src/index.ts"],
+      "@aivo/brain-model/*": ["packages/brain-model/src/*"],
+      "@aivo/api-client": ["packages/api-client/src"],
+      "@aivo/auth": ["packages/auth/src"],
+      "@aivo/persistence": ["packages/persistence/src"],
+      "@aivo/ui": ["packages/ui/src"],
+      "@aivo/ui/native": ["packages/ui/src/native.ts"],
+      "@aivo/observability": ["packages/observability/src"],
+      "@aivo/guardrails": ["packages/guardrails/src"]
     },
-      "declaration": true,
-      "declarationMap": false
+    "declaration": true,
+    "declarationMap": false
+  }
 }

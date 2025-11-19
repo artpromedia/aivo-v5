@@ -1,4 +1,4 @@
-## Aivo v5 – Agentic AI Learning Platform Monorepo
+# Aivo v5 – Agentic AI Learning Platform Monorepo
 
 This repository contains the Aivo v5 agentic AI learning platform implemented as a **Turborepo + pnpm monorepo**, not a single Node/Express app.
 
@@ -8,28 +8,32 @@ At a high level, the system provides:
 - Learner- and parent/teacher-facing web and mobile apps.
 - Backend services for model dispatch, baseline assessment, and an API gateway.
 - Shared packages for types, UI components, and brain/model logic.
+- **Content Authoring & Curriculum Management** system for creating curriculum-aligned learning materials.
 
 ## Repository layout
 
 - `apps/` – Next.js frontends (App Router)
-   - `web` – marketing / main web app
-   - `learner-web` – learner-facing PWA
-   - `parent-teacher-web` – parent/teacher web app
-   - `admin-web` – unified admin console (platform + district admin flows)
-   - `platform-admin-web` – independent platform admin app (optional)
-   - `district-admin-web` – independent district admin app (optional)
+  - `web` – marketing / main web app
+  - `learner-web` – learner-facing PWA
+  - `parent-teacher-web` – parent/teacher web app
+  - `admin-web` – unified admin console (platform + district admin flows)
+  - `platform-admin-web` – independent platform admin app (optional)
+  - `district-admin-web` – independent district admin app (optional)
 - `mobile/` – Expo React Native apps
-   - `learner-mobile`
-   - `parent-teacher-mobile`
+  - `learner-mobile`
+  - `parent-teacher-mobile`
 - `packages/` – shared libraries
-   - `@aivo/types` – domain types (multi-tenancy, admin, assessments, etc.)
-   - `@aivo/api-client` – typed client for backend APIs
-   - `@aivo/ui` – shared UI components and theme
-   - `@aivo/brain-model` – brain/model logic
+  - `@aivo/types` – domain types (multi-tenancy, admin, assessments, content, etc.)
+  - `@aivo/api-client` – typed client for backend APIs
+  - `@aivo/ui` – shared UI components and theme
+  - `@aivo/brain-model` – brain/model logic
+  - `@aivo/persistence` – Prisma client and database helpers
+  - `@aivo/auth` – Authentication utilities
 - `services/` – backend services
-   - `api-gateway` – Fastify gateway, auth context, admin APIs, and routing
-   - `baseline-assessment` – baseline assessment generator using model-dispatch
-   - `model-dispatch` – provider failover and routing for LLM calls
+  - `api-gateway` – Fastify gateway, auth context, admin APIs, content management, and routing
+  - `baseline-assessment` – baseline assessment generator using model-dispatch
+  - `brain-orchestrator` – lesson plan generation and brain profile management
+  - `model-dispatch` – provider failover and routing for LLM calls
 - `prisma/` – Prisma schema and migrations
 
 ## Prerequisites
@@ -57,12 +61,12 @@ Common dev entry points:
 - Model Dispatch service: `http://localhost:4001`
 - Baseline Assessment service: `http://localhost:4002`
 - Web apps: Next.js apps start on `3000`+ and auto-increment if a port is in use. Check the console output for the exact URL, for example:
-   - `platform-admin-web`: `http://localhost:3001`
-   - `district-admin-web`: `http://localhost:3002`
-   - `learner-web`: `http://localhost:3003`
-   - `parent-teacher-web`: `http://localhost:3004`
-   - `web`: `http://localhost:3005`
-   - `admin-web`: `http://localhost:3006`
+  - `platform-admin-web`: `http://localhost:3001`
+  - `district-admin-web`: `http://localhost:3002`
+  - `learner-web`: `http://localhost:3003`
+  - `parent-teacher-web`: `http://localhost:3004`
+  - `web`: `http://localhost:3005`
+  - `admin-web`: `http://localhost:3006`
 
 ### Running specific apps
 
@@ -114,6 +118,20 @@ pnpm dev
 pnpm dev:web
 ```
 
+## Governance-powered admin dashboards
+
+Two dedicated dashboards sit on top of the governance APIs so platform and district leaders can review usage, guardrails, and policy activity without touching code:
+
+- **District Admin (`apps/district-admin-web`)** – visit `http://localhost:3002/tenant` after running `pnpm dev`. The page surfaces:
+  - Curriculum + provider configuration for the current tenant.
+  - Real-time usage pulse (LLM calls, tutor turns, incidents) with guardrail progress bars.
+  - District/school coverage tables, role-assignment summaries, and the latest audit log slices.
+- **Platform Admin (`apps/platform-admin-web`)** – visit `http://localhost:3001/tenants`. The experience includes:
+  - Portfolio-level stats (active vs paused tenants, mix by tenant type).
+  - An interactive tenant table; selecting a row loads tenant-specific guardrails, usage trends, analytics, and audit events.
+
+Both dashboards rely on the running API Gateway (`http://localhost:4000`) for data via `@aivo/api-client`. If you seed additional tenants, the pages adapt automatically without extra configuration.
+
 ## Linting and tests
 
 Run lint across the monorepo:
@@ -164,11 +182,57 @@ For linting, you should generally stick with **bare package names** (like `paren
 
 If a filter fails, double-check the `name` field in that package's `package.json` and use that value directly.
 
+## Content Authoring & Curriculum Management
+
+Aivo v5.1 includes a comprehensive content authoring system that allows educators to create, manage, and approve curriculum-aligned learning materials.
+
+### Features
+
+- **Curriculum Topics**: Define topics aligned to regional standards (e.g., CCSS, UK National Curriculum)
+- **Content Items**: Create explanations, worked examples, and practice questions
+- **AI-Assisted Generation**: Generate draft content using AI, requiring human review before approval
+- **Multi-tenant**: Each tenant maintains their own curriculum library
+- **Role-based Access**: District/platform admins create topics; teachers create/approve content
+- **Status Workflow**: Draft → Approved → Archived lifecycle for quality control
+
+### Access the Content UI
+
+1. Start the admin web app: `pnpm --filter admin-web dev`
+2. Navigate to: `http://localhost:3006/content/topics`
+3. Create topics and content items through the web interface
+
+### API Endpoints
+
+- `GET /content/topics` - List curriculum topics
+- `POST /content/topics` - Create a new topic
+- `PATCH /content/topics/:topicId` - Update a topic
+- `GET /content/items?topicId=X` - List content items for a topic
+- `POST /content/items` - Create a content item
+- `PATCH /content/items/:itemId` - Update a content item
+- `POST /content/generate-draft` - Generate AI-drafted content
+
+For detailed documentation, see [docs/content-authoring-system.md](docs/content-authoring-system.md).
+
+## Local database (PostgreSQL via Docker)
+
+Run a local Postgres instance with Docker (requires Docker Desktop):
+
+```powershell
+docker compose -f docker-compose.db.yml up -d postgres
+```
+
+The `aivo-v5-postgres` container maps host port `5433` to Postgres `5432` and seeds a database named `aivo_v5` with username/password `aivo/aivo`. Update `DATABASE_URL` if you change these defaults. When you are finished developing, stop it with:
+
+```powershell
+docker compose -f docker-compose.db.yml down
+```
+
 ## Notes
 
 - Uses **pnpm workspaces** and **Turborepo** for orchestration.
 - Next.js, Tailwind CSS, ESLint, and Prettier are configured at the root.
 - Admin flows use a dev-only middleware/header-based mock auth (`x-aivo-user`) for platform and district admin roles.
+- Database: PostgreSQL (via Docker) in all environments.
 
 ## Contributing
 

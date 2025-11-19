@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "lib": ["ES2022"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "types": ["expo"],
+    "ignoreDeprecations": "5.0",
+    "baseUrl": ".",
+    "paths": {
+      "@aivo/types": ["../../packages/types/src"],
+      "@aivo/ui": ["../../packages/ui/src"],
+      "@aivo/ui/native": ["../../packages/ui/src/native.ts"],
+      "@aivo/api-client": ["../../packages/api-client/src"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

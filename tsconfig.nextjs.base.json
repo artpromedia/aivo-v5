@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "preserve",
+    "strict": true,
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "5.0",
+    "isolatedModules": true,
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@aivo/types": ["../../packages/types/src"],
+      "@aivo/brain-model": ["../../packages/brain-model/src/index.ts"],
+      "@aivo/brain-model/*": ["../../packages/brain-model/src/*"],
+      "@aivo/ui": ["../../packages/ui/src"],
+      "@aivo/ui/native": ["../../packages/ui/src/native.ts"],
+      "@aivo/api-client": ["../../packages/api-client/src"],
+      "@aivo/auth": ["../../packages/auth/src"],
+      "@aivo/persistence": ["../../packages/persistence/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".next", ".turbo"]
+}

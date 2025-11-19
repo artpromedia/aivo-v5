@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "5.0",
+    "baseUrl": ".",
+    "paths": {
+      "@aivo/types": ["../../packages/types/src"],
+      "@aivo/brain-model": ["../../packages/brain-model/src/index.ts"],
+      "@aivo/brain-model/*": ["../../packages/brain-model/src/*"],
+      "@aivo/api-client": ["../../packages/api-client/src"],
+      "@aivo/auth": ["../../packages/auth/src"],
+      "@aivo/persistence": ["../../packages/persistence/src"],
+      "@aivo/ui": ["../../packages/ui/src"],
+      "@aivo/ui/native": ["../../packages/ui/src/native.ts"],
+      "@aivo/observability": ["../../packages/observability/src"],
+      "@aivo/guardrails": ["../../packages/guardrails/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}
