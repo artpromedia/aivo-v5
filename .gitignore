@@ -59,6 +59,29 @@ jspm_packages/
 dist/
 build/
 
+# Turborepo cache
+.turbo/
+
+# Next.js build artifacts
+.next/
+apps/*/.next/
+services/*/.next/
+packages/*/.next/
+
+# Expo / React Native caches
+.expo/
+.expo-shared/
+
+# TypeScript incremental build metadata
+*.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# pnpm store
+.pnpm-store/
+
+# Local Prisma databases
+packages/persistence/prisma/dev.db
+
 # IDE files
 .vscode/
 .idea/
