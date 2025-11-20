@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@aivo/types": "workspace:*",
+    "@aivo/observability": "workspace:*",
+    "@aivo/persistence": "workspace:*",
+    "@aivo/guardrails": "workspace:*",
     "fastify": "^5.0.0",
     "zod": "^3.23.0"
   },

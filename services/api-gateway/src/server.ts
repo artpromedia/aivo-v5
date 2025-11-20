@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import Fastify from "fastify";
 import { z } from "zod";
 import fetch from "node-fetch";
@@ -5,7 +6,12 @@ import {
   prisma,
   findUserWithRolesByEmail,
   getSubjectTimeseriesForLearner,
-  getAggregateTenantStats
+  getAggregateTenantStats,
+  incrementTenantUsage,
+  getOrCreateTenantLimits,
+  getTenantUsageForDate,
+  updateTenantLimits,
+  createAuditLogEntry
 } from "@aivo/persistence";
 import {
   createDifficultyProposal as dbCreateDifficultyProposal,
@@ -63,6 +69,13 @@ import type {
   ListRoleAssignmentsResponse
 } from "@aivo/api-client/src/admin-contracts";
 import type {
+  GetTenantLimitsResponse,
+  UpdateTenantLimitsRequest,
+  UpdateTenantLimitsResponse,
+  ListAuditLogsResponse,
+  ListTenantUsageResponse
+} from "@aivo/api-client/src/governance-contracts";
+import type {
   Tenant,
   TenantConfig,
   District,
@@ -86,8 +99,23 @@ import type {
 } from "@aivo/api-client/src/caregiver-contracts";
 import { getUserFromRequest, requireRole, type RequestUser } from "./authContext";
 import { signAccessToken, type Role } from "@aivo/auth";
+import {
+  info,
+  warn,
+  error as logError,
+  startSpan,
+  endSpan,
+  recordMetric,
+  drainMetrics
+} from "@aivo/observability";
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({ logger: false });
+fastify.addHook("onRequest", async (request, _reply) => {
+  const requestId =
+    (request.headers["x-request-id"] as string | undefined) ?? randomUUID();
+  (request as any).requestId = requestId;
+});
+
 const prismaAny = prisma as any;
 
 const DEV_JWT_SECRET = process.env.JWT_SECRET || "dev-secret-aivo";
@@ -197,65 +225,174 @@ fastify.get("/brain-profile/:learnerId", async (request, reply) => {
 // Lessons / brain-orchestrator proxy
 
 fastify.post("/lessons/generate", async (request, reply) => {
+  const requestId = ((request as any).requestId as string) ?? randomUUID();
+  const span = startSpan("lessons_generate", { requestId });
+  const startedAt = Date.now();
   const body = request.body as GenerateLessonPlanRequest;
+  const user = (request as any).user as RequestUser | null;
+  const tenantId = user?.tenantId ?? "demo-tenant";
 
-  const res = await fetch("http://brain-orchestrator:4003/lessons/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      learnerId: body.learnerId,
-      tenantId: "demo-tenant", // TODO: derive from auth/user
-      subject: body.subject,
-      region: body.region,
-      domain: body.domain
-    })
-  });
+  try {
+    const res = await fetch("http://brain-orchestrator:4003/lessons/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        learnerId: body.learnerId,
+        tenantId,
+        subject: body.subject,
+        region: body.region,
+        domain: body.domain
+      })
+    });
 
-  if (!res.ok) {
-    const text = await res.text();
-    fastify.log.error({ text }, "brain-orchestrator /lessons/generate failed");
-    return reply.status(502).send({ error: "Failed to generate lesson plan" });
+    if (!res.ok) {
+      const text = await res.text();
+      recordMetric({
+        name: "lessons_generate_errors_total",
+        value: 1,
+        labels: { tenantId },
+        timestamp: Date.now()
+      });
+      logError("Brain orchestrator lesson generation failed", {
+        tenantId,
+        requestId,
+        meta: { text }
+      });
+      endSpan(span);
+      return reply.status(502).send({ error: "Failed to generate lesson plan", requestId });
+    }
+
+    const data = (await res.json()) as GenerateLessonPlanResponse;
+    const duration = Date.now() - startedAt;
+
+    recordMetric({
+      name: "lessons_generate_latency_ms",
+      value: duration,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    recordMetric({
+      name: "lessons_generated_total",
+      value: 1,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    info("Lesson plan generated", {
+      tenantId,
+      requestId,
+      meta: { durationMs: duration }
+    });
+    endSpan(span);
+
+    const response: GenerateLessonPlanResponse = {
+      plan: data.plan
+    };
+
+    reply.header("x-request-id", requestId);
+    return reply.send(response);
+  } catch (err) {
+    recordMetric({
+      name: "lessons_generate_errors_total",
+      value: 1,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    logError("Lesson generation threw", {
+      tenantId,
+      requestId,
+      meta: {
+        error: err instanceof Error ? err.message : String(err)
+      }
+    });
+    endSpan(span);
+    return reply.status(500).send({ error: "Failed to generate lesson plan", requestId });
   }
-
-  const data = (await res.json()) as GenerateLessonPlanResponse;
-  const response: GenerateLessonPlanResponse = {
-    plan: data.plan
-  };
-
-  return reply.send(response);
 });
 
 fastify.post("/sessions/plan", async (request, reply) => {
+  const requestId = ((request as any).requestId as string) ?? randomUUID();
+  const span = startSpan("sessions_plan_gateway", { requestId });
+  const startedAt = Date.now();
   const user = (request as any).user as RequestUser | null;
 
   try {
     requireRole(user, ["learner"]);
   } catch (err: any) {
+    warn("Session plan forbidden", {
+      tenantId: user?.tenantId,
+      requestId,
+      meta: { error: err.message }
+    });
+    endSpan(span);
     return reply.status(err.statusCode ?? 403).send({ error: err.message });
   }
 
   const body = planSessionSchema.parse(request.body ?? {});
   const tenantId = user?.tenantId ?? "demo-tenant";
 
-  const orchestratorRes = await fetch("http://brain-orchestrator:4003/sessions/plan", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      learnerId: body.learnerId,
+  try {
+    const orchestratorRes = await fetch("http://brain-orchestrator:4003/sessions/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        learnerId: body.learnerId,
+        tenantId,
+        subject: body.subject,
+        region: body.region
+      })
+    });
+
+    if (!orchestratorRes.ok) {
+      const text = await orchestratorRes.text();
+      recordMetric({
+        name: "sessions_plan_gateway_errors_total",
+        value: 1,
+        labels: { tenantId },
+        timestamp: Date.now()
+      });
+      logError("Brain orchestrator /sessions/plan failed", {
+        tenantId,
+        requestId,
+        meta: { text }
+      });
+      endSpan(span);
+      return reply.status(502).send({ error: "Failed to plan session" });
+    }
+
+    const payload = (await orchestratorRes.json()) as { run: SessionPlanRun };
+    const duration = Date.now() - startedAt;
+
+    recordMetric({
+      name: "sessions_plan_gateway_latency_ms",
+      value: duration,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    info("Session plan generated", {
       tenantId,
-      subject: body.subject,
-      region: body.region
-    })
-  });
-
-  if (!orchestratorRes.ok) {
-    const text = await orchestratorRes.text();
-    fastify.log.error({ text }, "brain-orchestrator /sessions/plan failed");
-    return reply.status(502).send({ error: "Failed to plan session" });
+      requestId,
+      meta: { durationMs: duration, learnerId: body.learnerId }
+    });
+    reply.header("x-request-id", requestId);
+    endSpan(span);
+    return reply.send(payload);
+  } catch (err) {
+    recordMetric({
+      name: "sessions_plan_gateway_errors_total",
+      value: 1,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    logError("Session plan request threw", {
+      tenantId,
+      requestId,
+      meta: {
+        error: err instanceof Error ? err.message : String(err)
+      }
+    });
+    endSpan(span);
+    return reply.status(500).send({ error: "Failed to plan session" });
   }
-
-  const payload = (await orchestratorRes.json()) as { run: SessionPlanRun };
-  return reply.send(payload);
 });
 
 // Baseline assessment routes
@@ -616,6 +753,14 @@ const planSessionSchema = z.object({
   region: z.string().default("north_america")
 });
 
+const providerEnum = z.enum(["openai", "anthropic", "google", "meta"]);
+const updateTenantLimitsSchema = z.object({
+  maxDailyLlmCalls: z.number().int().min(0).nullable().optional(),
+  maxDailyTutorTurns: z.number().int().min(0).nullable().optional(),
+  allowedProviders: z.array(providerEnum).min(1).nullable().optional(),
+  blockedProviders: z.array(providerEnum).min(1).nullable().optional()
+});
+
 // Helper to create a calm, short session from scratch
 function createMockSession(
   learnerId: string,
@@ -729,7 +874,23 @@ fastify.get("/sessions/today", async (request, reply) => {
 
 // POST /sessions/start
 fastify.post("/sessions/start", async (request, reply) => {
-  const user = (request as any).user;
+  const requestId = ((request as any).requestId as string) ?? randomUUID();
+  const span = startSpan("sessions_start", { requestId });
+  const startedAt = Date.now();
+  const user = (request as any).user as RequestUser | null;
+
+  try {
+    requireRole(user, ["learner"]);
+  } catch (err: any) {
+    warn("Session start forbidden", {
+      tenantId: user?.tenantId,
+      requestId,
+      meta: { error: err.message }
+    });
+    endSpan(span);
+    return reply.status(err.statusCode ?? 403).send({ error: err.message });
+  }
+
   const body = z
     .object({
       learnerId: z.string(),
@@ -737,25 +898,86 @@ fastify.post("/sessions/start", async (request, reply) => {
     })
     .parse(request.body);
 
+  const tenantId = user?.tenantId ?? "demo-tenant";
   const today = new Date().toISOString().slice(0, 10);
-  let session = mockSessions.find(
-    (s) =>
-      s.learnerId === body.learnerId &&
-      s.subject === (body.subject as any) &&
-      s.date === today
-  );
 
-  if (!session) {
-    session = createMockSession(body.learnerId, user.tenantId, body.subject);
-    mockSessions.push(session);
+  try {
+    if (tenantId) {
+      const limits = await getOrCreateTenantLimits(tenantId);
+      if (limits.maxDailyTutorTurns != null) {
+        const usage = await getTenantUsageForDate(tenantId, today);
+        const used = usage?.tutorTurns ?? 0;
+        if (used >= limits.maxDailyTutorTurns) {
+          warn("Tenant exceeded tutor turn quota", {
+            tenantId,
+            requestId,
+            meta: { used, limit: limits.maxDailyTutorTurns }
+          });
+          endSpan(span);
+          return reply.status(429).send({ error: "Daily tutor turn quota exceeded." });
+        }
+        if (used >= Math.floor(limits.maxDailyTutorTurns * 0.8)) {
+          reply.header(
+            "x-aivo-usage-warning",
+            `Tutor turns ${used}/${limits.maxDailyTutorTurns} approaching limit`
+          );
+        }
+      }
+    }
+
+    let session = mockSessions.find(
+      (s) =>
+        s.learnerId === body.learnerId &&
+        s.subject === (body.subject as any) &&
+        s.date === today
+    );
+
+    if (!session) {
+      session = createMockSession(body.learnerId, tenantId, body.subject);
+      mockSessions.push(session);
+    }
+
+    if (session.status === "planned") {
+      session.status = "active";
+      session.updatedAt = new Date().toISOString();
+    }
+
+    await incrementTenantUsage({
+      tenantId,
+      date: today,
+      tutorTurns: 1
+    });
+
+    const duration = Date.now() - startedAt;
+    recordMetric({
+      name: "tutor_turns_total",
+      value: 1,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    recordMetric({
+      name: "sessions_start_latency_ms",
+      value: duration,
+      labels: { tenantId },
+      timestamp: Date.now()
+    });
+    info("Session started", {
+      tenantId,
+      requestId,
+      meta: { learnerId: body.learnerId, subject: body.subject, durationMs: duration }
+    });
+    reply.header("x-request-id", requestId);
+    endSpan(span);
+    return reply.send({ session });
+  } catch (err) {
+    logError("Session start failed", {
+      tenantId,
+      requestId,
+      meta: { error: err instanceof Error ? err.message : String(err) }
+    });
+    endSpan(span);
+    return reply.status(500).send({ error: "Failed to start session" });
   }
-
-  if (session.status === "planned") {
-    session.status = "active";
-    session.updatedAt = new Date().toISOString();
-  }
-
-  return reply.send({ session });
 });
 
 // PATCH /sessions/:sessionId/activities/:activityId
@@ -921,6 +1143,153 @@ fastify.get("/admin/tenants/:tenantId/roles", async (request, reply) => {
 
   const assignments = mockRoleAssignments.filter((a) => a.tenantId === params.tenantId);
   const response: ListRoleAssignmentsResponse = { assignments };
+  return reply.send(response);
+});
+
+function mapTenantLimitsRecord(record: any) {
+  return {
+    tenantId: record.tenantId,
+    maxDailyLlmCalls: record.maxDailyLlmCalls ?? undefined,
+    maxDailyTutorTurns: record.maxDailyTutorTurns ?? undefined,
+    allowedProviders: (record.allowedProviders as string[] | null) ?? undefined,
+    blockedProviders: (record.blockedProviders as string[] | null) ?? undefined
+  };
+}
+
+fastify.get("/governance/tenants/:tenantId/limits", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  const params = z.object({ tenantId: z.string() }).parse(request.params);
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  if (!user.roles.includes("district_admin") && !user.roles.includes("platform_admin")) {
+    return reply.status(403).send({ error: "Forbidden" });
+  }
+
+  if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
+    return reply.status(403).send({ error: "Forbidden for this tenant" });
+  }
+
+  const limits = await getOrCreateTenantLimits(params.tenantId);
+  const response: GetTenantLimitsResponse = {
+    limits: mapTenantLimitsRecord(limits)
+  };
+
+  return reply.send(response);
+});
+
+fastify.put("/governance/tenants/:tenantId/limits", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  const params = z.object({ tenantId: z.string() }).parse(request.params);
+  const body = updateTenantLimitsSchema.parse(request.body ?? {});
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  if (!user.roles.includes("district_admin") && !user.roles.includes("platform_admin")) {
+    return reply.status(403).send({ error: "Forbidden" });
+  }
+
+  if (!user.roles.includes("platform_admin") && user.tenantId !== params.tenantId) {
+    return reply.status(403).send({ error: "Forbidden for this tenant" });
+  }
+
+  const updated = await updateTenantLimits({
+    tenantId: params.tenantId,
+    maxDailyLlmCalls: body.maxDailyLlmCalls ?? null,
+    maxDailyTutorTurns: body.maxDailyTutorTurns ?? null,
+    allowedProviders: body.allowedProviders ?? null,
+    blockedProviders: body.blockedProviders ?? null
+  });
+
+  await createAuditLogEntry({
+    tenantId: params.tenantId,
+    userId: user.userId,
+    type: "tenant_policy_updated",
+    message: "Tenant limits updated",
+    meta: body
+  });
+
+  const response: UpdateTenantLimitsResponse = {
+    limits: mapTenantLimitsRecord(updated)
+  };
+
+  return reply.send(response);
+});
+
+fastify.get("/governance/audit", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  const query = z.object({ tenantId: z.string() }).parse(request.query);
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  if (!user.roles.includes("district_admin") && !user.roles.includes("platform_admin")) {
+    return reply.status(403).send({ error: "Forbidden" });
+  }
+
+  if (!user.roles.includes("platform_admin") && user.tenantId !== query.tenantId) {
+    return reply.status(403).send({ error: "Forbidden for this tenant" });
+  }
+
+  const logs = await prismaAny.auditLogEntry.findMany({
+    where: { tenantId: query.tenantId },
+    orderBy: { createdAt: "desc" },
+    take: 100
+  });
+
+  const response: ListAuditLogsResponse = {
+    logs: logs.map((log: any) => ({
+      id: log.id,
+      tenantId: log.tenantId,
+      userId: log.userId,
+      type: log.type,
+      message: log.message,
+      meta: log.meta ?? undefined,
+      createdAt: log.createdAt.toISOString()
+    }))
+  };
+
+  return reply.send(response);
+});
+
+fastify.get("/governance/usage", async (request, reply) => {
+  const user = (request as any).user as RequestUser | null;
+  const query = z.object({ tenantId: z.string() }).parse(request.query);
+
+  if (!user) {
+    return reply.status(401).send({ error: "Unauthenticated" });
+  }
+
+  if (!user.roles.includes("district_admin") && !user.roles.includes("platform_admin")) {
+    return reply.status(403).send({ error: "Forbidden" });
+  }
+
+  if (!user.roles.includes("platform_admin") && user.tenantId !== query.tenantId) {
+    return reply.status(403).send({ error: "Forbidden for this tenant" });
+  }
+
+  const rows = await prismaAny.tenantUsage.findMany({
+    where: { tenantId: query.tenantId },
+    orderBy: { date: "desc" },
+    take: 30
+  });
+
+  const response: ListTenantUsageResponse = {
+    usage: rows.map((row: any) => ({
+      tenantId: row.tenantId,
+      date: row.date,
+      llmCalls: row.llmCalls,
+      tutorTurns: row.tutorTurns,
+      sessionsPlanned: row.sessionsPlanned,
+      safetyIncidents: row.safetyIncidents
+    }))
+  };
+
   return reply.send(response);
 });
 
@@ -1535,6 +1904,11 @@ fastify.get("/feedback/aggregate", async (request, reply) => {
   };
 
   return reply.send(response);
+});
+
+fastify.get("/metrics", async (_request, reply) => {
+  const metrics = drainMetrics();
+  return reply.send({ metrics });
 });
 
 fastify

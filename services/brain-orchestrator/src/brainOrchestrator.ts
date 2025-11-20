@@ -9,7 +9,7 @@ import type {
 } from "@aivo/types";
 import { getDifficultyRecommendations } from "@aivo/brain-model";
 import fetch from "node-fetch";
-import { getLearnerWithBrainProfile } from "@aivo/persistence";
+import { fetchLearnerBrainProfile } from "./lib/brainProfile";
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -44,43 +44,6 @@ async function callModelDispatch(prompt: string, system?: string): Promise<Model
   return (await res.json()) as ModelDispatchResult;
 }
 
-async function fetchBrainProfile(learnerId: string): Promise<LearnerBrainProfile | null> {
-  const record = await getLearnerWithBrainProfile(learnerId);
-  if (!record) {
-    return null;
-  }
-
-  if (!record.brainProfile) {
-    const region = (record.region as Region) ?? "north_america";
-    const currentGrade = record.currentGrade ?? 7;
-    const gradeBand: any = currentGrade <= 5 ? "k_5" : currentGrade <= 8 ? "six_8" : "nine_12";
-
-    return {
-      learnerId: record.id,
-      tenantId: record.tenantId,
-      region,
-      currentGrade,
-      gradeBand,
-      subjectLevels: [],
-      neurodiversity: {},
-      preferences: {},
-      lastUpdatedAt: new Date().toISOString()
-    };
-  }
-
-  return {
-    learnerId: record.id,
-    tenantId: record.tenantId,
-    region: record.brainProfile.region as Region,
-    currentGrade: record.brainProfile.currentGrade,
-    gradeBand: record.brainProfile.gradeBand as any,
-    subjectLevels: record.brainProfile.subjectLevels as any,
-    neurodiversity: record.brainProfile.neurodiversity as any,
-    preferences: record.brainProfile.preferences as any,
-    lastUpdatedAt: record.brainProfile.lastUpdatedAt.toISOString()
-  };
-}
-
 async function fetchTenantConfig(
   gatewayBaseUrl: string,
   tenantId: string
@@ -106,6 +69,17 @@ async function fetchTenantConfig(
   return data.config ?? null;
 }
 
+// TODO: Content Authoring Integration
+// When generating lesson plans, prefer using approved ContentItems from the 
+// CurriculumTopic/ContentItem tables where available. Query by subject, grade, 
+// and topicId to find relevant explanations, examples, and practice questions.
+// Only fall back to AI generation if no approved content exists for the topic.
+// This ensures:
+// - Curriculum-aligned content that meets regional standards
+// - Human-reviewed, approved materials for student safety
+// - Consistent quality across lessons
+// - Reduced AI generation costs and latency
+
 // This function still returns a deterministic, calm lesson plan shape, but now
 // it threads through real-ish brain profile, curriculum, and difficulty
 // recommendations into the prompt we send to model-dispatch. The student-facing
@@ -116,7 +90,7 @@ export async function generateLessonPlanMock(
   const gatewayBaseUrl = process.env.API_GATEWAY_BASE_URL ?? "http://api-gateway:4000";
 
   const [brainProfile, tenantConfig] = await Promise.all([
-    fetchBrainProfile(input.learnerId),
+    fetchLearnerBrainProfile(input.learnerId),
     fetchTenantConfig(gatewayBaseUrl, input.tenantId)
   ]);
 

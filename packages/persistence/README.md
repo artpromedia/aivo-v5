@@ -13,7 +13,7 @@ The canonical Prisma schema for the monorepo lives at `prisma/schema.prisma` in 
 Set the database connection in your root `.env` file, for example:
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/aivo_v5"
+DATABASE_URL="postgresql://user:password@localhost:5433/aivo_v5"
 ```
 
 The root schema is configured for PostgreSQL by default. You can adjust the provider in `prisma/schema.prisma` if needed.

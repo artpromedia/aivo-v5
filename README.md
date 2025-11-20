@@ -213,6 +213,13 @@ Aivo v5.1 includes a comprehensive content authoring system that allows educator
 
 For detailed documentation, see [docs/content-authoring-system.md](docs/content-authoring-system.md).
 
+## Caregiver & Learner Onboarding
+
+The `apps/web` experience now includes full caregiver self-registration, role-aware login, and
+secure learner provisioning flows backed by NextAuth v5 + Prisma. The architecture, API endpoints,
+and environment configuration for these AI chatbot onboarding flows are documented in
+[docs/ai-chatbot-auth.md](docs/ai-chatbot-auth.md).
+
 ## Local database (PostgreSQL via Docker)
 
 Run a local Postgres instance with Docker (requires Docker Desktop):

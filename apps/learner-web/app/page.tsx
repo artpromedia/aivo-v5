@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { ThemeProviderByGrade, useAivoTheme } from "@aivo/ui";
-import { getGradeBand } from "@aivo/brain-model";
 
 const mockBrainProfile = {
   learnerId: "demo",
   tenantId: "demo-tenant",
   region: "north_america",
   currentGrade: 7,
-  gradeBand: getGradeBand(7),
+  gradeBand: "6_8" as const,
   subjectLevels: [],
   neurodiversity: { adhd: true, prefersLowStimulusUI: true },
   preferences: { prefersStepByStep: true, prefersVisual: true },

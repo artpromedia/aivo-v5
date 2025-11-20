@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "AIVO Parent Teacher",
+    "slug": "aivo-parent-teacher",
+    "scheme": "aivo-parent-teacher",
+    "platforms": ["ios", "android"],
+    "jsEngine": "hermes",
+    "extra": {
+      "eas": {
+        "projectId": "aivo-parent-teacher-demo"
+      }
+    }
+  }
+}

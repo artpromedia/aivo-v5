@@ -60,6 +60,13 @@ import type {
   RecordFeedbackResponse,
   AggregateFeedbackResponse
 } from "./feedback-contracts";
+import type {
+  GetTenantLimitsResponse,
+  UpdateTenantLimitsRequest,
+  UpdateTenantLimitsResponse,
+  ListAuditLogsResponse,
+  ListTenantUsageResponse
+} from "./governance-contracts";
 
 export class AivoApiClient {
   constructor(private baseUrl: string, private getToken?: () => Promise<string | null>) {}
@@ -174,6 +181,38 @@ export class AivoApiClient {
   listRoleAssignments(tenantId: string) {
     return this.request<ListRoleAssignmentsResponse>(
       `/admin/tenants/${tenantId}/roles`
+    );
+  }
+
+  // Governance
+
+  getTenantLimits(tenantId: string) {
+    return this.request<GetTenantLimitsResponse>(
+      `/governance/tenants/${tenantId}/limits`
+    );
+  }
+
+  updateTenantLimits(tenantId: string, body: UpdateTenantLimitsRequest) {
+    return this.request<UpdateTenantLimitsResponse>(
+      `/governance/tenants/${tenantId}/limits`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body)
+      }
+    );
+  }
+
+  listAuditLogs(tenantId: string) {
+    const search = new URLSearchParams({ tenantId });
+    return this.request<ListAuditLogsResponse>(
+      `/governance/audit?${search.toString()}`
+    );
+  }
+
+  listTenantUsage(tenantId: string) {
+    const search = new URLSearchParams({ tenantId });
+    return this.request<ListTenantUsageResponse>(
+      `/governance/usage?${search.toString()}`
     );
   }
 

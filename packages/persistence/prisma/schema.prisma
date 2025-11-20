@@ -26,6 +26,10 @@ model Tenant {
   telemetryEvents  TelemetryEvent[]
   experiments      Experiment[]
   feedbacks        Feedback[]
+  usageRecords     TenantUsage[]
+  limits           TenantLimits?
+  auditLogs        AuditLogEntry[]
+  safetyIncidents  SafetyIncident[]
 }
 
 model User {
@@ -42,6 +46,7 @@ model User {
   notices   Notification[] @relation("NotificationRecipient")
   contentItems ContentItem[]
   feedbacks Feedback[]
+  auditLogs AuditLogEntry[]
 }
 
 model RoleAssignment {
@@ -76,6 +81,7 @@ model Learner {
   progressSnapshots SubjectProgressSnapshot[]
   experimentAssignments ExperimentAssignment[]
   feedbacks    Feedback[]
+  safetyIncidents SafetyIncident[]
 }
 
 model BrainProfile {
@@ -299,4 +305,56 @@ model Feedback {
   variantKey  String?
 
   createdAt   DateTime @default(now())
+}
+
+model TenantUsage {
+  id              String   @id @default(cuid())
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId        String
+
+  date            String
+  llmCalls        Int      @default(0)
+  tutorTurns      Int      @default(0)
+  sessionsPlanned Int      @default(0)
+  safetyIncidents Int      @default(0)
+
+  @@unique([tenantId, date], name: "tenantId_date")
+}
+
+model TenantLimits {
+  id                 String  @id @default(cuid())
+  tenant             Tenant  @relation(fields: [tenantId], references: [id])
+  tenantId           String  @unique
+
+  maxDailyLlmCalls   Int?
+  maxDailyTutorTurns Int?
+  allowedProviders   Json?
+  blockedProviders   Json?
+}
+
+model AuditLogEntry {
+  id        String   @id @default(cuid())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  type      String
+  message   String
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model SafetyIncident {
+  id               String   @id @default(cuid())
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId         String
+  learner          Learner? @relation(fields: [learnerId], references: [id])
+  learnerId        String?
+  type             String
+  severity         String
+  message          String
+  rawModelResponse String?
+  createdAt        DateTime @default(now())
 }

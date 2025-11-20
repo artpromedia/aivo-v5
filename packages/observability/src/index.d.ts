@@ -1,0 +1,12 @@
+import type { LogEntry, LogLevel, MetricPoint, TraceSpan } from "@aivo/types";
+type LogMeta = Omit<LogEntry, "level" | "message" | "timestamp" | "service">;
+export declare function log(level: LogLevel, message: string, meta?: LogMeta): void;
+export declare function info(message: string, meta?: LogMeta): void;
+export declare function warn(message: string, meta?: LogMeta): void;
+export declare function error(message: string, meta?: LogMeta): void;
+export declare function debug(message: string, meta?: LogMeta): void;
+export declare function recordMetric(point: MetricPoint): void;
+export declare function drainMetrics(): MetricPoint[];
+export declare function startSpan(name: string, attributes?: Record<string, unknown>): TraceSpan;
+export declare function endSpan(span: TraceSpan): TraceSpan;
+export {};

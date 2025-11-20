@@ -1,3 +1,5 @@
+export * from "./observability";
+export * from "./governance";
 export type Region = "north_america" | "africa" | "europe" | "australia" | "middle_east" | "asia";
 export type GradeBand = "k_5" | "6_8" | "9_12";
 export type SubjectCode = "math" | "ela" | "reading" | "writing" | "science" | "social_studies" | "sel" | "speech" | "other";
@@ -140,6 +142,41 @@ export interface CurriculumConfig {
     standard: CurriculumStandard;
     subjects: SubjectCode[];
 }
+export interface CurriculumTopic {
+    id: string;
+    tenantId: string;
+    subject: SubjectCode;
+    grade: number;
+    region: Region;
+    standard: CurriculumStandard;
+    code?: string;
+    title: string;
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+export type ContentItemType = "explanation" | "worked_example" | "practice_question" | "reflection_prompt";
+export type ContentItemStatus = "draft" | "under_review" | "approved" | "deprecated";
+export interface ContentItem {
+    id: string;
+    tenantId: string;
+    topicId: string;
+    subject: SubjectCode;
+    grade: number;
+    type: ContentItemType;
+    title: string;
+    body: string;
+    questionFormat?: PracticeQuestionFormat;
+    options?: string[];
+    correctAnswer?: string;
+    accessibilityNotes?: string;
+    status: ContentItemStatus;
+    createdByUserId: string;
+    createdAt: string;
+    updatedAt: string;
+    aiGenerated?: boolean;
+    aiModel?: string;
+}
 export interface District {
     id: string;
     tenantId: string;
@@ -190,6 +227,29 @@ export interface LearnerSession {
     activities: SessionActivity[];
     createdAt: string;
     updatedAt: string;
+}
+export interface SessionPlanInsights {
+    objective: string;
+    tone: string;
+    difficultySummary: string;
+    calmingStrategies: string[];
+    recommendedMinutes: number;
+}
+export interface AgentToolTrace {
+    stepId: string;
+    label: string;
+    toolName: string;
+    startedAt: string;
+    finishedAt: string;
+    durationMs: number;
+    notes?: string;
+    error?: string;
+    savedKeys?: string[];
+}
+export interface SessionPlanRun {
+    plan: LearnerSession;
+    insights: SessionPlanInsights;
+    trace: AgentToolTrace[];
 }
 export interface SubjectProgressSnapshot {
     learnerId: string;
@@ -309,4 +369,59 @@ export interface CaregiverLearnerOverview {
     lastBaselineSummary?: BaselineResultSummary;
     recentSessionDates: string[];
     pendingDifficultyProposals: DifficultyChangeProposal[];
+}
+export interface NotificationSummary {
+    id: string;
+    title: string;
+    body: string;
+    createdAtFriendly: string;
+}
+export interface DifficultyProposalSummary {
+    id: string;
+    learnerName: string;
+    subjectLabel: string;
+    currentDifficultyLabel: string;
+    proposedDifficultyLabel: string;
+    createdAtFriendly: string;
+}
+export type ExperimentStatus = "draft" | "running" | "paused" | "completed";
+export interface ExperimentVariant {
+    id: string;
+    key: string;
+    label: string;
+    description?: string;
+}
+export interface Experiment {
+    id: string;
+    tenantId: string;
+    key: string;
+    name: string;
+    description?: string;
+    status: ExperimentStatus;
+    variants: ExperimentVariant[];
+    createdAt: string;
+    updatedAt: string;
+}
+export interface ExperimentAssignment {
+    learnerId: string;
+    experimentId: string;
+    variantKey: string;
+    assignedAt: string;
+}
+export type FeedbackTargetType = "tutor_turn" | "session_plan" | "content_item" | "difficulty_decision";
+export type FeedbackRole = "learner" | "parent" | "teacher" | "admin";
+export interface Feedback {
+    id: string;
+    tenantId: string;
+    learnerId?: string;
+    userId?: string;
+    targetType: FeedbackTargetType;
+    targetId: string;
+    role: FeedbackRole;
+    rating: number;
+    label?: string;
+    comment?: string;
+    experimentKey?: string;
+    variantKey?: string;
+    createdAt: string;
 }

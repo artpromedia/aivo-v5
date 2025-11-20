@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "AIVO Learner",
+    "slug": "aivo-learner",
+    "scheme": "aivo-learner",
+    "platforms": ["ios", "android"],
+    "jsEngine": "hermes",
+    "extra": {
+      "eas": {
+        "projectId": "aivo-learner-demo"
+      }
+    }
+  }
+}

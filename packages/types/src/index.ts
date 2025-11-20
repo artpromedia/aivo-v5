@@ -1,3 +1,6 @@
+export * from "./observability";
+export * from "./governance";
+
 export type Region =
   | "north_america"
   | "africa"

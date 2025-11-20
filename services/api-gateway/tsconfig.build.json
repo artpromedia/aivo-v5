@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.build.base.json",
   "compilerOptions": {
-    "rootDir": "src",
     "outDir": "dist",
     "declaration": true,
     "emitDeclarationOnly": false

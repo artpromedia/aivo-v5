@@ -1,10 +1,25 @@
 {
-  "extends": "../admin-web/tsconfig.json",
+  "extends": "../../tsconfig.nextjs.base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"],
+      "@aivo/types": ["../../packages/types/src"],
+      "@aivo/brain-model": ["../../packages/brain-model/src"],
+      "@aivo/ui": ["../../packages/ui/src"],
+      "@aivo/api-client": ["../../packages/api-client/src"],
+      "@aivo/auth": ["../../packages/auth/src"],
+      "@aivo/persistence": ["../../packages/persistence/src"]
+    }
+  },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
-  "exclude": ["node_modules"]
+  ]
 }
