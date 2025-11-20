@@ -72,9 +72,13 @@ model Diagnosis {
 model Assessment {
   id          String   @id @default(cuid())
   learnerId   String
-  subject     String
-  score       Int
-  takenAt     DateTime @default(now())
+  type        String
+  status      String
+  subject     String?
+  score       Int?
+  results     Json?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
 
   learner Learner @relation(fields: [learnerId], references: [id])
 }
