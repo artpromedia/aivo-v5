@@ -10,4 +10,6 @@ export { ModelCloner, type CloneConfig, type ClonedModelInfo } from "./ml/ModelC
 export { FederatedLearningManager, type FederatedTrainingConfig, type FederatedUpdate, type AggregationResult } from "./ml/FederatedLearning";
 export { ModelRegistry, type MainModelVersion, type LearnerModelInstance, type TrainingSession, type FederatedUpdateRecord } from "./ml/ModelRegistry";
 export { FederatedAggregationService, type AggregationConfig, type AggregationJob } from "./ml/FederatedAggregationService";
+export { AssessmentDataProcessor, type BaselineAssessmentData, type PersonalizationTrainingData } from "./ml/AssessmentDataProcessor";
+export { AdaptiveLevelAdjustmentEngine, type LevelAdjustmentRecommendation, type PerformanceMetrics } from "./ml/AdaptiveLevelAdjustment";
 export { ModelTrainer } from "./ml/ModelTrainer";

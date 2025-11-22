@@ -9,6 +9,9 @@ import path from "path";
 
 // Import federated learning components
 import { ModelCloner } from "@aivo/agents/ml/ModelCloner";
+import { FederatedLearningManager } from "@aivo/agents/ml/FederatedLearning";
+import { AssessmentDataProcessor } from "@aivo/agents/ml/AssessmentDataProcessor";
+import type { BaselineAssessmentData } from "@aivo/agents/ml/AssessmentDataProcessor";
 
 interface FineTuningArtifacts {
   fileId: string;
@@ -25,6 +28,8 @@ export class AIVOModelCloner {
   private baseModelId = "aivo-main-v1"; // Updated to reference actual main model
   private mainModelPath: string;
   private modelCloner: ModelCloner;
+  private federatedLearning: FederatedLearningManager;
+  private assessmentProcessor: AssessmentDataProcessor;
   private useFederatedLearning: boolean;
 
   constructor() {
@@ -36,6 +41,16 @@ export class AIVOModelCloner {
     
     // Initialize model cloner for federated learning
     this.modelCloner = new ModelCloner();
+    
+    // Initialize federated learning manager for personalization training
+    this.federatedLearning = new FederatedLearningManager({
+      enableDifferentialPrivacy: process.env.ENABLE_DIFFERENTIAL_PRIVACY === "true",
+      noiseMultiplier: parseFloat(process.env.NOISE_MULTIPLIER || "0.1"),
+      clipNorm: parseFloat(process.env.CLIP_NORM || "1.0")
+    });
+    
+    // Initialize assessment processor
+    this.assessmentProcessor = new AssessmentDataProcessor();
     
     // Use federated learning if main model exists, otherwise fall back to fine-tuning
     this.useFederatedLearning = process.env.USE_FEDERATED_LEARNING === "true";
@@ -56,6 +71,7 @@ export class AIVOModelCloner {
 
   /**
    * Clone model using neural network weight copying (federated learning)
+   * with baseline assessment personalization
    */
   private async cloneWithWeights(profile: LearnerProfile): Promise<string> {
     const systemPrompt = this.generateSystemPrompt(profile);
@@ -70,7 +86,15 @@ export class AIVOModelCloner {
     );
 
     try {
-      // Clone weights from main model
+      // Step 1: Fetch baseline assessment data
+      console.log(`Fetching baseline assessment for learner ${profile.learnerId}...`);
+      const assessmentData = await this.fetchBaselineAssessment(profile.learnerId);
+      
+      let recommendedLevels: Record<string, any> = {};
+      let personalizationMetadata: any = {};
+
+      // Step 2: Clone weights from main model
+      console.log("Cloning weights from main model...");
       const cloneInfo = await this.modelCloner.cloneModel({
         mainModelPath: this.mainModelPath,
         learnerModelPath,
@@ -88,13 +112,38 @@ export class AIVOModelCloner {
       console.log(`Total params: ${cloneInfo.architecture.totalParams}`);
       console.log(`Trainable params: ${cloneInfo.architecture.trainableParams}`);
 
-      // Create configuration for learner
+      // Step 3: Personalize model with baseline assessment data
+      if (assessmentData && assessmentData.domainResults.length > 0) {
+        console.log("Personalizing model with baseline assessment data...");
+        
+        try {
+          const personalizationResult = await this.personalizeWithAssessment(
+            learnerModelPath,
+            assessmentData,
+            profile.learnerId
+          );
+          
+          recommendedLevels = personalizationResult.recommendedLevels;
+          personalizationMetadata = personalizationResult.metadata;
+          
+          console.log("Model personalization complete");
+          console.log("Recommended starting levels:", recommendedLevels);
+        } catch (personalizationError) {
+          console.error("Personalization failed, using generic clone:", personalizationError);
+          // Continue with generic clone if personalization fails
+        }
+      } else {
+        console.log("No baseline assessment found, using generic clone");
+      }
+
+      // Step 4: Create configuration for learner
       const configuration: PersonalizedModelConfig = {
         gradeLevel: profile.gradeLevel,
         actualLevel: profile.actualLevel,
         domainLevels: profile.domainLevels,
         learningStyle: profile.learningStyle,
-        adaptationRules: this.generateAdaptationRules(profile)
+        adaptationRules: this.generateAdaptationRules(profile),
+        recommendedLevels // Add recommended levels from assessment
       };
 
       const configurationJson = configuration as unknown as Prisma.JsonObject;
@@ -107,13 +156,17 @@ export class AIVOModelCloner {
           systemPrompt,
           vectorStoreId: vectorStore.id,
           configuration: configurationJson,
-          status: "ACTIVE", // Immediately active since weights are cloned
-          summary: `Federated learning model cloned from ${this.baseModelId}`,
+          status: "ACTIVE", // Immediately active since weights are cloned and personalized
+          summary: `Personalized federated learning model cloned from ${this.baseModelId}`,
           metadata: {
             clonedModelPath: cloneInfo.clonedModelPath,
             cloneDate: cloneInfo.cloneDate.toISOString(),
             architecture: cloneInfo.architecture,
-            federatedLearning: true
+            federatedLearning: true,
+            personalized: assessmentData ? true : false,
+            assessmentBased: assessmentData ? true : false,
+            recommendedLevels,
+            personalizationMetadata
           } as any
         },
         create: {
@@ -123,12 +176,16 @@ export class AIVOModelCloner {
           vectorStoreId: vectorStore.id,
           configuration: configurationJson,
           status: "ACTIVE",
-          summary: `Federated learning model cloned from ${this.baseModelId}`,
+          summary: `Personalized federated learning model cloned from ${this.baseModelId}`,
           metadata: {
             clonedModelPath: cloneInfo.clonedModelPath,
             cloneDate: cloneInfo.cloneDate.toISOString(),
             architecture: cloneInfo.architecture,
-            federatedLearning: true
+            federatedLearning: true,
+            personalized: assessmentData ? true : false,
+            assessmentBased: assessmentData ? true : false,
+            recommendedLevels,
+            personalizationMetadata
           } as any
         }
       });
@@ -390,5 +447,127 @@ Break instructions into three scaffolded steps, end with a confidence check ques
     const normalized = subject.toUpperCase();
     const pool = defaults[normalized] ?? ["study skills"];
     return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /**
+   * Fetch baseline assessment data for a learner
+   */
+  private async fetchBaselineAssessment(learnerId: string): Promise<BaselineAssessmentData | null> {
+    try {
+      const assessment = await prisma.baselineAssessmentSession.findFirst({
+        where: {
+          learnerId,
+          status: "COMPLETED"
+        },
+        include: {
+          domainResults: true,
+          speechSamples: true
+        },
+        orderBy: {
+          completedAt: "desc"
+        }
+      });
+
+      if (!assessment) {
+        console.log(`No completed baseline assessment found for learner ${learnerId}`);
+        return null;
+      }
+
+      return {
+        sessionId: assessment.id,
+        learnerId: assessment.learnerId,
+        status: assessment.status as "IN_PROGRESS" | "COMPLETED" | "ABANDONED",
+        domainResults: assessment.domainResults.map(result => ({
+          domain: result.domain,
+          component: result.component,
+          modality: result.modality,
+          responses: result.responses,
+          score: result.score || undefined,
+          confidence: result.confidence || undefined,
+          aiNotes: result.aiNotes || undefined
+        })),
+        speechSamples: assessment.speechSamples?.map(sample => ({
+          taskType: sample.taskType,
+          component: sample.component || undefined,
+          articulation: sample.articulation || undefined,
+          fluency: sample.fluency || undefined,
+          intelligibility: sample.intelligibility || undefined,
+          analysis: sample.analysis || undefined
+        })),
+        completedAt: assessment.completedAt || undefined
+      };
+    } catch (error) {
+      console.error("Error fetching baseline assessment:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Personalize cloned model using baseline assessment data
+   */
+  private async personalizeWithAssessment(
+    learnerModelPath: string,
+    assessmentData: BaselineAssessmentData,
+    learnerId: string
+  ): Promise<{
+    recommendedLevels: Record<string, any>;
+    metadata: any;
+  }> {
+    // Process assessment into training data
+    const trainingData = await this.assessmentProcessor.processAssessment(assessmentData);
+
+    console.log(`Generated ${trainingData.metadata.totalSamples} training samples from assessment`);
+    console.log(`Domain breakdown:`, trainingData.metadata.domainBreakdown);
+    console.log(`Average score: ${(trainingData.metadata.averageScore * 100).toFixed(1)}%`);
+
+    // Load the cloned model
+    const { model } = await this.modelCloner.loadClonedModel(learnerModelPath);
+
+    try {
+      // Perform initial personalization training
+      await this.federatedLearning.trainLocalModel(
+        model,
+        {
+          features: trainingData.features,
+          labels: trainingData.labels
+        },
+        {
+          learnerId,
+          epochs: 5, // Quick personalization, not full training
+          batchSize: 16,
+          learningRate: 0.01 // Higher rate for initial personalization
+        }
+      );
+
+      console.log("Initial personalization training complete");
+
+      // Save the personalized model
+      await model.save(`file://${learnerModelPath}`);
+
+      // Get recommended levels
+      const recommendedLevels = this.assessmentProcessor.getRecommendedLevels(
+        trainingData.metadata
+      );
+
+      // Clean up
+      this.assessmentProcessor.dispose(trainingData);
+      model.dispose();
+
+      return {
+        recommendedLevels,
+        metadata: {
+          trainingSamples: trainingData.metadata.totalSamples,
+          domainBreakdown: trainingData.metadata.domainBreakdown,
+          averageScore: trainingData.metadata.averageScore,
+          confidenceLevel: trainingData.metadata.confidenceLevel,
+          personalizedAt: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      // Clean up on error
+      this.assessmentProcessor.dispose(trainingData);
+      model.dispose();
+      throw error;
+    }
   }
 }

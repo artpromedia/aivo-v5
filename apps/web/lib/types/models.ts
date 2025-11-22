@@ -19,6 +19,11 @@ export interface PersonalizedModelConfig {
   domainLevels: Record<AssessmentDomainName | string, number>;
   learningStyle: LearningStyle;
   adaptationRules: Record<string, unknown>;
+  recommendedLevels?: Record<string, {
+    level: number;
+    label: string;
+    confidence: number;
+  }>;
 }
 
 export interface PersonalizedModelAdapter {
