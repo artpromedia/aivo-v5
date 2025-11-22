@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AivoApiClient } from "@aivo/api-client";
+import { useAivoTheme } from "@aivo/ui";
 
 const client = new AivoApiClient("http://localhost:4000");
 
@@ -13,6 +14,7 @@ type ChatMessage = {
 };
 
 export default function TutorChatPage() {
+  const theme = useAivoTheme();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "1",
@@ -62,14 +64,14 @@ export default function TutorChatPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
+    <main className={`min-h-screen ${theme.background} ${theme.text}`}>
       <div className="max-w-4xl mx-auto p-6 space-y-4">
         <header className="border-b border-slate-800 pb-4">
-          <h1 className="text-2xl font-semibold">AIVO Tutor Chat</h1>
-          <p className="text-sm text-slate-400">Your calm, neurodiversity-affirming learning companion</p>
+          <h1 className={`text-2xl font-semibold ${theme.accent}`}>AIVO Tutor Chat</h1>
+          <p className={`text-sm ${theme.text} opacity-80`}>Your calm, neurodiversity-affirming learning companion</p>
         </header>
 
-        <div className="space-y-4 min-h-[500px] max-h-[600px] overflow-y-auto rounded-xl bg-slate-900/50 border border-slate-800 p-4">
+        <div className={`space-y-4 min-h-[500px] max-h-[600px] overflow-y-auto rounded-xl ${theme.card} border border-slate-800 p-4`}>
           {messages.map((msg) => (
             <div
               key={msg.id}

@@ -1,5 +1,32 @@
 import { EventEmitter } from 'events';
 
+// Mock OpenAI
+jest.mock('openai', () => {
+  return {
+    default: jest.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: jest.fn().mockResolvedValue({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    action: "continue",
+                    reason: "Mocked AI decision",
+                    confidence: 0.8,
+                    details: {},
+                    adaptations: []
+                  })
+                }
+              }
+            ]
+          })
+        }
+      }
+    }))
+  };
+});
+
 jest.mock('ioredis', () => {
   class MockRedis extends EventEmitter {
     private static store = new Map<string, string>();

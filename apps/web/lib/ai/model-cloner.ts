@@ -5,6 +5,10 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { LearnerProfile, PersonalizedModelConfig } from "@/lib/types/models";
+import path from "path";
+
+// Import federated learning components
+import { ModelCloner } from "@aivo/agents/ml/ModelCloner";
 
 interface FineTuningArtifacts {
   fileId: string;
@@ -18,14 +22,140 @@ interface VectorStoreResult {
 export class AIVOModelCloner {
   private openai: OpenAI | null;
   private pinecone: Pinecone | null;
-  private baseModelId = "aivo-super-model-v1";
+  private baseModelId = "aivo-main-v1"; // Updated to reference actual main model
+  private mainModelPath: string;
+  private modelCloner: ModelCloner;
+  private useFederatedLearning: boolean;
 
   constructor() {
     this.openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
     this.pinecone = process.env.PINECONE_API_KEY ? new Pinecone({ apiKey: process.env.PINECONE_API_KEY }) : null;
+    
+    // Path to main AIVO model
+    this.mainModelPath = process.env.AIVO_MAIN_MODEL_PATH || path.join(process.cwd(), "models", "main-aivo");
+    
+    // Initialize model cloner for federated learning
+    this.modelCloner = new ModelCloner();
+    
+    // Use federated learning if main model exists, otherwise fall back to fine-tuning
+    this.useFederatedLearning = process.env.USE_FEDERATED_LEARNING === "true";
   }
 
   async cloneModel(profile: LearnerProfile): Promise<string> {
+    console.log(`Cloning model for learner: ${profile.learnerId}`);
+    console.log(`Using federated learning: ${this.useFederatedLearning}`);
+
+    if (this.useFederatedLearning) {
+      // Use true neural network weight cloning (federated learning approach)
+      return this.cloneWithWeights(profile);
+    } else {
+      // Fall back to fine-tuning approach if main model not available
+      return this.cloneWithFineTuning(profile);
+    }
+  }
+
+  /**
+   * Clone model using neural network weight copying (federated learning)
+   */
+  private async cloneWithWeights(profile: LearnerProfile): Promise<string> {
+    const systemPrompt = this.generateSystemPrompt(profile);
+    const vectorStore = await this.createPersonalizedVectorStore(profile);
+
+    // Path for learner's cloned model
+    const learnerModelPath = path.join(
+      process.cwd(),
+      "models",
+      "learners",
+      profile.learnerId
+    );
+
+    try {
+      // Clone weights from main model
+      const cloneInfo = await this.modelCloner.cloneModel({
+        mainModelPath: this.mainModelPath,
+        learnerModelPath,
+        learnerId: profile.learnerId,
+        // Freeze early layers (feature extraction), allow later layers to adapt
+        freezeLayers: [
+          "shared_dense_1",
+          "shared_bn_1",
+          "shared_dense_2",
+          "shared_bn_2"
+        ]
+      });
+
+      console.log(`Cloned model successfully for learner ${profile.learnerId}`);
+      console.log(`Total params: ${cloneInfo.architecture.totalParams}`);
+      console.log(`Trainable params: ${cloneInfo.architecture.trainableParams}`);
+
+      // Create configuration for learner
+      const configuration: PersonalizedModelConfig = {
+        gradeLevel: profile.gradeLevel,
+        actualLevel: profile.actualLevel,
+        domainLevels: profile.domainLevels,
+        learningStyle: profile.learningStyle,
+        adaptationRules: this.generateAdaptationRules(profile)
+      };
+
+      const configurationJson = configuration as unknown as Prisma.JsonObject;
+
+      // Store model metadata in database
+      const modelRecord = await prisma.personalizedModel.upsert({
+        where: { learnerId: profile.learnerId },
+        update: {
+          modelId: cloneInfo.sourceModelVersion,
+          systemPrompt,
+          vectorStoreId: vectorStore.id,
+          configuration: configurationJson,
+          status: "ACTIVE", // Immediately active since weights are cloned
+          summary: `Federated learning model cloned from ${this.baseModelId}`,
+          metadata: {
+            clonedModelPath: cloneInfo.clonedModelPath,
+            cloneDate: cloneInfo.cloneDate.toISOString(),
+            architecture: cloneInfo.architecture,
+            federatedLearning: true
+          } as any
+        },
+        create: {
+          learnerId: profile.learnerId,
+          modelId: cloneInfo.sourceModelVersion,
+          systemPrompt,
+          vectorStoreId: vectorStore.id,
+          configuration: configurationJson,
+          status: "ACTIVE",
+          summary: `Federated learning model cloned from ${this.baseModelId}`,
+          metadata: {
+            clonedModelPath: cloneInfo.clonedModelPath,
+            cloneDate: cloneInfo.cloneDate.toISOString(),
+            architecture: cloneInfo.architecture,
+            federatedLearning: true
+          } as any
+        }
+      });
+
+      return modelRecord.id;
+    } catch (error) {
+      console.error("Weight cloning failed, falling back to fine-tuning:", error);
+      // Fall back to fine-tuning if weight cloning fails
+      return this.cloneWithFineTuning(profile);
+    }
+  }
+
+  /**
+   * Legacy fine-tuning approach (fallback when main model unavailable)
+   */
+  private async cloneWithFineTuning(profile: LearnerProfile): Promise<string> {
+    console.log("Using fine-tuning approach (legacy fallback)");
+    
+    const systemPrompt = this.generateSystemPrompt(profile);
+    const fineTuningArtifacts = await this.prepareFineTuningData(profile);
+
+  /**
+   * Legacy fine-tuning approach (fallback when main model unavailable)
+   */
+  private async cloneWithFineTuning(profile: LearnerProfile): Promise<string> {
+    console.log("Using fine-tuning approach (legacy fallback)");
+    
     const systemPrompt = this.generateSystemPrompt(profile);
     const fineTuningArtifacts = await this.prepareFineTuningData(profile);
 
@@ -62,7 +192,11 @@ export class AIVOModelCloner {
         vectorStoreId: vectorStore.id,
         configuration: configurationJson,
         status: "TRAINING",
-        summary: `Custom AIVO model derived from ${this.baseModelId}`
+        summary: `Custom AIVO model derived from ${this.baseModelId} (fine-tuning)`,
+        metadata: {
+          federatedLearning: false,
+          fineTuningJob: fineTuningJob.id
+        } as any
       },
       create: {
         learnerId: profile.learnerId,
@@ -71,7 +205,11 @@ export class AIVOModelCloner {
         vectorStoreId: vectorStore.id,
         configuration: configurationJson,
         status: "TRAINING",
-        summary: `Custom AIVO model derived from ${this.baseModelId}`
+        summary: `Custom AIVO model derived from ${this.baseModelId} (fine-tuning)`,
+        metadata: {
+          federatedLearning: false,
+          fineTuningJob: fineTuningJob.id
+        } as any
       }
     });
 

@@ -206,8 +206,49 @@ model PersonalizedModel {
   version            Int                     @default(1)
   performanceMetrics Json?
   lastTrainedAt      DateTime?
+  metadata           Json? // Stores federated learning metadata
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
+  trainingSessions   ModelTrainingSession[]
+}
+
+model MainModelVersion {
+  id                String              @id @default(cuid())
+  version           String              @unique
+  modelPath         String
+  architecture      Json
+  trainingMetrics   Json
+  status            ModelVersionStatus  @default(ACTIVE)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  federatedUpdates  FederatedUpdate[]
+}
+
+model FederatedUpdate {
+  id                     String            @id @default(cuid())
+  mainModelVersionId     String
+  mainModelVersion       MainModelVersion  @relation(fields: [mainModelVersionId], references: [id], onDelete: Cascade)
+  aggregationStrategy    String
+  contributingLearners   String[]
+  performanceImprovement Float
+  privacyBudget          Float?
+  metadata               Json?
+  createdAt              DateTime          @default(now())
+}
+
+model ModelTrainingSession {
+  id                      String             @id @default(cuid())
+  personalizedModelId     String
+  personalizedModel       PersonalizedModel  @relation(fields: [personalizedModelId], references: [id], onDelete: Cascade)
+  epochs                  Int
+  batchSize               Int
+  samples                 Int
+  finalLoss               Float
+  finalAccuracy           Float
+  contributedToFederation Boolean            @default(false)
+  federatedUpdateId       String?
+  metadata                Json?
+  createdAt               DateTime           @default(now())
 }
 
 model LearningAdjustmentLog {
@@ -788,6 +829,19 @@ model CommunicationLog {
   @@index([learnerId])
 }
 
+model MLTrainingData {
+  id        String   @id @default(cuid())
+  learnerId String
+  timestamp DateTime @default(now())
+  features  Json
+  labels    Json
+  outcome   Json?
+  createdAt DateTime @default(now())
+
+  @@index([learnerId])
+  @@index([timestamp])
+}
+
 enum Role {
   ADMIN
   TEACHER
@@ -838,6 +892,12 @@ enum PersonalizedModelStatus {
   UPDATING
   FAILED
   ERROR
+}
+
+enum ModelVersionStatus {
+  ACTIVE
+  ARCHIVED
+  DEPRECATED
 }
 
 enum AccommodationType {

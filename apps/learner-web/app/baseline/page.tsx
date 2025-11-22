@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { AivoApiClient } from "@aivo/api-client";
+import { useAivoTheme } from "@aivo/ui";
 
 const client = new AivoApiClient("http://localhost:4000");
 
 export default function BaselinePage() {
+  const theme = useAivoTheme();
   const [loading, setLoading] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,10 +29,10 @@ export default function BaselinePage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-6">
-      <section className="w-full max-w-md rounded-2xl bg-slate-900/80 p-6 shadow-soft-coral">
-        <h1 className="text-lg font-semibold mb-2">Start Baseline Check-in</h1>
-        <p className="text-sm text-slate-200 mb-4">
+    <main className={`min-h-screen flex items-center justify-center ${theme.background} ${theme.text} p-6`}>
+      <section className={`w-full max-w-md rounded-2xl ${theme.card} p-6 shadow-soft-coral`}>
+        <h1 className={`text-lg font-semibold mb-2 ${theme.accent}`}>Start Baseline Check-in</h1>
+        <p className={`text-sm ${theme.text} mb-4`}>
           We&apos;ll gently measure where you are in each subject so we can teach at your best level.
         </p>
         <button

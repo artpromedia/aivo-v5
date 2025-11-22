@@ -1,15 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AivoApiClient } from "@aivo/api-client";
-import type { LearnerSession, SessionActivity, SessionPlanRun, SubjectCode } from "@aivo/types";
+import { useAivoTheme } from "@aivo/ui";
+import type {
+	LearnerSession,
+	Region,
+	SessionActivity,
+	SessionPlanRun,
+	SubjectCode
+} from "@aivo/types";
 
-const client = new AivoApiClient("http://localhost:4000");
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const client = new AivoApiClient(API_BASE_URL);
 type MePayload = Awaited<ReturnType<typeof client.me>>;
+type LearnerMeta = { id: string; region: Region };
 
 export default function SessionPage() {
+	const router = useRouter();
 	const [session, setSession] = useState<LearnerSession | null>(null);
 	const [me, setMe] = useState<MePayload | null>(null);
+	const [learnerMeta, setLearnerMeta] = useState<LearnerMeta | null>(null);
 	const [sessionPlan, setSessionPlan] = useState<SessionPlanRun | null>(null);
 	const [planLoading, setPlanLoading] = useState(false);
 	const [planError, setPlanError] = useState<string | null>(null);
@@ -27,6 +39,28 @@ export default function SessionPage() {
 		return (allowed as string[]).includes(raw) ? (raw as SubjectCode) : fallback;
 	}, []);
 
+	const ensureLearnerReady = useCallback(
+		async (payload: MePayload): Promise<LearnerMeta | null> => {
+			if (learnerMeta) {
+				return learnerMeta;
+			}
+			const learnerId = payload.learner?.id;
+			if (!learnerId) {
+				router.replace("/baseline");
+				return null;
+			}
+			const learnerDetails = await client.getLearner(learnerId);
+			if (!learnerDetails.brainProfile) {
+				router.replace("/baseline");
+				return null;
+			}
+			const meta = { id: learnerDetails.learner.id, region: learnerDetails.learner.region as Region };
+			setLearnerMeta(meta);
+			return meta;
+		},
+		[learnerMeta, router]
+	);
+
 	const loadSessionPlan = useCallback(
 		async (existingMe?: MePayload) => {
 			setPlanLoading(true);
@@ -36,13 +70,13 @@ export default function SessionPage() {
 				if (!me && !existingMe) {
 					setMe(resolvedMe);
 				}
-				const learnerId = resolvedMe.learner?.id ?? "demo-learner";
+				const meta = await ensureLearnerReady(resolvedMe);
+				if (!meta) return;
 				const subject = getPrimarySubject(resolvedMe.learner?.subjects);
-				const region = resolvedMe.learner?.region ?? "north_america";
 				const plan = await client.planSession({
-					learnerId,
+					learnerId: meta.id,
 					subject,
-					region
+					region: meta.region
 				});
 				setSessionPlan(plan.run);
 			} catch (e) {
@@ -51,7 +85,7 @@ export default function SessionPage() {
 				setPlanLoading(false);
 			}
 		},
-		[getPrimarySubject, me]
+		[ensureLearnerReady, getPrimarySubject, me]
 	);
 
 	const loadSession = useCallback(async () => {
@@ -60,9 +94,10 @@ export default function SessionPage() {
 		try {
 			const meRes = await client.me();
 			setMe(meRes);
-			const learnerId = meRes.learner?.id ?? "demo-learner";
+			const meta = await ensureLearnerReady(meRes);
+			if (!meta) return;
 			const subject = getPrimarySubject(meRes.learner?.subjects);
-			const res = await client.getTodaySession(learnerId, subject);
+			const res = await client.getTodaySession(meta.id, subject);
 			setSession(res.session);
 			await loadSessionPlan(meRes);
 		} catch (e) {
@@ -70,7 +105,7 @@ export default function SessionPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [getPrimarySubject, loadSessionPlan]);
+	}, [ensureLearnerReady, getPrimarySubject, loadSessionPlan]);
 
 	async function handleStartSession() {
 		setStarting(true);
@@ -78,10 +113,11 @@ export default function SessionPage() {
 		try {
 			const meRes = me ?? (await client.me());
 			if (!me) setMe(meRes);
-			const learnerId = meRes.learner?.id ?? "demo-learner";
+			const meta = await ensureLearnerReady(meRes);
+			if (!meta) return;
 			const subject = getPrimarySubject(meRes.learner?.subjects);
 			const res = await client.startSession({
-				learnerId,
+				learnerId: meta.id,
 				subject
 			});
 			setSession(res.session);
@@ -118,6 +154,7 @@ export default function SessionPage() {
 		void loadSession();
 	}, [loadSession]);
 
+	const theme = useAivoTheme();
 	const todayLabel = new Date().toLocaleDateString(undefined, {
 		month: "short",
 		day: "numeric",
@@ -127,8 +164,8 @@ export default function SessionPage() {
 	const subjectLabel = (me?.learner?.subjects?.[0] ?? "math").toUpperCase();
 
 	return (
-		<main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-6">
-			<section className="w-full max-w-2xl rounded-2xl bg-slate-900/80 border border-slate-800 shadow-soft-coral p-5 space-y-4">
+		<main className={`min-h-screen flex items-center justify-center ${theme.background} ${theme.text} p-6`}>
+			<section className={`w-full max-w-2xl rounded-2xl ${theme.card} border border-slate-800 shadow-soft-coral p-5 space-y-4`}>
 				<header className="flex items-center justify-between gap-3">
 					<div>
 						<h1 className="text-xl font-semibold">Today&apos;s Calm Session</h1>

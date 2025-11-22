@@ -11,18 +11,22 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "fastify": "^4.28.0",
-    "zod": "^3.23.8",
-    "node-fetch": "^3.3.2",
-    "@aivo/types": "workspace:*",
+    "@aivo/agents": "workspace:*",
     "@aivo/brain-model": "workspace:*",
+    "@aivo/observability": "workspace:*",
     "@aivo/persistence": "workspace:*",
-    "@aivo/observability": "workspace:*"
+    "@aivo/types": "workspace:*",
+    "fastify": "^4.28.0",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2",
+    "socket.io": "^4.7.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "6.0.0-dev.20251120",
-    "ts-node-dev": "^2.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.9.0",
-    "tsx": "^4.19.0"
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "6.0.0-dev.20251120"
   }
 }

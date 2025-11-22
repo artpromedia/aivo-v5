@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
+import { ThemeWrapper } from "./ThemeWrapper";
 
 export const metadata = {
   title: "AIVO Learner",
@@ -9,7 +10,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <ThemeWrapper>{children}</ThemeWrapper>
+      </body>
     </html>
   );
 }
