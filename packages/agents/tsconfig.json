@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "moduleResolution": "node16",
+    "types": ["node", "jest"],
+    "composite": false,
+    "isolatedModules": true
+  },
+  "include": ["src"]
+}

@@ -21,7 +21,9 @@
       "@aivo/ui": ["packages/ui/src"],
       "@aivo/ui/native": ["packages/ui/src/native.ts"],
       "@aivo/observability": ["packages/observability/src"],
-      "@aivo/guardrails": ["packages/guardrails/src"]
+      "@aivo/guardrails": ["packages/guardrails/src"],
+      "@aivo/agents": ["packages/agents/src"],
+      "@aivo/agents/*": ["packages/agents/src/*"]
     },
     "declaration": true,
     "declarationMap": false

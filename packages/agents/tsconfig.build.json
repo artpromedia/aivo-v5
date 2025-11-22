@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.build.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
+    "isolatedModules": true
+  },
+  "include": ["src"],
+  "exclude": ["src/__tests__"]
+}

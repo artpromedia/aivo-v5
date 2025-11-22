@@ -29,6 +29,7 @@ At a high level, the system provides:
   - `@aivo/brain-model` – brain/model logic
   - `@aivo/persistence` – Prisma client and database helpers
   - `@aivo/auth` – Authentication utilities
+  - `@aivo/agents` – Event-driven agent framework with Redis-backed state, memory, and orchestration support
 - `services/` – backend services
   - `api-gateway` – Fastify gateway, auth context, admin APIs, content management, and routing
   - `baseline-assessment` – baseline assessment generator using model-dispatch
@@ -131,6 +132,32 @@ Two dedicated dashboards sit on top of the governance APIs so platform and distr
   - An interactive tenant table; selecting a row loads tenant-specific guardrails, usage trends, analytics, and audit events.
 
 Both dashboards rely on the running API Gateway (`http://localhost:4000`) for data via `@aivo/api-client`. If you seed additional tenants, the pages adapt automatically without extra configuration.
+
+## Agent infrastructure
+
+The `@aivo/agents` workspace package implements the cross-platform AI agent foundation used by services and apps:
+
+- `BaseAgent` – abstract class with Redis-backed state/memory persistence, episodic recording, and OpenAI-compatible model helpers.
+- Inter-agent messaging via Redis Pub/Sub (direct messages plus broadcast events) with correlation tracking and heartbeat monitoring.
+- `AgentOrchestrator` – Bull-powered job orchestration layer that sequences or parallelizes agent steps, enforces dependency ordering, retries, and tracks insights/errors.
+
+### Usage
+
+```powershell
+# Compile the package
+pnpm --filter @aivo/agents build
+```
+
+Set these environment variables before running agents or orchestrations:
+
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` (optional) – connection for state + coordination.
+- `OPENAI_API_KEY` – required when agent `modelConfig.provider` is `openai`.
+
+See `packages/agents/README.md` for deeper usage notes and extension guidance.
+
+When implementing new agent-driven services, import `BaseAgent`/`AgentOrchestrator` directly from `@aivo/agents` so every worker inherits the shared Redis-backed state, coordination hooks, and memory primitives. Make sure the `REDIS_*` and `OPENAI_API_KEY` variables above are present before calling `agent.initialize()` in those consumers.
+
+> ⚠️ Running `pnpm install` or any Jest-powered task may surface `ts-jest` peer dependency warnings because the monorepo currently targets the TypeScript 6 prerelease builds. These warnings are expected and caused by upstream support lag; no action is required unless you downgrade TypeScript.
 
 ## Linting and tests
 
