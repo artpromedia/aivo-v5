@@ -14,6 +14,268 @@ enum Role {
   LEARNER
 }
 
+enum PersonalizedModelStatus {
+  PENDING
+  TRAINING
+  ACTIVE
+  ERROR
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum DomainType {
+  READING
+  MATH
+  SPEECH
+  SEL
+  SCIENCE
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ACHIEVED
+  MODIFIED
+}
+
+enum BaselineDomain {
+  SPEECH_LANGUAGE
+  READING
+  MATH
+  SCIENCE_SOCIAL
+  SEL
+}
+
+enum BaselineAssessmentStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum AccommodationType {
+  TEXT_TO_SPEECH
+  INCREASED_FONT_SIZE
+  HIGH_CONTRAST
+  REDUCED_VISUAL_CLUTTER
+  VISUAL_SCHEDULES
+  COLOR_CODING
+  DYSLEXIA_FONT
+  CAPTIONS
+  AUDIO_INSTRUCTIONS
+  SLOWED_AUDIO
+  SPEECH_TO_TEXT
+  SIMPLIFIED_CONTROLS
+  LARGER_CLICK_TARGETS
+  EXTRA_TIME
+  FREQUENT_BREAKS
+  REDUCED_CHOICES
+  CHUNKED_CONTENT
+  WORKED_EXAMPLES
+  STEP_BY_STEP
+  ENCOURAGEMENT_PROMPTS
+  FIDGET_TOOLS
+  CALM_DOWN_STRATEGIES
+  CHOICE_IN_ACTIVITIES
+}
+
+model LearningStandard {
+  id           String             @id @default(cuid())
+  code         String
+  jurisdiction String
+  gradeBand    String
+  subject      String
+  skillFocus   String?
+  description  String?
+  tags         String[]           @default([])
+  metadata     Json?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  units           CurriculumUnit[]   @relation("UnitStandards")
+  primaryContent  CurriculumContent[] @relation("ContentStandards")
+  alignedContent  CurriculumContent[] @relation("CurriculumContentStandards")
+
+  @@unique([code, jurisdiction])
+}
+
+model CurriculumUnit {
+  id          String                 @id @default(cuid())
+  title       String
+  description String?
+  subject     String
+  gradeBand   String
+  gradeLevel  Int?
+  focusSkills String[]               @default([])
+  status      CurriculumUnitStatus   @default(DRAFT)
+  createdById String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  createdBy User?             @relation("UnitCreators", fields: [createdById], references: [id])
+  modules   CurriculumModule[]
+  standards LearningStandard[] @relation("UnitStandards")
+}
+
+model CurriculumModule {
+  id              String                 @id @default(cuid())
+  unitId          String
+  title           String
+  description     String?
+  subject         String?
+  targetGrade     Int?
+  skillFocus      String?
+  durationMinutes Int?
+  sequence        Int?
+  status          CurriculumModuleStatus @default(DRAFT)
+  createdById     String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  unit       CurriculumUnit   @relation(fields: [unitId], references: [id])
+  createdBy  User?            @relation("ModuleCreators", fields: [createdById], references: [id])
+  content    CurriculumContent[]
+  prerequisites ModulePrerequisite[] @relation("ModulePrerequisites")
+  dependents    ModulePrerequisite[] @relation("ModuleDependency")
+
+  @@index([unitId])
+}
+
+model ModulePrerequisite {
+  id              String           @id @default(cuid())
+  moduleId        String
+  prerequisiteId  String
+
+  module       CurriculumModule @relation("ModulePrerequisites", fields: [moduleId], references: [id], onDelete: Cascade)
+  prerequisite CurriculumModule @relation("ModuleDependency", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, prerequisiteId])
+}
+
+model CurriculumContent {
+  id                String                   @id @default(cuid())
+  moduleId          String
+  title             String
+  summary           String?
+  contentType       CurriculumContentType
+  difficultyLevel   Float?
+  primaryStandardId String?
+  aiTags            String[]                 @default([])
+  status            CurriculumContentStatus  @default(ACTIVE)
+  createdById       String?
+  updatedById       String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  module          CurriculumModule  @relation(fields: [moduleId], references: [id])
+  primaryStandard LearningStandard? @relation("ContentStandards", fields: [primaryStandardId], references: [id])
+  createdBy       User?             @relation("ContentCreators", fields: [createdById], references: [id])
+  updatedBy       User?             @relation("ContentUpdaters", fields: [updatedById], references: [id])
+  versions        ContentVersion[]
+  interactions    ContentInteraction[]
+  effectiveness   ContentEffectiveness[]
+
+  standards LearningStandard[] @relation("CurriculumContentStandards")
+
+  @@index([moduleId])
+  @@index([primaryStandardId])
+}
+
+model ContentVersion {
+  id               String                 @id @default(cuid())
+  contentId        String
+  versionNumber    Int
+  source           ContentVersionSource   @default(AUTHOR)
+  status           ContentVersionStatus   @default(DRAFT)
+  prompt           String?
+  aiModel          String?
+  diffSummary      String?
+  adaptationContext Json?
+  aiConfidence     Float?
+  payload          Json?
+  createdById      String?
+  reviewedById     String?
+  publishedAt      DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  content    CurriculumContent @relation(fields: [contentId], references: [id])
+  createdBy  User?             @relation("VersionCreators", fields: [createdById], references: [id])
+  reviewedBy User?             @relation("VersionReviewers", fields: [reviewedById], references: [id])
+  assets     ContentAsset[]
+  interactions ContentInteraction[]
+  effectiveness ContentEffectiveness[]
+
+  @@unique([contentId, versionNumber])
+  @@index([status])
+}
+
+model ContentAsset {
+  id            String           @id @default(cuid())
+  versionId     String
+  assetType     ContentAssetType
+  title         String?
+  uri           String?
+  mimeType      String?
+  textContent   String?
+  durationSeconds Int?
+  metadata      Json?
+  createdAt     DateTime         @default(now())
+
+  version ContentVersion @relation(fields: [versionId], references: [id])
+
+  @@index([versionId])
+}
+
+model ContentInteraction {
+  id             String                 @id @default(cuid())
+  contentId      String
+  versionId      String?
+  learnerId      String?
+  userId         String?
+  interactionType ContentInteractionType
+  modality       String?
+  durationSeconds Int?
+  feedbackRating  Int?
+  feedbackComment String?
+  masteryEvidence Json?
+  metadata        Json?
+  createdAt       DateTime               @default(now())
+
+  content   CurriculumContent @relation(fields: [contentId], references: [id])
+  version   ContentVersion?   @relation(fields: [versionId], references: [id])
+  learner   Learner?          @relation("LearnerContentInteractions", fields: [learnerId], references: [id])
+  user      User?             @relation("UserContentInteractions", fields: [userId], references: [id])
+
+  @@index([contentId])
+  @@index([learnerId])
+  @@index([userId])
+}
+
+model ContentEffectiveness {
+  id               String    @id @default(cuid())
+  contentId        String
+  versionId        String?
+  date             DateTime
+  engagementScore  Float     @default(0)
+  masteryDelta     Float     @default(0)
+  aiQualityScore   Float     @default(0)
+  educatorSentiment Float    @default(0)
+  sampleSize       Int       @default(0)
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+
+  content CurriculumContent @relation(fields: [contentId], references: [id])
+  version ContentVersion?   @relation(fields: [versionId], references: [id])
+
+  @@unique([contentId, date])
+  @@index([versionId])
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String?  @unique
@@ -26,6 +288,24 @@ model User {
   profile        Profile?
   learners       Learner[] @relation("GuardianLearners")
   learnerProfile Learner?
+  approvalAssignments ApprovalRequest[] @relation("ApprovalAssignments")
+  notifications Notification[]
+  messagesSent Message[] @relation("MessageSender")
+  messagesReceived Message[] @relation("MessageRecipient")
+  meetingsCreated Meeting[] @relation("MeetingCreator")
+  meetingInvites MeetingParticipant[]
+  announcements Announcement[] @relation("AnnouncementCreator")
+  notificationPreference NotificationPreference?
+  communicationLogs CommunicationLog[]
+  requestedInsights AIInsight[] @relation("InsightRequester")
+  receivedInsights AIInsight[] @relation("InsightRecipient")
+  createdUnits CurriculumUnit[] @relation("UnitCreators")
+  createdModules CurriculumModule[] @relation("ModuleCreators")
+  authoredCurriculum CurriculumContent[] @relation("ContentCreators")
+  updatedCurriculum CurriculumContent[] @relation("ContentUpdaters")
+  createdContentVersions ContentVersion[] @relation("VersionCreators")
+  reviewedContentVersions ContentVersion[] @relation("VersionReviewers")
+  contentInteractions ContentInteraction[] @relation("UserContentInteractions")
 }
 
 model Profile {
@@ -58,6 +338,111 @@ model Learner {
   diagnoses   Diagnosis[]
   assessments Assessment[]
   learningModel PersonalizedModel?
+  approvalRequests ApprovalRequest[] @relation("LearnerApprovalRequests")
+  adjustmentLogs  LearningAdjustmentLog[]
+  notifications   Notification[]
+  progress        Progress[]
+  iepGoals        IEPGoal[]
+  messages        Message[]
+  aiInsights      AIInsight[]
+  communicationLogs CommunicationLog[]
+  contentInteractions ContentInteraction[] @relation("LearnerContentInteractions")
+  accommodationPlan LearnerAccommodation?
+  accommodationMetrics AccommodationEffectiveness[]
+  baselineSessions BaselineAssessmentSession[]
+  speechSamples SpeechAssessmentSample[]
+}
+
+model LearnerAccommodation {
+  id            String             @id @default(cuid())
+  learnerId     String             @unique
+  accommodations AccommodationType[]
+  autoEnabled   Boolean            @default(false)
+  autoEnabledAt DateTime?
+  notes         String?
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+}
+
+model AccommodationEffectiveness {
+  id                 String             @id @default(cuid())
+  learnerId          String
+  accommodation      AccommodationType
+  sessionId          String?
+  engagementWith     Float?
+  completionRateWith Float?
+  accuracyWith       Float?
+  timeOnTaskWith     Float?
+  metadata           Json?
+  createdAt          DateTime           @default(now())
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, accommodation])
+}
+
+model BaselineAssessmentSession {
+  id              String                     @id @default(cuid())
+  learnerId       String
+  status          BaselineAssessmentStatus   @default(IN_PROGRESS)
+  currentDomain   BaselineDomain?
+  currentComponent String?
+  plan             Json?
+  multiModalPlan   Json?
+  aiSummary        Json?
+  startedAt        DateTime                  @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  learner        Learner                 @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  domainResults  BaselineDomainResult[]
+  speechSamples  SpeechAssessmentSample[]
+
+  @@index([learnerId, status])
+}
+
+model BaselineDomainResult {
+  id           String            @id @default(cuid())
+  sessionId    String
+  domain       BaselineDomain
+  component    String
+  modality     String
+  responses    Json?
+  score        Float?
+  confidence   Float?
+  aiNotes      String?
+  createdAt    DateTime          @default(now())
+
+  session BaselineAssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, domain])
+}
+
+model SpeechAssessmentSample {
+  id             String                     @id @default(cuid())
+  learnerId      String
+  sessionId      String?
+  taskType       String
+  component      String?
+  audioFormat    String?
+  audioBase64    String?
+  durationMs     Int?
+  articulation   Float?
+  fluency        Float?
+  intelligibility Float?
+  metadata       Json?
+  analysis       Json?
+  createdAt      DateTime                  @default(now())
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  session BaselineAssessmentSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([learnerId])
+  @@index([sessionId])
 }
 
 model Diagnosis {
@@ -84,10 +469,283 @@ model Assessment {
 }
 
 model PersonalizedModel {
-  id          String   @id @default(cuid())
-  learnerId   String   @unique
-  summary     String
-  updatedAt   DateTime @updatedAt
+  id             String                  @id @default(cuid())
+  learnerId      String                  @unique
+  modelId        String?
+  systemPrompt   String?
+  vectorStoreId  String?
+  configuration  Json?
+  status         PersonalizedModelStatus @default(PENDING)
+  summary        String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  learner        Learner                 @relation(fields: [learnerId], references: [id])
+}
+
+model ApprovalRequest {
+  id          String         @id @default(cuid())
+  type        String
+  learnerId   String
+  requesterId String
+  approverId  String?
+  status      ApprovalStatus @default(PENDING)
+  details     Json
+  comments    String?
+  createdAt   DateTime       @default(now())
+  decidedAt   DateTime?
+
+  learner  Learner @relation("LearnerApprovalRequests", fields: [learnerId], references: [id])
+  approver User?   @relation("ApprovalAssignments", fields: [approverId], references: [id])
+}
+
+model LearningAdjustmentLog {
+  id            String   @id @default(cuid())
+  learnerId     String
+  previousLevel Float
+  newLevel      Float
+  approvedBy    String
+  approvedAt    DateTime @default(now())
+  reasoning     String?
+  createdAt     DateTime @default(now())
 
   learner Learner @relation(fields: [learnerId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  learnerId String?
+  subject   String
+  template  String
+  payload   Json
+  status    String   @default("QUEUED")
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  learner Learner? @relation(fields: [learnerId], references: [id])
+}
+
+model Progress {
+  id        String     @id @default(cuid())
+  learnerId String
+  learner   Learner    @relation(fields: [learnerId], references: [id])
+  domain    DomainType
+  date      DateTime
+  level     Float
+  score     Float?
+  timeSpent Int
+  createdAt DateTime   @default(now())
+}
+
+model IEPGoal {
+  id         String     @id @default(cuid())
+  learnerId  String
+  learner    Learner    @relation(fields: [learnerId], references: [id])
+  goal       String
+  category   String
+  targetDate DateTime
+  status     GoalStatus @default(NOT_STARTED)
+  progress   Float      @default(0)
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Message {
+  id        String       @id @default(cuid())
+  fromId    String
+  toId      String
+  learnerId String?
+  type      MessageType  @default(TEXT)
+  content   String
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime     @default(now())
+
+  fromUser  User         @relation("MessageSender", fields: [fromId], references: [id])
+  toUser    User         @relation("MessageRecipient", fields: [toId], references: [id])
+  learner   Learner?     @relation(fields: [learnerId], references: [id])
+
+  @@index([toId, createdAt])
+  @@index([learnerId])
+}
+
+model AIInsight {
+  id              String          @id @default(cuid())
+  learnerId       String
+  requesterId     String?
+  generatedForId  String?
+  type            String
+  summary         String
+  content         Json
+  recommendations Json?
+  priority        InsightPriority @default(MEDIUM)
+  createdAt       DateTime        @default(now())
+
+  learner     Learner  @relation(fields: [learnerId], references: [id])
+  requester   User?    @relation("InsightRequester", fields: [requesterId], references: [id])
+  generatedFor User?   @relation("InsightRecipient", fields: [generatedForId], references: [id])
+}
+
+model Meeting {
+  id            String              @id @default(cuid())
+  roomId        String              @unique
+  roomLink      String
+  topic         String
+  scheduledTime DateTime
+  duration      Int?
+  createdById   String?
+  createdAt     DateTime            @default(now())
+
+  createdBy User? @relation("MeetingCreator", fields: [createdById], references: [id])
+  participants MeetingParticipant[]
+}
+
+model MeetingParticipant {
+  id         String   @id @default(cuid())
+  meetingId  String
+  userId     String
+  status     MeetingParticipantStatus @default(PENDING)
+  inviteSent DateTime? @default(now())
+  joinedAt   DateTime?
+
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([meetingId, userId])
+}
+
+model Announcement {
+  id          String               @id @default(cuid())
+  title       String
+  content     String
+  priority    AnnouncementPriority @default(MEDIUM)
+  recipients  String[]
+  createdById String?
+  createdAt   DateTime             @default(now())
+
+  createdBy User? @relation("AnnouncementCreator", fields: [createdById], references: [id])
+}
+
+model NotificationPreference {
+  id             String           @id @default(cuid())
+  userId         String           @unique
+  channels       Json
+  digestFrequency DigestFrequency @default(INSTANT)
+  muteUntil      DateTime?
+  updatedAt      DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model CommunicationLog {
+  id        String                @id @default(cuid())
+  userId    String?
+  learnerId String?
+  type      CommunicationLogType
+  channel   String
+  payload   Json
+  createdAt DateTime              @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id])
+  learner Learner? @relation(fields: [learnerId], references: [id])
+
+  @@index([userId])
+  @@index([learnerId])
+}
+
+enum MessageType {
+  TEXT
+  CONCERN
+  QUESTION
+  ALERT
+  SYSTEM
+}
+
+enum InsightPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MeetingParticipantStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum AnnouncementPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum DigestFrequency {
+  INSTANT
+  DAILY
+  WEEKLY
+}
+
+enum CommunicationLogType {
+  MESSAGE
+  INSIGHT
+  MEETING
+  ANNOUNCEMENT
+  NOTIFICATION
+}
+
+enum CurriculumUnitStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CurriculumModuleStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CurriculumContentType {
+  LESSON
+  ACTIVITY
+  ASSESSMENT
+  SUPPORT
+  RESOURCE
+}
+
+enum CurriculumContentStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ContentVersionSource {
+  AUTHOR
+  AI
+  FALLBACK
+}
+
+enum ContentVersionStatus {
+  DRAFT
+  IN_REVIEW
+  ACTIVE
+  ARCHIVED
+}
+
+enum ContentAssetType {
+  TEXT
+  AUDIO
+  VIDEO
+  IMAGE
+  INTERACTIVE
+  HAPTIC
+}
+
+enum ContentInteractionType {
+  VIEW
+  DELIVERY
+  ASSIGNMENT
+  FEEDBACK
+  AI_RECOMMENDATION
 }

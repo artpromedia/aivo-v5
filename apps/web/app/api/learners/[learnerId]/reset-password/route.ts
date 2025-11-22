@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { generateStrongPassword, hashPassword } from "@/lib/passwords";
 import { isGuardianRole } from "@/lib/roles";
 
+export const runtime = "nodejs";
+
 export async function POST(
   _request: Request,
   { params }: { params: { learnerId: string } }

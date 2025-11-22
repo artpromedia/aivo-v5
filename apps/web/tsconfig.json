@@ -8,14 +8,29 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@aivo/types": ["../../packages/types/src"],
-      "@aivo/brain-model": ["../../packages/brain-model/src"],
-      "@aivo/ui": ["../../packages/ui/src"],
-      "@aivo/api-client": ["../../packages/api-client/src"],
-      "@aivo/auth": ["../../packages/auth/src"],
-      "@aivo/persistence": ["../../packages/persistence/src"]
-    }
+      "@/*": [
+        "./*"
+      ],
+      "@aivo/types": [
+        "../../packages/types/src"
+      ],
+      "@aivo/brain-model": [
+        "../../packages/brain-model/src"
+      ],
+      "@aivo/ui": [
+        "../../packages/ui/src"
+      ],
+      "@aivo/api-client": [
+        "../../packages/api-client/src"
+      ],
+      "@aivo/auth": [
+        "../../packages/auth/src"
+      ],
+      "@aivo/persistence": [
+        "../../packages/persistence/src"
+      ]
+    },
+    "strictNullChecks": true
   },
   "include": [
     "next-env.d.ts",

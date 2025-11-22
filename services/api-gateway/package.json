@@ -13,9 +13,9 @@
   "dependencies": {
     "@aivo/types": "workspace:*",
     "@aivo/api-client": "workspace:*",
-  "@aivo/persistence": "workspace:*",
+    "@aivo/persistence": "workspace:*",
     "@aivo/auth": "workspace:*",
-  "@aivo/observability": "workspace:*",
+    "@aivo/observability": "workspace:*",
     "@prisma/client": "^6.0.0",
     "fastify": "^5.0.0",
     "zod": "^3.23.0",
@@ -26,6 +26,6 @@
     "prisma": "^6.0.0",
     "ts-jest": "^29.1.1",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "6.0.0-dev.20251120"
   }
 }

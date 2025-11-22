@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { buildBaseUsername, generateStrongPassword, hashPassword, resolveUniqueUsername } from "@/lib/passwords";
 import { isGuardianRole } from "@/lib/roles";
 
+export const runtime = "nodejs";
+
 const learnerSchema = z.object({
   firstName: z.string().min(1).max(60),
   lastName: z.string().min(1).max(60),

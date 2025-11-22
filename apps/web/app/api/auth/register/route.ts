@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { buildBaseUsername, hashPassword, resolveUniqueUsername } from "@/lib/passwords";
 import { isGuardianRole } from "@/lib/roles";
 
+export const runtime = "nodejs";
+
 const registerSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
   password: z

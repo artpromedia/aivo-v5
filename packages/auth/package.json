@@ -13,7 +13,7 @@
     "@aivo/api-client": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "typescript": "6.0.0-dev.20251120",
     "@types/node": "^22.7.5"
   }
 }

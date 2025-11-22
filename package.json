@@ -18,7 +18,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "ts-node --transpile-only scripts/seed-tenants-and-users.ts",
-    "seed:dev-users": "ts-node --transpile-only scripts/seed-dev-users.ts"
+    "seed:dev-users": "ts-node --transpile-only scripts/seed-dev-users.ts",
+    "clean:bom": "node scripts/strip-bom.js",
+    "postinstall": "pnpm run clean:bom"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
@@ -41,7 +43,7 @@
     "tailwindcss": "^3.4.4",
     "ts-jest": "^29.1.1",
     "turbo": "^2.6.1",
-    "typescript": "^5.7.0"
+    "typescript": "6.0.0-dev.20251120"
   },
   "engines": {
     "node": ">=20.0.0"

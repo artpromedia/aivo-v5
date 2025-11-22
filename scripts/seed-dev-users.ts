@@ -1,46 +1,17 @@
-import { prisma } from "@aivo/persistence";
+import { PrismaClient } from "@prisma/client";
+import { seedCoreData } from "./seed-core-data";
+
+const prisma = new PrismaClient();
 
 async function main() {
-  const tenant = await prisma.tenant.upsert({
-    where: { id: "tenant-1" },
-    update: {},
-    create: {
-      id: "tenant-1",
-      type: "district" as any,
-      name: "Sunrise Unified",
-      region: "north_america" as any
-    }
-  });
-
-  const parent = await prisma.user.upsert({
-    where: { email: "parent@example.com" },
-    update: {},
-    create: {
-      email: "parent@example.com",
-      name: "Demo Parent",
-      tenantId: tenant.id
-    }
-  });
-
-  await prisma.roleAssignment.createMany({
-    data: [
-      {
-        userId: parent.id,
-        tenantId: tenant.id,
-        role: "parent" as any
-      }
-    ],
-    skipDuplicates: true
-  });
-
-  console.log("Seeded demo users");
+  const summary = await seedCoreData(prisma);
+  console.log("Seeded guardian, teacher, learner, and class records", summary);
 }
 
 main()
   .catch((err) => {
     console.error(err);
-    // eslint-disable-next-line no-process-exit
-    process.exit(1);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

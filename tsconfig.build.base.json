@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+  "module": "commonjs",
     "lib": ["ES2022", "DOM"],
     "strict": true,
-    "moduleResolution": "node",
+  "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
+  "ignoreDeprecations": "6.0",
+  "baseUrl": ".",
     "paths": {
       "@aivo/types": ["packages/types/src"],
       "@aivo/brain-model": ["packages/brain-model/src/index.ts"],

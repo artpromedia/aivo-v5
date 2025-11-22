@@ -182,6 +182,51 @@ For linting, you should generally stick with **bare package names** (like `paren
 
 If a filter fails, double-check the `name` field in that package's `package.json` and use that value directly.
 
+## Database schema & Prisma
+
+The unified neurodiverse learning schema lives in `prisma/schema.prisma` and powers every service/package that calls Prisma.
+
+```powershell
+# Install Prisma CLI + client (already part of pnpm workspaces, but handy for fresh clones)
+pnpm install prisma @prisma/client
+
+# Copy the example env file and update credentials as needed
+copy .env.example .env
+
+# Start the local Postgres container (runs on localhost:5433 by default)
+docker compose -f docker-compose.db.yml up -d
+
+# Run the initial migration against your local Postgres
+pnpm exec prisma migrate dev --name init
+
+# Generate the Prisma client for all packages that import @aivo/persistence
+pnpm exec prisma generate
+
+# Optional: load demo caregivers/teachers/learners or inspect records
+pnpm seed
+pnpm seed:dev-users
+pnpm exec prisma studio
+```
+
+Environment variables required for local development (the defaults line up with `docker-compose.db.yml`):
+
+```env
+DATABASE_URL="postgresql://aivo:aivo@localhost:5433/aivo_v5?schema=public"
+DIRECT_URL="postgresql://aivo:aivo@localhost:5433/aivo_v5?schema=public"
+
+OPENAI_API_KEY="sk-..."
+
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key-here"
+
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+```
+
+Add any additional provider keys (OpenAI org IDs, Pinecone credentials, etc.) as your workflow requires.
+
 ## Content Authoring & Curriculum Management
 
 Aivo v5.1 includes a comprehensive content authoring system that allows educators to create, manage, and approve curriculum-aligned learning materials.

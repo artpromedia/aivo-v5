@@ -3,6 +3,7 @@ import { z } from "zod";
 import { CapabilityMapper } from "@/lib/ai/capability-mapper";
 import { prisma } from "@/lib/prisma";
 import type { Question, QuestionType } from "@/lib/types/assessment";
+import type { LearningStyle } from "@/lib/types/models";
 
 const DOMAINS = ["READING", "MATH", "SPEECH", "SEL", "SCIENCE"] as const;
 
@@ -37,6 +38,15 @@ const PayloadSchema = z.object({
 const mapper = new CapabilityMapper();
 
 type ResponseMap = Record<string, { answer: string; isCorrect?: boolean }>;
+
+function inferLearningStyle(summary: string | undefined): LearningStyle {
+  if (!summary) return "MIXED";
+  const text = summary.toLowerCase();
+  if (text.includes("visual")) return "VISUAL";
+  if (text.includes("audio") || text.includes("listening")) return "AUDITORY";
+  if (text.includes("movement") || text.includes("hands-on")) return "KINESTHETIC";
+  return "MIXED";
+}
 
 function buildQuestionLedger(questions: Record<DomainName, Question[]>): {
   id: string;
@@ -95,6 +105,7 @@ export async function POST(request: NextRequest) {
         learnerId: payload.learnerId,
         type: "BASELINE",
         status: "COMPLETED",
+        startedAt: new Date(),
         results: {
           overallLevel,
           domainLevels,
@@ -110,9 +121,13 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    await prisma.learner.update({
+    const learner = await prisma.learner.update({
       where: { id: payload.learnerId },
       data: { actualLevel: overallLevel }
+    });
+
+    const learnerDiagnoses = await prisma.diagnosis.findMany({
+      where: { learnerId: payload.learnerId }
     });
 
     const cloneModelUrl = new URL("/api/ai/clone-model", request.url);
@@ -121,10 +136,13 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         learnerId: payload.learnerId,
-        gradeLevel: analysis.gradeLevel,
+        gradeLevel: learner.gradeLevel,
         actualLevel: overallLevel,
         domainLevels,
-        learningProfile: analysis.learningProfile
+        learningStyle: inferLearningStyle(analysis.learningProfile),
+        strengths: analysis.strengths,
+        challenges: analysis.challenges,
+        diagnoses: learnerDiagnoses.map((item) => item.description)
       })
     }).catch((error) => {
       console.warn("clone-model trigger failed", error);
