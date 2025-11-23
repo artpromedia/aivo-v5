@@ -1,7 +1,10 @@
 {
   "name": "@aivo/marketing",
-  "version": "1.0.0",
+  "version": "5.0.0",
+  "description": "AIVO Learning - Marketing Website for AI-Powered Personalized Learning Platform",
+  "author": "AIVO Learning",
   "private": true,
+  "homepage": "https://aivolearning.com",
   "scripts": {
     "dev": "next dev --port 3002",
     "build": "next build",
