@@ -35,14 +35,23 @@ class ConnectionManager:
         
         self.agent_manager: Optional[AgentManager] = None
         
+        # Metrics
+        self.total_connections = 0
+        self.total_disconnections = 0
+        self.total_messages_sent = 0
+        self.total_messages_received = 0
+        self.total_errors = 0
+        self.start_time = datetime.utcnow()
+        self.message_latencies: List[float] = []
+        
     async def initialize(self, agent_manager: AgentManager = None):
         """Initialize WebSocket manager"""
         self.agent_manager = agent_manager
         logger.info("WebSocket Manager initialized")
     
     async def connect(
-        self, 
-        websocket: WebSocket, 
+        self,
+        websocket: WebSocket,
         user_id: str,
         connection_id: str = None
     ) -> str:
@@ -59,12 +68,17 @@ class ConnectionManager:
             "user_id": user_id,
             "learner_ids": [],
             "connected_at": datetime.utcnow().isoformat(),
+            "messages_sent": 0,
+            "messages_received": 0,
         }
         
         # Map user to connection
         if user_id not in self.user_connections:
             self.user_connections[user_id] = []
         self.user_connections[user_id].append(connection_id)
+        
+        # Update metrics
+        self.total_connections += 1
         
         # Send connection confirmation
         await self.send_personal_message(
@@ -90,6 +104,9 @@ class ConnectionManager:
         connection = self.active_connections[connection_id]
         user_id = connection["user_id"]
         learner_ids = connection.get("learner_ids", [])
+        
+        # Update metrics
+        self.total_disconnections += 1
         
         # Remove from user connections
         if user_id in self.user_connections:
@@ -178,8 +195,8 @@ class ConnectionManager:
             )
     
     async def send_personal_message(
-        self, 
-        message: Dict[str, Any], 
+        self,
+        message: Dict[str, Any],
         connection_id: str
     ):
         """
@@ -188,9 +205,24 @@ class ConnectionManager:
         if connection_id in self.active_connections:
             websocket = self.active_connections[connection_id]["websocket"]
             try:
+                start_time = datetime.utcnow()
                 await websocket.send_json(message)
+                
+                # Update metrics
+                self.total_messages_sent += 1
+                self.active_connections[connection_id]["messages_sent"] += 1
+                
+                # Track latency (in milliseconds)
+                latency = (datetime.utcnow() - start_time).total_seconds() * 1000
+                self.message_latencies.append(latency)
+                
+                # Keep only last 1000 latency measurements
+                if len(self.message_latencies) > 1000:
+                    self.message_latencies.pop(0)
+                    
             except Exception as e:
                 logger.error(f"Error sending to {connection_id}: {str(e)}")
+                self.total_errors += 1
                 await self.disconnect(connection_id)
     
     async def send_to_user(
@@ -264,6 +296,69 @@ class ConnectionManager:
     def get_learner_subscriber_count(self, learner_id: str) -> int:
         """Get subscriber count for specific learner"""
         return len(self.learner_connections.get(learner_id, []))
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """
+        Get comprehensive WebSocket metrics
+        """
+        uptime = (datetime.utcnow() - self.start_time).total_seconds()
+        
+        # Calculate average latency
+        avg_latency = (
+            sum(self.message_latencies) / len(self.message_latencies)
+            if self.message_latencies else 0
+        )
+        
+        # Calculate message throughput (messages per second)
+        messages_per_second = (
+            self.total_messages_sent / uptime if uptime > 0 else 0
+        )
+        
+        return {
+            "connections": {
+                "active": len(self.active_connections),
+                "total": self.total_connections,
+                "disconnections": self.total_disconnections,
+            },
+            "users": {
+                "connected": len(self.user_connections),
+            },
+            "learners": {
+                "subscribed": len(self.learner_connections),
+            },
+            "rooms": {
+                "active": len(self.rooms),
+            },
+            "messages": {
+                "sent": self.total_messages_sent,
+                "received": self.total_messages_received,
+                "per_second": round(messages_per_second, 2),
+            },
+            "performance": {
+                "average_latency_ms": round(avg_latency, 2),
+                "min_latency_ms": (
+                    round(min(self.message_latencies), 2)
+                    if self.message_latencies else 0
+                ),
+                "max_latency_ms": (
+                    round(max(self.message_latencies), 2)
+                    if self.message_latencies else 0
+                ),
+            },
+            "errors": {
+                "total": self.total_errors,
+            },
+            "uptime": {
+                "seconds": round(uptime, 2),
+                "started_at": self.start_time.isoformat(),
+            },
+        }
+    
+    def record_message_received(self, connection_id: str):
+        """Record that a message was received from a connection"""
+        self.total_messages_received += 1
+        if connection_id in self.active_connections:
+            self.active_connections[connection_id]["messages_received"] += 1
 
 
 # Create global instance

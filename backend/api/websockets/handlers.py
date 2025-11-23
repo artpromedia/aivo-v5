@@ -54,6 +54,9 @@ class WebSocketHandler:
         """
         Route incoming WebSocket message to appropriate handler
         """
+        # Record message received
+        self.socket_manager.record_message_received(connection_id)
+        
         message_type = message.get("type")
 
         if message_type not in self.handlers:

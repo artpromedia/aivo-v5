@@ -19,6 +19,7 @@ from db.database import init_db, close_db
 from agents.agent_manager import agent_manager
 from api.websockets import socket_manager, router as websocket_router
 from api.routes import agents_router
+from api.routes.websocket_metrics import router as websocket_metrics_router
 
 # Setup logging
 logger = setup_logging(__name__)
@@ -143,6 +144,11 @@ app.include_router(
     agents_router,
     prefix=f"{settings.API_PREFIX}/agents",
     tags=["Agents"]
+)
+app.include_router(
+    websocket_metrics_router,
+    prefix=f"{settings.API_PREFIX}/websocket",
+    tags=["WebSocket Metrics"]
 )
 app.include_router(websocket_router, tags=["WebSocket"])
 
