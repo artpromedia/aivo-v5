@@ -4,12 +4,15 @@ Author: artpromedia
 Date: 2025-11-23
 """
 
-from sqlalchemy import Column, String, Integer, Boolean, JSON, DateTime, Float
+from sqlalchemy import (
+    Column, String, Integer, Boolean, JSON, DateTime, Float, ForeignKey, Text
+)
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from db.models.base import Base
+from db.database import Base
 
 
 class Learner(Base):
@@ -68,8 +71,40 @@ class Learner(Base):
     
     # Metadata
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now()
+    )
     last_login = Column(DateTime, nullable=True)
+    
+    # Relationships
+    parent = relationship("User", back_populates="learners")
+    diagnoses = relationship(
+        "Diagnosis",
+        back_populates="learner",
+        cascade="all, delete-orphan"
+    )
+    accommodations = relationship(
+        "Accommodation",
+        back_populates="learner",
+        cascade="all, delete-orphan"
+    )
+    sessions = relationship(
+        "LearningSession",
+        back_populates="learner",
+        cascade="all, delete-orphan"
+    )
+    assessments = relationship(
+        "Assessment",
+        back_populates="learner",
+        cascade="all, delete-orphan"
+    )
+    skill_progress = relationship(
+        "SkillProgress",
+        back_populates="learner",
+        cascade="all, delete-orphan"
+    )
     
     def __repr__(self):
         return f"<Learner {self.first_name} {self.last_name} (ID: {self.id})>"
