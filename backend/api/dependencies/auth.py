@@ -117,3 +117,56 @@ def require_role(*allowed_roles: str):
         return current_user
     
     return role_checker
+
+
+async def verify_websocket_token(
+    token: Optional[str],
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    """
+    Verify JWT token for WebSocket connections
+    
+    Args:
+        token: JWT access token from query parameter
+        db: Database session
+        
+    Returns:
+        User object if valid, None otherwise
+    """
+    if not token:
+        logger.warning("WebSocket connection attempt without token")
+        return None
+    
+    try:
+        # Verify token
+        payload = verify_token(token, "access")
+        
+        if not payload:
+            logger.warning("Invalid WebSocket token")
+            return None
+        
+        user_id: str = payload.get("sub")
+        
+        if user_id is None:
+            logger.warning("WebSocket token missing user ID")
+            return None
+        
+        # Get user from database
+        result = await db.execute(
+            select(User).where(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if user is None:
+            logger.warning(f"User not found for WebSocket token: {user_id}")
+            return None
+        
+        if not user.is_active:
+            logger.warning(f"Inactive user attempted WebSocket: {user_id}")
+            return None
+        
+        return user
+        
+    except Exception as e:
+        logger.error(f"Error verifying WebSocket token: {str(e)}")
+        return None

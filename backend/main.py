@@ -15,6 +15,10 @@ from datetime import datetime
 from core.config import settings
 from core.logging import setup_logging
 from core.exceptions import setup_exception_handlers
+from db.database import init_db, close_db
+from agents.agent_manager import agent_manager
+from api.websockets import socket_manager, router as websocket_router
+from api.routes import agents_router
 
 # Setup logging
 logger = setup_logging(__name__)
@@ -32,6 +36,18 @@ async def lifespan(app: FastAPI):
     logger.info(f"Startup Time: {datetime.utcnow().isoformat()}")
     
     try:
+        # Initialize database
+        await init_db()
+        logger.info("✅ Database initialized")
+        
+        # Initialize WebSocket manager
+        await socket_manager.initialize(agent_manager)
+        logger.info("✅ WebSocket manager initialized")
+        
+        # Store managers in app state
+        app.state.agent_manager = agent_manager
+        app.state.socket_manager = socket_manager
+        
         logger.info("🚀 AIVO Learning Backend started successfully!")
         
     except Exception as e:
@@ -44,6 +60,18 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down AIVO Learning Backend...")
     
     try:
+        # Cleanup WebSocket connections
+        await socket_manager.disconnect_all()
+        logger.info("✅ WebSocket connections closed")
+        
+        # Cleanup agent instances
+        await agent_manager.cleanup_inactive_brains(max_idle_minutes=0)
+        logger.info("✅ Agent instances cleaned up")
+        
+        # Close database connections
+        await close_db()
+        logger.info("✅ Database connections closed")
+        
         logger.info("👋 AIVO Learning Backend stopped gracefully")
         
     except Exception as e:
@@ -108,6 +136,15 @@ async def log_requests(request: Request, call_next):
 
 # Setup exception handlers
 setup_exception_handlers(app)
+
+
+# Include API routers
+app.include_router(
+    agents_router,
+    prefix=f"{settings.API_PREFIX}/agents",
+    tags=["Agents"]
+)
+app.include_router(websocket_router, tags=["WebSocket"])
 
 
 # Health check endpoint
