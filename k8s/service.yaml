@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aivo-web-service
+  namespace: production
+  labels:
+    app: aivo
+    component: web
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: aivo
+    component: web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aivo-agents-service
+  namespace: production
+  labels:
+    app: aivo
+    component: agents
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3001
+    targetPort: 3001
+    protocol: TCP
+    name: websocket
+  selector:
+    app: aivo
+    component: agents

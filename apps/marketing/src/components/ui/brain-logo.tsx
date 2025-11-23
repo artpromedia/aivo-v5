@@ -1,0 +1,49 @@
+export function BrainLogo({ className = "w-10 h-10" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="20" cy="20" r="20" fill="url(#gradient)" />
+      <path
+        d="M20 10C14.477 10 10 14.477 10 20C10 25.523 14.477 30 20 30C25.523 30 30 25.523 30 20C30 14.477 25.523 10 20 10ZM20 11.5C24.694 11.5 28.5 15.306 28.5 20C28.5 24.694 24.694 28.5 20 28.5C15.306 28.5 11.5 24.694 11.5 20C11.5 15.306 15.306 11.5 20 11.5Z"
+        fill="white"
+      />
+      <path
+        d="M16.5 16C15.672 16 15 16.672 15 17.5V22.5C15 23.328 15.672 24 16.5 24C17.328 24 18 23.328 18 22.5V17.5C18 16.672 17.328 16 16.5 16Z"
+        fill="white"
+      />
+      <path
+        d="M23.5 16C22.672 16 22 16.672 22 17.5V22.5C22 23.328 22.672 24 23.5 24C24.328 24 25 23.328 25 22.5V17.5C25 16.672 24.328 16 23.5 16Z"
+        fill="white"
+      />
+      <path
+        d="M13.5 18.5C13.5 18.224 13.724 18 14 18H15V19H14C13.724 19 13.5 18.776 13.5 18.5Z"
+        fill="white"
+      />
+      <path
+        d="M26 18C26.276 18 26.5 18.224 26.5 18.5C26.5 18.776 26.276 19 26 19H25V18H26Z"
+        fill="white"
+      />
+      <path
+        d="M20 13C19.448 13 19 13.448 19 14V15C19 15.552 19.448 16 20 16C20.552 16 21 15.552 21 15V14C21 13.448 20.552 13 20 13Z"
+        fill="white"
+      />
+      <defs>
+        <linearGradient
+          id="gradient"
+          x1="0"
+          y1="0"
+          x2="40"
+          y2="40"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#a855f7" />
+          <stop offset="1" stopColor="#c084fc" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}

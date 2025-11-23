@@ -47,3 +47,10 @@ export function getDifficultyRecommendations(
     };
   });
 }
+
+// Export agent system
+export { AgentManager } from './agents/AgentManager'
+export { AgentOrchestrator } from './agents/base/AgentOrchestrator'
+export { PersonalizedLearningAgent } from './agents/implementations/PersonalizedLearningAgent'
+export { AITutorAgent } from './agents/implementations/AITutorAgent'
+export { ContentAdaptationAgent } from './agents/implementations/ContentAdaptationAgent'

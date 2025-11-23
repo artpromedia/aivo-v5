@@ -41,6 +41,7 @@ model User {
   announcementsCreated Announcement[] @relation("AnnouncementCreator")
   notificationPreference NotificationPreference?
   communicationLogs CommunicationLog[]
+  accounts       Account[]
 }
 
 model Profile {
@@ -90,6 +91,8 @@ model Learner {
   communicationLogs CommunicationLog[]
   accommodationPlan LearnerAccommodation? @relation("LearnerAccommodationPlan")
   accommodationMetrics AccommodationEffectiveness[] @relation("LearnerAccommodationMetrics")
+  agentStates      AgentState[]
+  agentInteractions AgentInteraction[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }
@@ -1061,4 +1064,81 @@ enum ContentInteractionType {
   ASSIGNMENT
   FEEDBACK
   AI_RECOMMENDATION
+}
+
+// NextAuth Authentication Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Agent System Models
+model AgentState {
+  id                  String      @id @default(cuid())
+  agentId             String      @unique
+  learnerId           String
+  learner             Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  agentType           AgentType
+  state               Json
+  memory              Json
+  lastActivity        DateTime
+  
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  
+  @@index([learnerId])
+  @@index([lastActivity])
+  @@index([agentType])
+}
+
+enum AgentType {
+  PERSONALIZED_LEARNING
+  AI_TUTOR
+  CONTENT_ADAPTATION
+  SPEECH_ANALYSIS
+  PROGRESS_MONITORING
+}
+
+model AgentInteraction {
+  id                  String      @id @default(cuid())
+  learnerId           String
+  learner             Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  agentId             String
+  interactionType     String
+  input               Json
+  output              Json
+  
+  durationMs          Int?
+  success             Boolean     @default(true)
+  errorMessage        String?
+  
+  createdAt           DateTime    @default(now())
+  
+  @@index([learnerId])
+  @@index([agentId])
+  @@index([createdAt])
 }

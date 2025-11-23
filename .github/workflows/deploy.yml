@@ -1,0 +1,202 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
+
+jobs:
+  # Run tests and type checks
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Generate Prisma Client
+        run: pnpm prisma generate
+      
+      - name: Run type check
+        run: pnpm type-check
+      
+      - name: Run linter
+        run: pnpm lint
+      
+      - name: Run tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+
+  # Build and push Docker images
+  build:
+    name: Build Docker Images
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/aivo-platform
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push Web App
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/aivo-platform:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/aivo-platform:buildcache,mode=max
+          build-args: |
+            NEXT_PUBLIC_APP_VERSION=${{ github.sha }}
+      
+      - name: Build and push Agent Server
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.agents
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/aivo-agents:latest,${{ secrets.DOCKER_USERNAME }}/aivo-agents:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/aivo-agents:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/aivo-agents:buildcache,mode=max
+
+  # Deploy to production
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name aivo-production --region us-east-1
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/aivo-web web=${{ secrets.DOCKER_USERNAME }}/aivo-platform:${{ github.sha }} -n production
+          kubectl set image deployment/aivo-agents agent-server=${{ secrets.DOCKER_USERNAME }}/aivo-agents:${{ github.sha }} -n production
+          kubectl rollout status deployment/aivo-web -n production
+          kubectl rollout status deployment/aivo-agents -n production
+      
+      - name: Run database migrations
+        run: |
+          kubectl run prisma-migrate --rm -i --restart=Never \
+            --image=${{ secrets.DOCKER_USERNAME }}/aivo-platform:${{ github.sha }} \
+            --env="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            -n production \
+            -- pnpm prisma migrate deploy
+      
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Deployment to production: ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Smoke tests after deployment
+  smoke-test:
+    name: Smoke Tests
+    needs: deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Wait for deployment
+        run: sleep 30
+      
+      - name: Check health endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://aivo.education/api/health)
+          if [ $response -ne 200 ]; then
+            echo "Health check failed with status: $response"
+            exit 1
+          fi
+      
+      - name: Check API endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://aivo.education/api/ready)
+          if [ $response -ne 200 ]; then
+            echo "API readiness check failed with status: $response"
+            exit 1
+          fi
+      
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: 'failure'
+          text: 'Smoke tests failed after deployment!'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
