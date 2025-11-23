@@ -8,13 +8,76 @@
 
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 import { verify } from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import { PersonalizedLearningAgent } from "@aivo/agents";
 import { AITutorAgent } from "@aivo/agents";
 import { SpeechAnalysisAgent } from "@aivo/agents";
+import { Registry, Counter, Gauge, Histogram } from "prom-client";
 
 const prisma = new PrismaClient();
+
+// Prometheus metrics registry
+const metricsRegistry = new Registry();
+
+// WebSocket Metrics
+const wsConnections = new Gauge({
+	name: "websocket_connections_total",
+	help: "Total number of active WebSocket connections",
+	registers: [metricsRegistry]
+});
+
+const wsConnectionsTotal = new Counter({
+	name: "websocket_connections_count",
+	help: "Total count of WebSocket connections established",
+	registers: [metricsRegistry]
+});
+
+const wsDisconnectionsTotal = new Counter({
+	name: "websocket_disconnections_total",
+	help: "Total count of WebSocket disconnections",
+	labelNames: ["reason"],
+	registers: [metricsRegistry]
+});
+
+const wsMessagesSent = new Counter({
+	name: "websocket_messages_sent_total",
+	help: "Total number of messages sent via WebSocket",
+	labelNames: ["event"],
+	registers: [metricsRegistry]
+});
+
+const wsMessagesReceived = new Counter({
+	name: "websocket_messages_received_total",
+	help: "Total number of messages received via WebSocket",
+	labelNames: ["event"],
+	registers: [metricsRegistry]
+});
+
+const wsMessageLatency = new Histogram({
+	name: "websocket_message_latency_ms",
+	help: "WebSocket message processing latency in milliseconds",
+	labelNames: ["event"],
+	buckets: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000],
+	registers: [metricsRegistry]
+});
+
+const wsErrors = new Counter({
+	name: "websocket_errors_total",
+	help: "Total number of WebSocket errors",
+	labelNames: ["type"],
+	registers: [metricsRegistry]
+});
+
+const wsActiveSessions = new Gauge({
+	name: "websocket_active_sessions",
+	help: "Number of active agent sessions",
+	registers: [metricsRegistry]
+});
+
+export { metricsRegistry };
 
 interface AuthenticatedSocket extends Socket {
 	userId?: string;
@@ -36,6 +99,37 @@ const activeSessions = new Map<string, AgentSession>();
 // Learner ID to socket mapping (for broadcasting to specific learners)
 const learnerSockets = new Map<string, Set<string>>();
 
+// Rate limiting: connection ID -> message timestamps
+const rateLimitStore = new Map<string, number[]>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX_MESSAGES = 100; // Max 100 messages per minute
+
+/**
+ * Check if connection has exceeded rate limit
+ */
+function checkRateLimit(socketId: string): boolean {
+	const now = Date.now();
+	const timestamps = rateLimitStore.get(socketId) || [];
+	
+	// Remove old timestamps outside the window
+	const validTimestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW);
+	
+	if (validTimestamps.length >= RATE_LIMIT_MAX_MESSAGES) {
+		return false; // Rate limit exceeded
+	}
+	
+	validTimestamps.push(now);
+	rateLimitStore.set(socketId, validTimestamps);
+	return true;
+}
+
+/**
+ * Clear rate limit data for a socket
+ */
+function clearRateLimit(socketId: string): void {
+	rateLimitStore.delete(socketId);
+}
+
 export function initializeWebSocketServer(httpServer: HTTPServer) {
 	const io = new SocketIOServer(httpServer, {
 		cors: {
@@ -47,6 +141,25 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 		pingTimeout: 60000,
 		pingInterval: 25000
 	});
+
+	// Setup Redis adapter for horizontal scaling
+	if (process.env.REDIS_HOST) {
+		const pubClient = createClient({
+			url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`
+		});
+		const subClient = pubClient.duplicate();
+
+		Promise.all([pubClient.connect(), subClient.connect()])
+			.then(() => {
+				io.adapter(createAdapter(pubClient, subClient));
+				console.log("✅ Redis adapter connected for horizontal scaling");
+			})
+			.catch((err) => {
+				console.error("❌ Redis adapter connection failed:", err);
+			});
+	} else {
+		console.log("ℹ️  Running without Redis adapter (single instance mode)");
+	}
 
 	// Authentication middleware
 	io.use(async (socket: AuthenticatedSocket, next) => {
@@ -76,6 +189,11 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 	// Connection handler
 	io.on("connection", async (socket: AuthenticatedSocket) => {
 		console.log(`Client connected: ${socket.id}, learner: ${socket.learnerId}`);
+		
+		// Update metrics
+		wsConnections.inc();
+		wsConnectionsTotal.inc();
+		wsActiveSessions.set(activeSessions.size);
 
 		// Track learner socket
 		if (socket.learnerId) {
@@ -93,11 +211,33 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 		};
 		activeSessions.set(socket.id, session);
 
+		// Emit connection quality info
+		socket.emit("connection:quality", {
+			latency: socket.handshake.query.latency || 0,
+			quality: "good",
+			timestamp: new Date().toISOString()
+		});
+
 		// Learning Agent handlers
 		socket.on("agent:learning", async (data, callback) => {
+			const startTime = Date.now();
+			
+			// Check rate limit
+			if (!checkRateLimit(socket.id)) {
+				wsErrors.inc({ type: "rate_limit" });
+				return callback({ 
+					error: "Rate limit exceeded. Please slow down.",
+					rateLimited: true
+				});
+			}
+			
+			// Update metrics
+			wsMessagesReceived.inc({ event: "agent:learning" });
+			
 			try {
 				const session = activeSessions.get(socket.id);
 				if (!session) {
+					wsErrors.inc({ type: "no_session" });
 					return callback({ error: "No active session" });
 				}
 
@@ -125,11 +265,15 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 				switch (data.action) {
 					case "start_session": {
 						// Already initialized above
+						wsMessagesSent.inc({ event: "session:started" });
 						callback({
 							success: true,
 							sessionId: socket.id,
 							agentId: "learning-" + session.learnerId
 						});
+						
+						// Record latency
+						wsMessageLatency.observe({ event: "agent:learning" }, Date.now() - startTime);
 						break;
 					}
 
@@ -148,8 +292,12 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 								reasoning: result.reasoning,
 								confidence: result.confidence
 							});
+							wsMessagesSent.inc({ event: "content:adapted" });
 						}
 
+						// Record latency
+						wsMessageLatency.observe({ event: "agent:learning" }, Date.now() - startTime);
+						
 						callback({
 							success: true,
 							result
@@ -163,6 +311,9 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 							data.context
 						);
 
+						// Record latency
+						wsMessageLatency.observe({ event: "agent:learning" }, Date.now() - startTime);
+						
 						callback({
 							success: true,
 							recommendation
@@ -171,19 +322,36 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 					}
 
 					default:
+						wsErrors.inc({ type: "unknown_action" });
 						callback({ error: "Unknown action" });
 				}
 			} catch (error: any) {
 				console.error("Learning agent error:", error);
+				wsErrors.inc({ type: "agent_error" });
+				wsMessageLatency.observe({ event: "agent:learning" }, Date.now() - startTime);
 				callback({ error: error.message });
 			}
 		});
 
 		// Tutor Agent handlers
 		socket.on("agent:tutor", async (data, callback) => {
+			const startTime = Date.now();
+			
+			// Check rate limit
+			if (!checkRateLimit(socket.id)) {
+				wsErrors.inc({ type: "rate_limit" });
+				return callback({ 
+					error: "Rate limit exceeded. Please slow down.",
+					rateLimited: true
+				});
+			}
+			
+			wsMessagesReceived.inc({ event: "agent:tutor" });
+			
 			try {
 				const session = activeSessions.get(socket.id);
 				if (!session) {
+					wsErrors.inc({ type: "no_session" });
 					return callback({ error: "No active session" });
 				}
 
@@ -218,6 +386,7 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 					inputType: result.inputType,
 					breakSuggested: result.breakSuggested
 				});
+				wsMessagesSent.inc({ event: "tutor:message" });
 
 				// Emit break suggestion if needed
 				if (result.breakSuggested) {
@@ -225,23 +394,42 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 						reason: "Frustration or fatigue detected",
 						recommendedBreakDuration: 5
 					});
+					wsMessagesSent.inc({ event: "break:suggested" });
 				}
 
+				wsMessageLatency.observe({ event: "agent:tutor" }, Date.now() - startTime);
+				
 				callback({
 					success: true,
 					result
 				});
 			} catch (error: any) {
 				console.error("Tutor agent error:", error);
+				wsErrors.inc({ type: "agent_error" });
+				wsMessageLatency.observe({ event: "agent:tutor" }, Date.now() - startTime);
 				callback({ error: error.message });
 			}
 		});
 
 		// Speech Analysis Agent handlers
 		socket.on("agent:speech", async (data, callback) => {
+			const startTime = Date.now();
+			
+			// Check rate limit
+			if (!checkRateLimit(socket.id)) {
+				wsErrors.inc({ type: "rate_limit" });
+				return callback({ 
+					error: "Rate limit exceeded. Please slow down.",
+					rateLimited: true
+				});
+			}
+			
+			wsMessagesReceived.inc({ event: "agent:speech" });
+			
 			try {
 				const session = activeSessions.get(socket.id);
 				if (!session) {
+					wsErrors.inc({ type: "no_session" });
 					return callback({ error: "No active session" });
 				}
 
@@ -274,12 +462,16 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 					data.sampleRate
 				);
 
+				wsMessageLatency.observe({ event: "agent:speech" }, Date.now() - startTime);
+				
 				callback({
 					success: true,
 					result
 				});
 			} catch (error: any) {
 				console.error("Speech agent error:", error);
+				wsErrors.inc({ type: "agent_error" });
+				wsMessageLatency.observe({ event: "agent:speech" }, Date.now() - startTime);
 				callback({ error: error.message });
 			}
 		});
@@ -287,6 +479,14 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 		// Disconnect handler
 		socket.on("disconnect", async (reason) => {
 			console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+			
+			// Update metrics
+			wsConnections.dec();
+			wsDisconnectionsTotal.inc({ reason });
+			wsActiveSessions.set(activeSessions.size - 1);
+			
+			// Clear rate limit
+			clearRateLimit(socket.id);
 
 			// Cleanup session
 			const session = activeSessions.get(socket.id);
@@ -320,6 +520,7 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 		// Error handler
 		socket.on("error", (error) => {
 			console.error(`Socket error for ${socket.id}:`, error);
+			wsErrors.inc({ type: "socket_error" });
 		});
 	});
 

@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useOfflineQueue } from './useOfflineQueue';
 
 export type WebSocketStatus = 
   | 'connecting' 
@@ -25,6 +26,7 @@ export interface WebSocketOptions {
   reconnect?: boolean;
   reconnectInterval?: number;
   maxReconnectAttempts?: number;
+  enableOfflineQueue?: boolean;
   onOpen?: () => void;
   onClose?: (event: CloseEvent) => void;
   onError?: (error: Event) => void;
@@ -39,6 +41,8 @@ export interface UseWebSocketReturn {
   disconnect: () => void;
   lastMessage: WebSocketMessage | null;
   reconnectAttempts: number;
+  queueSize: number;
+  clearQueue: () => void;
 }
 
 export function useWebSocket(options: WebSocketOptions): UseWebSocketReturn {
@@ -49,6 +53,7 @@ export function useWebSocket(options: WebSocketOptions): UseWebSocketReturn {
     reconnect = true,
     reconnectInterval = 3000,
     maxReconnectAttempts = 5,
+    enableOfflineQueue = true,
     onOpen,
     onClose,
     onError,
@@ -63,6 +68,23 @@ export function useWebSocket(options: WebSocketOptions): UseWebSocketReturn {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const shouldReconnectRef = useRef(true);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Direct send function (without queue)
+  const sendDirect = useCallback((message: WebSocketMessage) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
+    } else {
+      console.warn('[WebSocket] Cannot send message, not connected');
+    }
+  }, []);
+
+  // Offline queue
+  const isConnected = status === 'connected';
+  const offlineQueue = useOfflineQueue(
+    sendDirect,
+    isConnected,
+    { persistToStorage: enableOfflineQueue }
+  );
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -201,10 +223,14 @@ export function useWebSocket(options: WebSocketOptions): UseWebSocketReturn {
       } catch (error) {
         console.error('[WebSocket] Failed to send message', error);
       }
+    } else if (enableOfflineQueue) {
+      // Queue message if offline queue is enabled
+      console.log('[WebSocket] Queueing message for later delivery');
+      offlineQueue.queueMessage(message);
     } else {
       console.warn('[WebSocket] Cannot send message, not connected');
     }
-  }, []);
+  }, [enableOfflineQueue, offlineQueue]);
 
   // Auto-connect on mount
   useEffect(() => {
@@ -233,5 +259,7 @@ export function useWebSocket(options: WebSocketOptions): UseWebSocketReturn {
     disconnect,
     lastMessage,
     reconnectAttempts,
+    queueSize: offlineQueue.queueSize,
+    clearQueue: offlineQueue.clearQueue,
   };
 }

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { generateLessonPlanMock } from "./brainOrchestrator";
 import { planLearnerSession } from "./workflows/sessionPlanWorkflow";
 import { getTutorOrchestrationService } from "./tutorOrchestration";
-import { initializeWebSocketServer } from "./websocket-server";
+import { initializeWebSocketServer, metricsRegistry } from "./websocket-server.js";
 import {
   info,
   error as logError,
@@ -332,6 +332,12 @@ fastify.post("/tutor/sessions/:sessionId/end", async (request: FastifyRequest, r
 fastify.get("/metrics", async (_request, reply) => {
   const metrics = drainMetrics();
   return reply.send({ metrics });
+});
+
+// Prometheus metrics endpoint
+fastify.get("/metrics/prometheus", async (_request, reply) => {
+  reply.type("text/plain");
+  return reply.send(await metricsRegistry.metrics());
 });
 
 fastify
