@@ -6,3 +6,4 @@ export * from "./usePermissions";
 export * from "./useWebSocket";
 export * from "./useConnectionQuality";
 export * from "./useOfflineQueue";
+export * from "./useOnboarding";

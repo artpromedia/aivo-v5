@@ -19,6 +19,13 @@ model User {
   tenant                  Tenant?                 @relation(fields: [tenantId], references: [id])
   isActive                Boolean                 @default(true)
   lastLogin               DateTime?
+  
+  // Onboarding tracking
+  onboardingStatus        OnboardingStatus        @default(PENDING)
+  onboardingCompletedAt   DateTime?
+  onboardingSteps         Json?                   // Track individual step completion
+  onboardingStartedAt     DateTime?
+  
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
   profile                 Profile?
@@ -47,6 +54,7 @@ model User {
   notificationPreference  NotificationPreference?
   communicationLogs       CommunicationLog[]
   accounts                Account[]
+  onboardingAnalytics     OnboardingAnalytics[]
 }
 
 model Profile {
@@ -887,6 +895,37 @@ enum Role {
   THERAPIST
   PARENT
   LEARNER
+}
+
+// ============================================================================
+// ONBOARDING - Progressive onboarding system
+// ============================================================================
+
+enum OnboardingStatus {
+  PENDING              // Just registered, not started
+  EMAIL_VERIFIED       // Email verified (if required)
+  PROFILE_COMPLETE     // Basic profile filled
+  CHILD_ADDED          // At least one learner added (for parents)
+  CLASS_SETUP          // Class created (for teachers)
+  ASSESSMENT_PENDING   // Learner exists, assessment not done
+  ASSESSMENT_COMPLETE  // Baseline assessment finished
+  COMPLETE             // Full onboarding done
+}
+
+model OnboardingAnalytics {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step          String   // Step identifier
+  action        String   // started, completed, skipped, abandoned
+  timeSpentMs   Int?     // Time spent on this step
+  metadata      Json?    // Additional context
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([step])
+  @@index([action])
+  @@index([createdAt])
 }
 
 enum AssessmentType {

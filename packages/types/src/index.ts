@@ -2,6 +2,7 @@ export * from "./observability";
 export * from "./governance";
 export * from "./ai-providers";
 export * from "./roles";
+export * from "./onboarding";
 
 export type Region =
   | "north_america"

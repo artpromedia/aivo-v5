@@ -4,6 +4,7 @@ type AuthUser = {
   email: string | null;
   name: string | null;
   username: string;
+  onboardingStatus: string;
 };
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -61,7 +62,8 @@ export const {
           role: user.role,
           email: user.email,
           name: user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user.username,
-          username: user.username
+          username: user.username,
+          onboardingStatus: (user as any).onboardingStatus || "PENDING"
         };
 
         return authUser;
@@ -75,6 +77,7 @@ export const {
         token.userId = authUser.id;
         token.role = authUser.role;
         token.username = authUser.username;
+        token.onboardingStatus = authUser.onboardingStatus;
       }
       return token;
     },
@@ -82,11 +85,13 @@ export const {
   const userId = typeof token.userId === "string" ? token.userId : undefined;
   const role = typeof token.role === "string" ? (token.role as Role) : undefined;
   const username = typeof token.username === "string" ? token.username : undefined;
+  const onboardingStatus = typeof token.onboardingStatus === "string" ? token.onboardingStatus : "PENDING";
 
       if (session.user && userId && role && username) {
         session.user.id = userId;
         session.user.role = role;
         session.user.username = username;
+        (session.user as any).onboardingStatus = onboardingStatus;
       }
       return session;
     }

@@ -244,4 +244,5 @@ export * from "./regulation";
 export * from "./sensory";
 export * from "./ai-providers";
 export * from "./roles";
+export * from "./onboarding";
 export { prisma } from "./client";
