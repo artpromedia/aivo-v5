@@ -242,4 +242,5 @@ export * from "./admin";
 export * from "./homework";
 export * from "./regulation";
 export * from "./sensory";
+export * from "./ai-providers";
 export { prisma } from "./client";

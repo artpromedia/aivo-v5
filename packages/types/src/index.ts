@@ -1,5 +1,6 @@
 export * from "./observability";
 export * from "./governance";
+export * from "./ai-providers";
 
 export type Region =
   | "north_america"
@@ -64,7 +65,21 @@ export interface User {
   name?: string;
 }
 
-export type LLMProviderName = "openai" | "anthropic" | "google" | "meta";
+export type LLMProviderName = 
+  | "openai" 
+  | "anthropic" 
+  | "google" 
+  | "meta"
+  | "cohere"
+  | "mistral"
+  | "huggingface"
+  | "groq"
+  | "together"
+  | "replicate"
+  | "azure_openai"
+  | "aws_bedrock"
+  | "custom"
+  | "aivo_brain";
 
 export interface ModelDispatchConfig {
   primary: LLMProviderName;

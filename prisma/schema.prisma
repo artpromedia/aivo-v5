@@ -9,44 +9,44 @@ datasource db {
 }
 
 model User {
-  id             String             @id @default(cuid())
-  email          String?            @unique
-  username       String             @unique
-  name           String?
-  password       String
-  role           Role
-  tenantId       String?
-  tenant         Tenant?            @relation(fields: [tenantId], references: [id])
-  isActive       Boolean            @default(true)
-  lastLogin      DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  profile        Profile?
-  roles          RoleAssignment[]   @relation("UserRoles")
-  learners       Learner[]          @relation("GuardianLearners")
-  ownedLearners  Learner[]          @relation("LearnerOwner")
-  learnerProfile Learner?
-  teacherClasses Class[]            @relation("TeacherClasses")
-  approvals      ApprovalRequest[]  @relation("ApproverRequests")
-  notifications  Notification[]
-  sessions       Session[]
-  createdUnits CurriculumUnit[] @relation("UnitCreators")
-  createdModules CurriculumModule[] @relation("ModuleCreators")
-  authoredCurriculum CurriculumContent[] @relation("ContentCreators")
-  updatedCurriculum CurriculumContent[] @relation("ContentUpdaters")
-  createdContentVersions ContentVersion[] @relation("VersionCreators")
-  reviewedContentVersions ContentVersion[] @relation("VersionReviewers")
-  contentInteractions ContentInteraction[] @relation("UserContentInteractions")
-  sentMessages Message[] @relation("MessageSender")
-  receivedMessages Message[] @relation("MessageRecipient")
-  requestedInsights AIInsight[] @relation("InsightRequester")
-  receivedInsights AIInsight[] @relation("InsightRecipient")
-  createdMeetings Meeting[] @relation("MeetingCreator")
-  meetingParticipations MeetingParticipant[]
-  announcementsCreated Announcement[] @relation("AnnouncementCreator")
-  notificationPreference NotificationPreference?
-  communicationLogs CommunicationLog[]
-  accounts       Account[]
+  id                      String                  @id @default(cuid())
+  email                   String?                 @unique
+  username                String                  @unique
+  name                    String?
+  password                String
+  role                    Role
+  tenantId                String?
+  tenant                  Tenant?                 @relation(fields: [tenantId], references: [id])
+  isActive                Boolean                 @default(true)
+  lastLogin               DateTime?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  profile                 Profile?
+  roles                   RoleAssignment[]        @relation("UserRoles")
+  learners                Learner[]               @relation("GuardianLearners")
+  ownedLearners           Learner[]               @relation("LearnerOwner")
+  learnerProfile          Learner?
+  teacherClasses          Class[]                 @relation("TeacherClasses")
+  approvals               ApprovalRequest[]       @relation("ApproverRequests")
+  notifications           Notification[]
+  sessions                Session[]
+  createdUnits            CurriculumUnit[]        @relation("UnitCreators")
+  createdModules          CurriculumModule[]      @relation("ModuleCreators")
+  authoredCurriculum      CurriculumContent[]     @relation("ContentCreators")
+  updatedCurriculum       CurriculumContent[]     @relation("ContentUpdaters")
+  createdContentVersions  ContentVersion[]        @relation("VersionCreators")
+  reviewedContentVersions ContentVersion[]        @relation("VersionReviewers")
+  contentInteractions     ContentInteraction[]    @relation("UserContentInteractions")
+  sentMessages            Message[]               @relation("MessageSender")
+  receivedMessages        Message[]               @relation("MessageRecipient")
+  requestedInsights       AIInsight[]             @relation("InsightRequester")
+  receivedInsights        AIInsight[]             @relation("InsightRecipient")
+  createdMeetings         Meeting[]               @relation("MeetingCreator")
+  meetingParticipations   MeetingParticipant[]
+  announcementsCreated    Announcement[]          @relation("AnnouncementCreator")
+  notificationPreference  NotificationPreference?
+  communicationLogs       CommunicationLog[]
+  accounts                Account[]
 }
 
 model Profile {
@@ -63,63 +63,63 @@ model Profile {
 }
 
 model Learner {
-  id              String             @id @default(cuid())
-  userId          String             @unique
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guardianId      String
-  guardian        User               @relation("GuardianLearners", fields: [guardianId], references: [id])
-  ownerId         String?
-  owner           User?              @relation("LearnerOwner", fields: [ownerId], references: [id])
-  tenantId        String?
-  tenant          Tenant?            @relation(fields: [tenantId], references: [id])
-  districtId      String?
-  district        District?          @relation(fields: [districtId], references: [id])
-  schoolId        String?
-  school          School?            @relation(fields: [schoolId], references: [id])
-  firstName       String
-  lastName        String
-  region          String?            @default("north_america")
-  dateOfBirth     DateTime
-  gradeLevel      Int
-  currentGrade    Int?
-  actualLevel     Float?
-  brainProfile    BrainProfile?
-  difficultyProposals DifficultyProposal[]
-  plannedSessions PlannedSession[]
-  progressSnapshots SubjectProgressSnapshot[]
-  telemetryEvents TelemetryEvent[]
-  safetyIncidents SafetyIncident[]
-  diagnoses       Diagnosis[]
-  accommodations  Json?
-  iepGoals        IEPGoal[]
-  assessments     Assessment[]
-  approvalRequests ApprovalRequest[]
-  adjustmentLogs  LearningAdjustmentLog[]
-  learningModel   PersonalizedModel?
-  sessions        LearningSession[]
-  progress        Progress[]
-  focusData       FocusData[]
-  gameHistory     GameSession[]
-  enrollments     Enrollment[]
+  id                    String                       @id @default(cuid())
+  userId                String                       @unique
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guardianId            String
+  guardian              User                         @relation("GuardianLearners", fields: [guardianId], references: [id])
+  ownerId               String?
+  owner                 User?                        @relation("LearnerOwner", fields: [ownerId], references: [id])
+  tenantId              String?
+  tenant                Tenant?                      @relation(fields: [tenantId], references: [id])
+  districtId            String?
+  district              District?                    @relation(fields: [districtId], references: [id])
+  schoolId              String?
+  school                School?                      @relation(fields: [schoolId], references: [id])
+  firstName             String
+  lastName              String
+  region                String?                      @default("north_america")
+  dateOfBirth           DateTime
+  gradeLevel            Int
+  currentGrade          Int?
+  actualLevel           Float?
+  brainProfile          BrainProfile?
+  difficultyProposals   DifficultyProposal[]
+  plannedSessions       PlannedSession[]
+  progressSnapshots     SubjectProgressSnapshot[]
+  telemetryEvents       TelemetryEvent[]
+  safetyIncidents       SafetyIncident[]
+  diagnoses             Diagnosis[]
+  accommodations        Json?
+  iepGoals              IEPGoal[]
+  assessments           Assessment[]
+  approvalRequests      ApprovalRequest[]
+  adjustmentLogs        LearningAdjustmentLog[]
+  learningModel         PersonalizedModel?
+  sessions              LearningSession[]
+  progress              Progress[]
+  focusData             FocusData[]
+  gameHistory           GameSession[]
+  enrollments           Enrollment[]
   experimentAssignments ExperimentAssignment[]
-  feedbackEntries Feedback[]
-  contentInteractions ContentInteraction[] @relation("LearnerContentInteractions")
-  baselineSessions BaselineAssessmentSession[]
-  speechSamples    SpeechAssessmentSample[]
-  notifications    Notification[]
-  messages         Message[]
-  aiInsights       AIInsight[]
-  communicationLogs CommunicationLog[]
-  accommodationPlan LearnerAccommodation? @relation("LearnerAccommodationPlan")
-  accommodationMetrics AccommodationEffectiveness[] @relation("LearnerAccommodationMetrics")
-  agentStates      AgentState[]
-  agentInteractions AgentInteraction[]
-  homeworkSessions HomeworkSession[]
-  regulationSessions RegulationSession[]
-  emotionHistory   EmotionHistory[]
-  sensoryProfile   SensoryProfile?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  feedbackEntries       Feedback[]
+  contentInteractions   ContentInteraction[]         @relation("LearnerContentInteractions")
+  baselineSessions      BaselineAssessmentSession[]
+  speechSamples         SpeechAssessmentSample[]
+  notifications         Notification[]
+  messages              Message[]
+  aiInsights            AIInsight[]
+  communicationLogs     CommunicationLog[]
+  accommodationPlan     LearnerAccommodation?        @relation("LearnerAccommodationPlan")
+  accommodationMetrics  AccommodationEffectiveness[] @relation("LearnerAccommodationMetrics")
+  agentStates           AgentState[]
+  agentInteractions     AgentInteraction[]
+  homeworkSessions      HomeworkSession[]
+  regulationSessions    RegulationSession[]
+  emotionHistory        EmotionHistory[]
+  sensoryProfile        SensoryProfile?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
 }
 
 model BaselineAssessmentSession {
@@ -131,12 +131,12 @@ model BaselineAssessmentSession {
   plan             Json?
   multiModalPlan   Json?
   aiSummary        Json?
-  startedAt        DateTime                @default(now())
+  startedAt        DateTime                 @default(now())
   completedAt      DateTime?
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
 
-  learner       Learner                @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner       Learner                  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   domainResults BaselineDomainResult[]
   speechSamples SpeechAssessmentSample[]
 
@@ -144,7 +144,7 @@ model BaselineAssessmentSession {
 }
 
 model BaselineDomainResult {
-  id         String   @id @default(cuid())
+  id         String         @id @default(cuid())
   sessionId  String
   domain     BaselineDomain
   component  String
@@ -153,7 +153,7 @@ model BaselineDomainResult {
   score      Float?
   confidence Float?
   aiNotes    String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime       @default(now())
 
   session BaselineAssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -176,7 +176,7 @@ model SpeechAssessmentSample {
   analysis        Json?
   createdAt       DateTime @default(now())
 
-  learner Learner                  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner Learner                    @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   session BaselineAssessmentSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@index([learnerId])
@@ -184,21 +184,21 @@ model SpeechAssessmentSample {
 }
 
 model Diagnosis {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   learnerId   String
-  learner     Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner     Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   type        String
   description String?
   severity    String?
   notes       String?
   diagnosedAt DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 model Assessment {
-  id           String            @id @default(cuid())
+  id           String             @id @default(cuid())
   learnerId    String
-  learner      Learner           @relation(fields: [learnerId], references: [id])
+  learner      Learner            @relation(fields: [learnerId], references: [id])
   type         AssessmentType
   status       AssessmentStatus
   domains      AssessmentDomain[]
@@ -206,19 +206,19 @@ model Assessment {
   overallLevel Float?
   startedAt    DateTime
   completedAt  DateTime?
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime           @default(now())
 }
 
 model AssessmentDomain {
-  id           String      @id @default(cuid())
+  id           String     @id @default(cuid())
   assessmentId String
-  assessment   Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   domain       DomainType
   questions    Json
   responses    Json
   score        Float?
   level        Float?
-  createdAt    DateTime    @default(now())
+  createdAt    DateTime   @default(now())
 }
 
 model PersonalizedModel {
@@ -241,42 +241,42 @@ model PersonalizedModel {
 }
 
 model MainModelVersion {
-  id                String              @id @default(cuid())
-  version           String              @unique
-  modelPath         String
-  architecture      Json
-  trainingMetrics   Json
-  status            ModelVersionStatus  @default(ACTIVE)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  federatedUpdates  FederatedUpdate[]
+  id               String             @id @default(cuid())
+  version          String             @unique
+  modelPath        String
+  architecture     Json
+  trainingMetrics  Json
+  status           ModelVersionStatus @default(ACTIVE)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  federatedUpdates FederatedUpdate[]
 }
 
 model FederatedUpdate {
-  id                     String            @id @default(cuid())
+  id                     String           @id @default(cuid())
   mainModelVersionId     String
-  mainModelVersion       MainModelVersion  @relation(fields: [mainModelVersionId], references: [id], onDelete: Cascade)
+  mainModelVersion       MainModelVersion @relation(fields: [mainModelVersionId], references: [id], onDelete: Cascade)
   aggregationStrategy    String
   contributingLearners   String[]
   performanceImprovement Float
   privacyBudget          Float?
   metadata               Json?
-  createdAt              DateTime          @default(now())
+  createdAt              DateTime         @default(now())
 }
 
 model ModelTrainingSession {
-  id                      String             @id @default(cuid())
+  id                      String            @id @default(cuid())
   personalizedModelId     String
-  personalizedModel       PersonalizedModel  @relation(fields: [personalizedModelId], references: [id], onDelete: Cascade)
+  personalizedModel       PersonalizedModel @relation(fields: [personalizedModelId], references: [id], onDelete: Cascade)
   epochs                  Int
   batchSize               Int
   samples                 Int
   finalLoss               Float
   finalAccuracy           Float
-  contributedToFederation Boolean            @default(false)
+  contributedToFederation Boolean           @default(false)
   federatedUpdateId       String?
   metadata                Json?
-  createdAt               DateTime           @default(now())
+  createdAt               DateTime          @default(now())
 }
 
 model LearningAdjustmentLog {
@@ -306,34 +306,34 @@ model LearningSession {
   interactions      Json
   focusScore        Float?
   completion        Float?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime  @default(now())
 }
 
 model FocusData {
-  id            String    @id @default(cuid())
-  learnerId     String
-  learner       Learner   @relation(fields: [learnerId], references: [id])
-  sessionId     String?
-  focusScore    Float
-  distractions  Int
-  timestamp     DateTime
-  metrics       Json
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  learnerId    String
+  learner      Learner  @relation(fields: [learnerId], references: [id])
+  sessionId    String?
+  focusScore   Float
+  distractions Int
+  timestamp    DateTime
+  metrics      Json
+  createdAt    DateTime @default(now())
 }
 
 model GameSession {
-  id                String    @id @default(cuid())
-  learnerId         String
-  learner           Learner   @relation(fields: [learnerId], references: [id])
-  gameType          GameType
-  subject           String?
-  difficulty        Int
-  duration          Int
-  score             Int?
-  completed         Boolean
-  triggeredBy       String
-  returnedToLearning Boolean @default(false)
-  createdAt         DateTime @default(now())
+  id                 String   @id @default(cuid())
+  learnerId          String
+  learner            Learner  @relation(fields: [learnerId], references: [id])
+  gameType           GameType
+  subject            String?
+  difficulty         Int
+  duration           Int
+  score              Int?
+  completed          Boolean
+  triggeredBy        String
+  returnedToLearning Boolean  @default(false)
+  createdAt          DateTime @default(now())
 }
 
 model Progress {
@@ -364,28 +364,28 @@ model ApprovalRequest {
 }
 
 model Class {
-  id          String        @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   description String?
   gradeLevel  Int
   teacherId   String
-  teacher     User          @relation("TeacherClasses", fields: [teacherId], references: [id])
+  teacher     User         @relation("TeacherClasses", fields: [teacherId], references: [id])
   enrollments Enrollment[]
   assignments Assignment[]
   startDate   DateTime
   endDate     DateTime?
-  isActive    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Enrollment {
-  id         String            @id @default(cuid())
+  id         String           @id @default(cuid())
   learnerId  String
-  learner    Learner           @relation(fields: [learnerId], references: [id])
+  learner    Learner          @relation(fields: [learnerId], references: [id])
   classId    String
-  class      Class             @relation(fields: [classId], references: [id])
-  enrolledAt DateTime          @default(now())
+  class      Class            @relation(fields: [classId], references: [id])
+  enrolledAt DateTime         @default(now())
   status     EnrollmentStatus
 
   @@unique([learnerId, classId])
@@ -430,7 +430,7 @@ model Session {
 }
 
 model CurriculumTopic {
-  id          String       @id @default(cuid())
+  id          String        @id @default(cuid())
   tenantId    String
   subject     String
   grade       Int
@@ -440,26 +440,26 @@ model CurriculumTopic {
   title       String
   description String?
   content     ContentItem[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model LearnerAccommodation {
-  id            String             @id @default(cuid())
-  learnerId     String             @unique
+  id             String              @id @default(cuid())
+  learnerId      String              @unique
   accommodations AccommodationType[]
-  autoEnabled   Boolean            @default(false)
-  autoEnabledAt DateTime?
-  notes         String?
-  metadata      Json?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  autoEnabled    Boolean             @default(false)
+  autoEnabledAt  DateTime?
+  notes          String?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   learner Learner @relation("LearnerAccommodationPlan", fields: [learnerId], references: [id], onDelete: Cascade)
 }
 
 model AccommodationEffectiveness {
-  id                 String             @id @default(cuid())
+  id                 String            @id @default(cuid())
   learnerId          String
   accommodation      AccommodationType
   sessionId          String?
@@ -468,7 +468,7 @@ model AccommodationEffectiveness {
   accuracyWith       Float?
   timeOnTaskWith     Float?
   metadata           Json?
-  createdAt          DateTime           @default(now())
+  createdAt          DateTime          @default(now())
 
   learner Learner @relation("LearnerAccommodationMetrics", fields: [learnerId], references: [id], onDelete: Cascade)
 
@@ -498,20 +498,20 @@ model ContentItem {
 }
 
 model LearningStandard {
-  id           String             @id @default(cuid())
+  id           String   @id @default(cuid())
   code         String
   jurisdiction String
   gradeBand    String
   subject      String
   skillFocus   String?
   description  String?
-  tags         String[]           @default([])
+  tags         String[] @default([])
   metadata     Json?
-  isActive     Boolean            @default(true)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  units          CurriculumUnit[]   @relation("UnitStandards")
+  units          CurriculumUnit[]    @relation("UnitStandards")
   primaryContent CurriculumContent[] @relation("ContentStandards")
   alignedContent CurriculumContent[] @relation("CurriculumContentStandards")
 
@@ -519,19 +519,19 @@ model LearningStandard {
 }
 
 model CurriculumUnit {
-  id          String                 @id @default(cuid())
+  id          String               @id @default(cuid())
   title       String
   description String?
   subject     String
   gradeBand   String
   gradeLevel  Int?
-  focusSkills String[]               @default([])
-  status      CurriculumUnitStatus   @default(DRAFT)
+  focusSkills String[]             @default([])
+  status      CurriculumUnitStatus @default(DRAFT)
   createdById String?
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
-  createdBy User?             @relation("UnitCreators", fields: [createdById], references: [id])
+  createdBy User?              @relation("UnitCreators", fields: [createdById], references: [id])
   modules   CurriculumModule[]
   standards LearningStandard[] @relation("UnitStandards")
 }
@@ -551,9 +551,9 @@ model CurriculumModule {
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 
-  unit       CurriculumUnit   @relation(fields: [unitId], references: [id])
-  createdBy  User?            @relation("ModuleCreators", fields: [createdById], references: [id])
-  content    CurriculumContent[]
+  unit          CurriculumUnit       @relation(fields: [unitId], references: [id])
+  createdBy     User?                @relation("ModuleCreators", fields: [createdById], references: [id])
+  content       CurriculumContent[]
   prerequisites ModulePrerequisite[] @relation("ModulePrerequisites")
   dependents    ModulePrerequisite[] @relation("ModuleDependency")
 
@@ -561,9 +561,9 @@ model CurriculumModule {
 }
 
 model ModulePrerequisite {
-  id              String           @id @default(cuid())
-  moduleId        String
-  prerequisiteId  String
+  id             String @id @default(cuid())
+  moduleId       String
+  prerequisiteId String
 
   module       CurriculumModule @relation("ModulePrerequisites", fields: [moduleId], references: [id], onDelete: Cascade)
   prerequisite CurriculumModule @relation("ModuleDependency", fields: [prerequisiteId], references: [id], onDelete: Cascade)
@@ -572,24 +572,24 @@ model ModulePrerequisite {
 }
 
 model CurriculumContent {
-  id                String                   @id @default(cuid())
+  id                String                  @id @default(cuid())
   moduleId          String
   title             String
   summary           String?
   contentType       CurriculumContentType
   difficultyLevel   Float?
   primaryStandardId String?
-  aiTags            String[]                 @default([])
-  status            CurriculumContentStatus  @default(ACTIVE)
+  aiTags            String[]                @default([])
+  status            CurriculumContentStatus @default(ACTIVE)
   createdById       String?
   updatedById       String?
-  createdAt         DateTime                 @default(now())
-  updatedAt         DateTime                 @updatedAt
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 
-  module          CurriculumModule  @relation(fields: [moduleId], references: [id])
-  primaryStandard LearningStandard? @relation("ContentStandards", fields: [primaryStandardId], references: [id])
-  createdBy       User?             @relation("ContentCreators", fields: [createdById], references: [id])
-  updatedBy       User?             @relation("ContentUpdaters", fields: [updatedById], references: [id])
+  module          CurriculumModule       @relation(fields: [moduleId], references: [id])
+  primaryStandard LearningStandard?      @relation("ContentStandards", fields: [primaryStandardId], references: [id])
+  createdBy       User?                  @relation("ContentCreators", fields: [createdById], references: [id])
+  updatedBy       User?                  @relation("ContentUpdaters", fields: [updatedById], references: [id])
   versions        ContentVersion[]
   interactions    ContentInteraction[]
   effectiveness   ContentEffectiveness[]
@@ -601,28 +601,28 @@ model CurriculumContent {
 }
 
 model ContentVersion {
-  id               String                 @id @default(cuid())
-  contentId        String
-  versionNumber    Int
-  source           ContentVersionSource   @default(AUTHOR)
-  status           ContentVersionStatus   @default(DRAFT)
-  prompt           String?
-  aiModel          String?
-  diffSummary      String?
+  id                String               @id @default(cuid())
+  contentId         String
+  versionNumber     Int
+  source            ContentVersionSource @default(AUTHOR)
+  status            ContentVersionStatus @default(DRAFT)
+  prompt            String?
+  aiModel           String?
+  diffSummary       String?
   adaptationContext Json?
-  aiConfidence     Float?
-  payload          Json?
-  createdById      String?
-  reviewedById     String?
-  publishedAt      DateTime?
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  aiConfidence      Float?
+  payload           Json?
+  createdById       String?
+  reviewedById      String?
+  publishedAt       DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
-  content    CurriculumContent @relation(fields: [contentId], references: [id])
-  createdBy  User?             @relation("VersionCreators", fields: [createdById], references: [id])
-  reviewedBy User?             @relation("VersionReviewers", fields: [reviewedById], references: [id])
-  assets     ContentAsset[]
-  interactions ContentInteraction[]
+  content       CurriculumContent      @relation(fields: [contentId], references: [id])
+  createdBy     User?                  @relation("VersionCreators", fields: [createdById], references: [id])
+  reviewedBy    User?                  @relation("VersionReviewers", fields: [reviewedById], references: [id])
+  assets        ContentAsset[]
+  interactions  ContentInteraction[]
   effectiveness ContentEffectiveness[]
 
   @@unique([contentId, versionNumber])
@@ -630,16 +630,16 @@ model ContentVersion {
 }
 
 model ContentAsset {
-  id            String           @id @default(cuid())
-  versionId     String
-  assetType     ContentAssetType
-  title         String?
-  uri           String?
-  mimeType      String?
-  textContent   String?
+  id              String           @id @default(cuid())
+  versionId       String
+  assetType       ContentAssetType
+  title           String?
+  uri             String?
+  mimeType        String?
+  textContent     String?
   durationSeconds Int?
-  metadata      Json?
-  createdAt     DateTime         @default(now())
+  metadata        Json?
+  createdAt       DateTime         @default(now())
 
   version ContentVersion @relation(fields: [versionId], references: [id])
 
@@ -647,13 +647,13 @@ model ContentAsset {
 }
 
 model ContentInteraction {
-  id             String                 @id @default(cuid())
-  contentId      String
-  versionId      String?
-  learnerId      String?
-  userId         String?
+  id              String                 @id @default(cuid())
+  contentId       String
+  versionId       String?
+  learnerId       String?
+  userId          String?
   interactionType ContentInteractionType
-  modality       String?
+  modality        String?
   durationSeconds Int?
   feedbackRating  Int?
   feedbackComment String?
@@ -661,10 +661,10 @@ model ContentInteraction {
   metadata        Json?
   createdAt       DateTime               @default(now())
 
-  content   CurriculumContent @relation(fields: [contentId], references: [id])
-  version   ContentVersion?   @relation(fields: [versionId], references: [id])
-  learner   Learner?          @relation("LearnerContentInteractions", fields: [learnerId], references: [id])
-  user      User?             @relation("UserContentInteractions", fields: [userId], references: [id])
+  content CurriculumContent @relation(fields: [contentId], references: [id])
+  version ContentVersion?   @relation(fields: [versionId], references: [id])
+  learner Learner?          @relation("LearnerContentInteractions", fields: [learnerId], references: [id])
+  user    User?             @relation("UserContentInteractions", fields: [userId], references: [id])
 
   @@index([contentId])
   @@index([learnerId])
@@ -672,17 +672,17 @@ model ContentInteraction {
 }
 
 model ContentEffectiveness {
-  id               String    @id @default(cuid())
-  contentId        String
-  versionId        String?
-  date             DateTime
-  engagementScore  Float     @default(0)
-  masteryDelta     Float     @default(0)
-  aiQualityScore   Float     @default(0)
+  id                String   @id @default(cuid())
+  contentId         String
+  versionId         String?
+  date              DateTime
+  engagementScore   Float    @default(0)
+  masteryDelta      Float    @default(0)
+  aiQualityScore    Float    @default(0)
   educatorSentiment Float    @default(0)
-  sampleSize       Int       @default(0)
-  metadata         Json?
-  createdAt        DateTime  @default(now())
+  sampleSize        Int      @default(0)
+  metadata          Json?
+  createdAt         DateTime @default(now())
 
   content CurriculumContent @relation(fields: [contentId], references: [id])
   version ContentVersion?   @relation(fields: [versionId], references: [id])
@@ -692,52 +692,52 @@ model ContentEffectiveness {
 }
 
 model Experiment {
-  id             String                 @id @default(cuid())
-  tenantId       String
-  key            String                 @unique
-  name           String
-  status         String
-  description    String?
-  variants       Json
-  targeting      Json?
+  id              String                 @id @default(cuid())
+  tenantId        String
+  key             String                 @unique
+  name            String
+  status          String
+  description     String?
+  variants        Json
+  targeting       Json?
   createdByUserId String?
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  assignments    ExperimentAssignment[]
-  feedback       Feedback[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  assignments     ExperimentAssignment[]
+  feedback        Feedback[]
 }
 
 model ExperimentAssignment {
-  id           String      @id @default(cuid())
+  id           String     @id @default(cuid())
   experimentId String
-  experiment   Experiment  @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
   learnerId    String
-  learner      Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner      Learner    @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   variantKey   String
   metadata     Json?
-  createdAt    DateTime    @default(now())
+  createdAt    DateTime   @default(now())
 
   @@unique([experimentId, learnerId])
 }
 
 model Feedback {
-  id           String     @id @default(cuid())
-  tenantId     String
-  learnerId    String?
-  learner      Learner?   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  userId       String?
-  targetType   String
-  targetId     String
-  role         String
-  rating       Int
-  label        String?
-  comment      String?
-  experimentId String?
-  experiment   Experiment? @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  tenantId      String
+  learnerId     String?
+  learner       Learner?    @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  userId        String?
+  targetType    String
+  targetId      String
+  role          String
+  rating        Int
+  label         String?
+  comment       String?
+  experimentId  String?
+  experiment    Experiment? @relation(fields: [experimentId], references: [id], onDelete: Cascade)
   experimentKey String?
-  variantKey   String?
-  metadata     Json?
-  createdAt    DateTime   @default(now())
+  variantKey    String?
+  metadata      Json?
+  createdAt     DateTime    @default(now())
 }
 
 model IEPGoal {
@@ -755,18 +755,18 @@ model IEPGoal {
 }
 
 model Message {
-  id        String       @id @default(cuid())
+  id        String      @id @default(cuid())
   fromId    String
   toId      String
   learnerId String?
-  type      MessageType  @default(TEXT)
+  type      MessageType @default(TEXT)
   content   String
   metadata  Json?
   readAt    DateTime?
-  createdAt DateTime     @default(now())
+  createdAt DateTime    @default(now())
 
-  fromUser User   @relation("MessageSender", fields: [fromId], references: [id])
-  toUser   User   @relation("MessageRecipient", fields: [toId], references: [id])
+  fromUser User     @relation("MessageSender", fields: [fromId], references: [id])
+  toUser   User     @relation("MessageRecipient", fields: [toId], references: [id])
   learner  Learner? @relation(fields: [learnerId], references: [id])
 
   @@index([toId, createdAt])
@@ -774,16 +774,16 @@ model Message {
 }
 
 model AIInsight {
-  id             String          @id @default(cuid())
-  learnerId      String
-  requesterId    String?
-  generatedForId String?
-  type           String
-  summary        String
-  content        Json
+  id              String          @id @default(cuid())
+  learnerId       String
+  requesterId     String?
+  generatedForId  String?
+  type            String
+  summary         String
+  content         Json
   recommendations Json?
-  priority       InsightPriority @default(MEDIUM)
-  createdAt      DateTime        @default(now())
+  priority        InsightPriority @default(MEDIUM)
+  createdAt       DateTime        @default(now())
 
   learner      Learner @relation(fields: [learnerId], references: [id])
   requester    User?   @relation("InsightRequester", fields: [requesterId], references: [id])
@@ -800,16 +800,16 @@ model Meeting {
   createdById   String?
   createdAt     DateTime @default(now())
 
-  createdBy    User?                 @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdBy    User?                @relation("MeetingCreator", fields: [createdById], references: [id])
   participants MeetingParticipant[]
 }
 
 model MeetingParticipant {
-  id         String   @id @default(cuid())
+  id         String                   @id @default(cuid())
   meetingId  String
   userId     String
   status     MeetingParticipantStatus @default(PENDING)
-  inviteSent DateTime? @default(now())
+  inviteSent DateTime?                @default(now())
   joinedAt   DateTime?
 
   meeting Meeting @relation(fields: [meetingId], references: [id])
@@ -831,24 +831,24 @@ model Announcement {
 }
 
 model NotificationPreference {
-  id              String           @id @default(cuid())
-  userId          String           @unique
+  id              String          @id @default(cuid())
+  userId          String          @unique
   channels        Json
-  digestFrequency DigestFrequency  @default(INSTANT)
+  digestFrequency DigestFrequency @default(INSTANT)
   muteUntil       DateTime?
-  updatedAt       DateTime         @updatedAt
+  updatedAt       DateTime        @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 }
 
 model CommunicationLog {
-  id        String                @id @default(cuid())
+  id        String               @id @default(cuid())
   userId    String?
   learnerId String?
   type      CommunicationLogType
   channel   String
   payload   Json
-  createdAt DateTime              @default(now())
+  createdAt DateTime             @default(now())
 
   user    User?    @relation(fields: [userId], references: [id])
   learner Learner? @relation(fields: [learnerId], references: [id])
@@ -1098,16 +1098,16 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String? @db.Text
   session_state     String?
-  
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
 
@@ -1121,19 +1121,19 @@ model VerificationToken {
 
 // Agent System Models
 model AgentState {
-  id                  String      @id @default(cuid())
-  agentId             String      @unique
-  learnerId           String
-  learner             Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  
-  agentType           AgentType
-  state               Json
-  memory              Json
-  lastActivity        DateTime
-  
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  
+  id        String  @id @default(cuid())
+  agentId   String  @unique
+  learnerId String
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  agentType    AgentType
+  state        Json
+  memory       Json
+  lastActivity DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([learnerId])
   @@index([lastActivity])
   @@index([agentType])
@@ -1148,21 +1148,21 @@ enum AgentType {
 }
 
 model AgentInteraction {
-  id                  String      @id @default(cuid())
-  learnerId           String
-  learner             Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  
-  agentId             String
-  interactionType     String
-  input               Json
-  output              Json
-  
-  durationMs          Int?
-  success             Boolean     @default(true)
-  errorMessage        String?
-  
-  createdAt           DateTime    @default(now())
-  
+  id        String  @id @default(cuid())
+  learnerId String
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  agentId         String
+  interactionType String
+  input           Json
+  output          Json
+
+  durationMs   Int?
+  success      Boolean @default(true)
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+
   @@index([learnerId])
   @@index([agentId])
   @@index([createdAt])
@@ -1175,28 +1175,28 @@ model AgentInteraction {
 // ============================================================================
 
 model Tenant {
-  id              String         @id @default(cuid())
-  name            String
-  type            TenantType     @default(DISTRICT)
-  region          String         @default("north_america")
-  isActive        Boolean        @default(true)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id        String     @id @default(cuid())
+  name      String
+  type      TenantType @default(DISTRICT)
+  region    String     @default("north_america")
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  config          TenantConfig?
-  users           User[]
-  learners        Learner[]
-  districts       District[]
-  schools         School[]
-  roleAssignments RoleAssignment[]
+  config              TenantConfig?
+  users               User[]
+  learners            Learner[]
+  districts           District[]
+  schools             School[]
+  roleAssignments     RoleAssignment[]
   difficultyProposals DifficultyProposal[]
-  notifications   ExtendedNotification[]
-  plannedSessions PlannedSession[]
-  telemetryEvents TelemetryEvent[]
-  tenantLimits    TenantLimits?
-  tenantUsage     TenantUsage[]
-  auditLogs       AuditLogEntry[]
-  safetyIncidents SafetyIncident[]
+  notifications       ExtendedNotification[]
+  plannedSessions     PlannedSession[]
+  telemetryEvents     TelemetryEvent[]
+  tenantLimits        TenantLimits?
+  tenantUsage         TenantUsage[]
+  auditLogs           AuditLogEntry[]
+  safetyIncidents     SafetyIncident[]
 
   @@index([region])
   @@index([type])
@@ -1281,17 +1281,17 @@ enum TenantType {
 // ============================================================================
 
 model BrainProfile {
-  id              String   @id @default(cuid())
-  learnerId       String   @unique
-  learner         Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  region          String   @default("north_america")
-  currentGrade    Int
-  gradeBand       String   // k_5, 6_8, 9_12
-  subjectLevels   Json     @default("[]") // Array of {subject, level, lastAssessed}
-  neurodiversity  Json     @default("{}") // ADHD, Dyslexia, Autism configs
-  preferences     Json     @default("{}") // Learning style preferences
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  learnerId      String   @unique
+  learner        Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  region         String   @default("north_america")
+  currentGrade   Int
+  gradeBand      String // k_5, 6_8, 9_12
+  subjectLevels  Json     @default("[]") // Array of {subject, level, lastAssessed}
+  neurodiversity Json     @default("{}") // ADHD, Dyslexia, Autism configs
+  preferences    Json     @default("{}") // Learning style preferences
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([region])
   @@index([gradeBand])
@@ -1303,23 +1303,23 @@ model BrainProfile {
 // ============================================================================
 
 model DifficultyProposal {
-  id            String    @id @default(cuid())
+  id            String                   @id @default(cuid())
   learnerId     String
-  learner       Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner       Learner                  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   tenantId      String
-  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   subject       String
   fromLevel     Float
   toLevel       Float
-  direction     String    // "easier" | "harder"
-  rationale     String    @db.Text
-  createdBy     String    // "system" | "teacher" | "parent"
+  direction     String // "easier" | "harder"
+  rationale     String                   @db.Text
+  createdBy     String // "system" | "teacher" | "parent"
   status        DifficultyProposalStatus @default(PENDING)
   decidedById   String?
   decidedAt     DateTime?
-  decisionNotes String?   @db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  decisionNotes String?                  @db.Text
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
 
   notifications ExtendedNotification[]
 
@@ -1340,20 +1340,20 @@ enum DifficultyProposalStatus {
 // ============================================================================
 
 model PlannedSession {
-  id             String           @id @default(cuid())
+  id             String               @id @default(cuid())
   learnerId      String
-  learner        Learner          @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner        Learner              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   tenantId       String
-  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  date           String           // YYYY-MM-DD format
+  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  date           String // YYYY-MM-DD format
   subject        String
   status         PlannedSessionStatus @default(PLANNED)
   plannedMinutes Int
   actualMinutes  Int?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
-  activities     SessionActivity[]
+  activities SessionActivity[]
 
   @@index([learnerId, date])
   @@index([tenantId])
@@ -1361,20 +1361,20 @@ model PlannedSession {
 }
 
 model SessionActivity {
-  id               String   @id @default(cuid())
+  id               String                @id @default(cuid())
   sessionId        String
-  session          PlannedSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session          PlannedSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   learnerId        String
   subject          String
   type             String
   title            String
-  instructions     String   @db.Text
+  instructions     String                @db.Text
   estimatedMinutes Int
   status           SessionActivityStatus @default(PENDING)
   startedAt        DateTime?
   completedAt      DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   @@index([sessionId])
   @@index([status])
@@ -1399,15 +1399,15 @@ enum SessionActivityStatus {
 // ============================================================================
 
 model SubjectProgressSnapshot {
-  id              String   @id @default(cuid())
-  learnerId       String
-  learner         Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  subject         String
-  date            String   // YYYY-MM-DD
-  masteryScore    Float
+  id               String   @id @default(cuid())
+  learnerId        String
+  learner          Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject          String
+  date             String // YYYY-MM-DD
+  masteryScore     Float
   minutesPracticed Int
-  difficultyLevel Float
-  createdAt       DateTime @default(now())
+  difficultyLevel  Float
+  createdAt        DateTime @default(now())
 
   @@unique([learnerId, subject, date])
   @@index([learnerId])
@@ -1451,7 +1451,7 @@ model TenantUsage {
   id              String   @id @default(cuid())
   tenantId        String
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  date            String   // YYYY-MM-DD
+  date            String // YYYY-MM-DD
   llmCalls        Int      @default(0)
   tutorTurns      Int      @default(0)
   sessionsPlanned Int      @default(0)
@@ -1485,16 +1485,16 @@ model AuditLogEntry {
 // ============================================================================
 
 model SafetyIncident {
-  id               String   @id @default(cuid())
+  id               String         @id @default(cuid())
   tenantId         String
-  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   learnerId        String?
-  learner          Learner? @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+  learner          Learner?       @relation(fields: [learnerId], references: [id], onDelete: SetNull)
   type             String
   severity         SafetySeverity
-  message          String   @db.Text
-  rawModelResponse String?  @db.Text
-  createdAt        DateTime @default(now())
+  message          String         @db.Text
+  rawModelResponse String?        @db.Text
+  createdAt        DateTime       @default(now())
 
   @@index([tenantId])
   @@index([learnerId])
@@ -1513,19 +1513,19 @@ enum SafetySeverity {
 // ============================================================================
 
 model ExtendedNotification {
-  id                         String    @id @default(cuid())
-  tenantId                   String
-  tenant                     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  learnerId                  String?
-  recipientUserId            String
-  audience                   String    // "parent" | "teacher" | "admin"
-  type                       String
-  title                      String
-  body                       String    @db.Text
-  status                     String    @default("unread") // "unread" | "read"
+  id                          String              @id @default(cuid())
+  tenantId                    String
+  tenant                      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  learnerId                   String?
+  recipientUserId             String
+  audience                    String // "parent" | "teacher" | "admin"
+  type                        String
+  title                       String
+  body                        String              @db.Text
+  status                      String              @default("unread") // "unread" | "read"
   relatedDifficultyProposalId String?
-  difficultyProposal         DifficultyProposal? @relation(fields: [relatedDifficultyProposalId], references: [id])
-  createdAt                  DateTime  @default(now())
+  difficultyProposal          DifficultyProposal? @relation(fields: [relatedDifficultyProposalId], references: [id])
+  createdAt                   DateTime            @default(now())
 
   @@index([tenantId])
   @@index([recipientUserId])
@@ -1537,29 +1537,29 @@ model ExtendedNotification {
 // ============================================================================
 
 model HomeworkSession {
-  id                  String                @id @default(cuid())
-  learnerId           String
-  learner             Learner               @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  title               String
-  subject             String?               // Detected or specified subject
-  gradeLevel          Int?                  // Detected or specified grade level
-  status              HomeworkSessionStatus @default(UNDERSTAND)
-  difficultyMode      HomeworkDifficultyMode @default(SCAFFOLDED)
-  parentAssistMode    Boolean               @default(false)
-  hintsUsed           Int                   @default(0)
-  maxHintsPerStep     Int                   @default(3)
-  currentStepHints    Int                   @default(0)
-  problemAnalysis     Json?                 // Stored ProblemAnalysis from UNDERSTAND step
-  solutionPlan        Json?                 // Stored SolutionPlan from PLAN step
-  finalAnswer         Json?                 // Learner's final answer
-  verificationResult  Json?                 // Stored VerificationResult from CHECK step
-  completedAt         DateTime?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  
-  files               HomeworkFile[]
-  workProducts        HomeworkWorkProduct[]
-  hints               HomeworkHint[]
+  id                 String                 @id @default(cuid())
+  learnerId          String
+  learner            Learner                @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  title              String
+  subject            String? // Detected or specified subject
+  gradeLevel         Int? // Detected or specified grade level
+  status             HomeworkSessionStatus  @default(UNDERSTAND)
+  difficultyMode     HomeworkDifficultyMode @default(SCAFFOLDED)
+  parentAssistMode   Boolean                @default(false)
+  hintsUsed          Int                    @default(0)
+  maxHintsPerStep    Int                    @default(3)
+  currentStepHints   Int                    @default(0)
+  problemAnalysis    Json? // Stored ProblemAnalysis from UNDERSTAND step
+  solutionPlan       Json? // Stored SolutionPlan from PLAN step
+  finalAnswer        Json? // Learner's final answer
+  verificationResult Json? // Stored VerificationResult from CHECK step
+  completedAt        DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  files        HomeworkFile[]
+  workProducts HomeworkWorkProduct[]
+  hints        HomeworkHint[]
 
   @@index([learnerId])
   @@index([status])
@@ -1575,26 +1575,26 @@ enum HomeworkSessionStatus {
 }
 
 enum HomeworkDifficultyMode {
-  SIMPLIFIED    // Extra scaffolding, simpler language
-  SCAFFOLDED    // Standard scaffolding with hints
-  STANDARD      // Minimal assistance
+  SIMPLIFIED // Extra scaffolding, simpler language
+  SCAFFOLDED // Standard scaffolding with hints
+  STANDARD // Minimal assistance
 }
 
 model HomeworkFile {
-  id              String           @id @default(cuid())
-  sessionId       String
-  session         HomeworkSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  filename        String
-  mimeType        String
-  fileUrl         String           // URL to stored file
-  fileSize        Int?             // Size in bytes
-  ocrStatus       OcrStatus        @default(PENDING)
-  extractedText   String?          @db.Text
-  ocrConfidence   Float?           // 0-1 confidence score
-  ocrMetadata     Json?            // Additional OCR metadata (word positions, etc.)
-  inputType       HomeworkInputType @default(UPLOAD)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id            String            @id @default(cuid())
+  sessionId     String
+  session       HomeworkSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  filename      String
+  mimeType      String
+  fileUrl       String // URL to stored file
+  fileSize      Int? // Size in bytes
+  ocrStatus     OcrStatus         @default(PENDING)
+  extractedText String?           @db.Text
+  ocrConfidence Float? // 0-1 confidence score
+  ocrMetadata   Json? // Additional OCR metadata (word positions, etc.)
+  inputType     HomeworkInputType @default(UPLOAD)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([sessionId])
   @@index([ocrStatus])
@@ -1608,49 +1608,49 @@ enum OcrStatus {
 }
 
 enum HomeworkInputType {
-  UPLOAD        // File upload
-  CAMERA        // Camera capture
-  TEXT          // Direct text input
-  DOCUMENT      // PDF/Document upload
+  UPLOAD // File upload
+  CAMERA // Camera capture
+  TEXT // Direct text input
+  DOCUMENT // PDF/Document upload
 }
 
 model HomeworkWorkProduct {
-  id              String           @id @default(cuid())
-  sessionId       String
-  session         HomeworkSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  step            HomeworkSessionStatus
-  inputType       String           // "analysis", "plan", "solution_step", "verification"
-  inputData       Json?            // Input provided by learner
-  outputData      Json             // AI-generated guidance/feedback
-  isComplete      Boolean          @default(false)
-  confidence      Float?           // AI confidence in the output
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id         String                @id @default(cuid())
+  sessionId  String
+  session    HomeworkSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  step       HomeworkSessionStatus
+  inputType  String // "analysis", "plan", "solution_step", "verification"
+  inputData  Json? // Input provided by learner
+  outputData Json // AI-generated guidance/feedback
+  isComplete Boolean               @default(false)
+  confidence Float? // AI confidence in the output
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
 
   @@index([sessionId])
   @@index([step])
 }
 
 model HomeworkHint {
-  id              String           @id @default(cuid())
-  sessionId       String
-  session         HomeworkSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  step            HomeworkSessionStatus
-  hintNumber      Int              // 1, 2, or 3 for the step
-  hintType        HomeworkHintType
-  content         String           @db.Text
-  wasHelpful      Boolean?         // Learner feedback
-  createdAt       DateTime         @default(now())
+  id         String                @id @default(cuid())
+  sessionId  String
+  session    HomeworkSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  step       HomeworkSessionStatus
+  hintNumber Int // 1, 2, or 3 for the step
+  hintType   HomeworkHintType
+  content    String                @db.Text
+  wasHelpful Boolean? // Learner feedback
+  createdAt  DateTime              @default(now())
 
   @@index([sessionId])
   @@index([step])
 }
 
 enum HomeworkHintType {
-  NUDGE           // Gentle pointer in right direction
-  EXPLANATION     // Explain a concept
-  EXAMPLE         // Show a similar example
-  DIRECT          // More direct guidance
+  NUDGE // Gentle pointer in right direction
+  EXPLANATION // Explain a concept
+  EXAMPLE // Show a similar example
+  DIRECT // More direct guidance
 }
 
 // =============================================================================
@@ -1658,25 +1658,25 @@ enum HomeworkHintType {
 // =============================================================================
 
 model RegulationSession {
-  id                String               @id @default(cuid())
-  learnerId         String
-  learner           Learner              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  activityId        String               // Reference to specific activity (e.g., "breathing_478", "grounding_54321")
-  activityType      RegulationActivityType
-  emotionBefore     String?              // Emotion identifier before activity
-  emotionLevelBefore Int?                // 1-5 scale
-  emotionAfter      String?              // Emotion identifier after activity
-  emotionLevelAfter Int?                 // 1-5 scale
-  durationSeconds   Int                  @default(0)
-  completed         Boolean              @default(false)
-  effectiveness     Int?                 // 1-5 rating from learner
-  notes             String?              @db.Text
-  triggeredBy       String?              // "manual", "focus_monitor", "scheduled"
-  context           Json?                // Additional context (subject, time of day, etc.)
-  startedAt         DateTime             @default(now())
-  completedAt       DateTime?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  id                 String                 @id @default(cuid())
+  learnerId          String
+  learner            Learner                @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  activityId         String // Reference to specific activity (e.g., "breathing_478", "grounding_54321")
+  activityType       RegulationActivityType
+  emotionBefore      String? // Emotion identifier before activity
+  emotionLevelBefore Int? // 1-5 scale
+  emotionAfter       String? // Emotion identifier after activity
+  emotionLevelAfter  Int? // 1-5 scale
+  durationSeconds    Int                    @default(0)
+  completed          Boolean                @default(false)
+  effectiveness      Int? // 1-5 rating from learner
+  notes              String?                @db.Text
+  triggeredBy        String? // "manual", "focus_monitor", "scheduled"
+  context            Json? // Additional context (subject, time of day, etc.)
+  startedAt          DateTime               @default(now())
+  completedAt        DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   @@index([learnerId])
   @@index([activityType])
@@ -1684,18 +1684,18 @@ model RegulationSession {
 }
 
 model EmotionHistory {
-  id          String    @id @default(cuid())
-  learnerId   String
-  learner     Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  emotion     String    // "happy", "sad", "angry", "anxious", "calm", "frustrated", "tired", "excited"
-  level       Int       // 1-5 intensity scale
-  trigger     String?   // What caused this emotion (optional)
-  strategy    String?   // Strategy used or suggested
-  context     Json?     // Additional context (activity, subject, time)
-  source      String    @default("manual") // "manual", "check_in", "post_activity", "focus_monitor"
+  id           String   @id @default(cuid())
+  learnerId    String
+  learner      Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  emotion      String // "happy", "sad", "angry", "anxious", "calm", "frustrated", "tired", "excited"
+  level        Int // 1-5 intensity scale
+  trigger      String? // What caused this emotion (optional)
+  strategy     String? // Strategy used or suggested
+  context      Json? // Additional context (activity, subject, time)
+  source       String   @default("manual") // "manual", "check_in", "post_activity", "focus_monitor"
   notifyParent Boolean  @default(false) // Whether to notify parent (high distress)
-  timestamp   DateTime  @default(now())
-  createdAt   DateTime  @default(now())
+  timestamp    DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   @@index([learnerId])
   @@index([emotion])
@@ -1703,10 +1703,10 @@ model EmotionHistory {
 }
 
 enum RegulationActivityType {
-  BREATHING     // Guided breathing exercises
-  MOVEMENT      // Physical movement breaks
-  GROUNDING     // 5-4-3-2-1 sensory grounding, body scan
-  SENSORY       // Fidget activities, calm sounds, visual relaxation
+  BREATHING // Guided breathing exercises
+  MOVEMENT // Physical movement breaks
+  GROUNDING // 5-4-3-2-1 sensory grounding, body scan
+  SENSORY // Fidget activities, calm sounds, visual relaxation
 }
 
 // =============================================================================
@@ -1714,15 +1714,15 @@ enum RegulationActivityType {
 // =============================================================================
 
 model SensoryProfile {
-  id              String    @id @default(cuid())
-  learnerId       String    @unique
-  learner         Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  name            String?   // Custom profile name (e.g., "School Mode", "Home Mode")
-  presetId        String?   // Reference to preset (e.g., "asd-low-sensory", "adhd-focus")
-  isActive        Boolean   @default(true)
-  
+  id        String  @id @default(cuid())
+  learnerId String  @unique
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  name      String? // Custom profile name (e.g., "School Mode", "Home Mode")
+  presetId  String? // Reference to preset (e.g., "asd-low-sensory", "adhd-focus")
+  isActive  Boolean @default(true)
+
   // Visual accommodations
-  visual          Json      @default("{}")
+  visual Json @default("{}")
   // {
   //   reduceAnimations: boolean,
   //   reduceMotion: boolean,
@@ -1735,9 +1735,9 @@ model SensoryProfile {
   //   colorScheme: "default" | "warm" | "cool" | "muted",
   //   flashingContent: "allow" | "warn" | "block"
   // }
-  
+
   // Auditory accommodations
-  auditory        Json      @default("{}")
+  auditory Json @default("{}")
   // {
   //   muteAllSounds: boolean,
   //   soundVolume: number (0-100),
@@ -1748,9 +1748,9 @@ model SensoryProfile {
   //   textToSpeechVoice: string,
   //   audioDescriptions: boolean
   // }
-  
+
   // Motor accommodations
-  motor           Json      @default("{}")
+  motor Json @default("{}")
   // {
   //   largerClickTargets: boolean,
   //   noDoubleClick: boolean,
@@ -1761,9 +1761,9 @@ model SensoryProfile {
   //   touchAccommodations: boolean,
   //   hoverDelay: number (ms)
   // }
-  
+
   // Cognitive accommodations
-  cognitive       Json      @default("{}")
+  cognitive Json @default("{}")
   // {
   //   oneThingAtATime: boolean,
   //   noPopups: boolean,
@@ -1776,9 +1776,9 @@ model SensoryProfile {
   //   breakReminders: boolean,
   //   breakFrequency: number (minutes)
   // }
-  
+
   // Environment accommodations
-  environment     Json      @default("{}")
+  environment Json @default("{}")
   // {
   //   fullScreenMode: boolean,
   //   minimizeDistractions: boolean,
@@ -1786,22 +1786,279 @@ model SensoryProfile {
   //   hideNotifications: boolean,
   //   whiteNoise: "none" | "rain" | "ocean" | "forest" | "pink"
   // }
-  
+
   // Trigger avoidances
-  triggers        Json?
+  triggers Json?
   // {
   //   avoidColors: string[],
   //   avoidPatterns: string[] ("stripes", "polka-dots", "checkers"),
   //   avoidFlashing: boolean,
   //   contentWarnings: string[] ("loud", "sudden", "crowded")
   // }
-  
+
   // Effectiveness tracking
   lastEffectivenessCheck DateTime?
-  effectivenessScore     Float?    // 0-1 based on learning outcomes with these settings
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
+  effectivenessScore     Float? // 0-1 based on learning outcomes with these settings
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([presetId])
+}
+
+// ============================================================================
+// MULTI-PROVIDER AI SYSTEM
+// Supports 8+ AI providers with automatic fallback, cost tracking, and admin management
+// ============================================================================
+
+model AIProvider {
+  id              String               @id @default(cuid())
+  providerType    ProviderType
+  name            String
+  apiEndpoint     String? // Custom endpoint URL for self-hosted models
+  apiKeyEncrypted String?              @db.Text // Encrypted API key storage
+  isActive        Boolean              @default(true)
+  priority        Int                  @default(100) // Lower = higher priority
+  rateLimitRpm    Int? // Requests per minute
+  rateLimitTpm    Int? // Tokens per minute
+  costPer1kInput  Float? // Default cost per 1k input tokens
+  costPer1kOutput Float? // Default cost per 1k output tokens
+  config          Json? // Provider-specific configuration
+  healthStatus    ProviderHealthStatus @default(HEALTHY)
+  lastHealthCheck DateTime?
+  healthCheckUrl  String? // Custom health check endpoint
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  models         AIModel[]
+  usageLogs      AIUsageLog[]
+  fallbackChains AIFallbackChainProvider[]
+
+  @@index([providerType])
+  @@index([isActive, priority])
+}
+
+model AIModel {
+  id                 String           @id @default(cuid())
+  providerId         String
+  provider           AIProvider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  modelIdentifier    String // API identifier e.g., "gpt-4-turbo", "claude-3-sonnet-20240229"
+  displayName        String // Human-readable name
+  capabilities       String[] // ["chat", "completion", "embedding", "vision", "audio", "function_calling"]
+  maxTokens          Int // Maximum tokens for completion
+  contextWindow      Int // Maximum context window size
+  costPer1kInput     Float // Cost per 1k input tokens
+  costPer1kOutput    Float // Cost per 1k output tokens
+  isActive           Boolean          @default(true)
+  isDefault          Boolean          @default(false) // Default model for this provider
+  useCases           String[] // ["homework_help", "assessment", "tutoring", "iep_analysis", "speech_analysis", "content_generation"]
+  qualityTier        ModelQualityTier @default(STANDARD) // For routing decisions
+  supportedLanguages String[]         @default(["en"]) // Language codes
+  metadata           Json? // Additional model-specific metadata
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  usageLogs AIUsageLog[]
+
+  @@unique([providerId, modelIdentifier])
+  @@index([isActive, providerId])
+  @@index([capabilities])
+}
+
+model AIUsageLog {
+  id           String     @id @default(cuid())
+  providerId   String
+  provider     AIProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  modelId      String?
+  model        AIModel?   @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  tenantId     String?
+  learnerId    String?
+  userId       String? // For admin/teacher usage tracking
+  useCase      String // homework_help, assessment, tutoring, etc.
+  requestId    String? // Correlation ID for request tracing
+  inputTokens  Int
+  outputTokens Int
+  totalTokens  Int
+  cost         Float // Calculated cost in USD
+  latencyMs    Int
+  success      Boolean
+  errorCode    String? // Provider-specific error code
+  errorMessage String?    @db.Text
+  fallbackUsed Boolean    @default(false)
+  fallbackFrom String? // Original provider that failed
+  metadata     Json? // Additional request metadata
+  timestamp    DateTime   @default(now())
+
+  @@index([providerId, timestamp])
+  @@index([tenantId, timestamp])
+  @@index([learnerId, timestamp])
+  @@index([useCase, timestamp])
+  @@index([success, timestamp])
+}
+
+model AIFallbackChain {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  useCase      String // homework_help, assessment, tutoring, iep_analysis, etc.
+  isActive     Boolean  @default(true)
+  isDefault    Boolean  @default(false) // Default chain for this use case
+  maxRetries   Int      @default(3)
+  retryDelayMs Int      @default(1000) // Base delay for exponential backoff
+  timeoutMs    Int      @default(30000) // Request timeout
+  budgetLimit  Float? // Optional per-request budget limit in USD
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  providers AIFallbackChainProvider[]
+
+  @@unique([useCase, isDefault])
+  @@index([useCase, isActive])
+}
+
+model AIFallbackChainProvider {
+  id            String          @id @default(cuid())
+  chainId       String
+  chain         AIFallbackChain @relation(fields: [chainId], references: [id], onDelete: Cascade)
+  providerId    String
+  provider      AIProvider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  priority      Int // Order in fallback sequence (lower = higher priority)
+  modelOverride String? // Optional specific model to use for this chain
+  config        Json? // Chain-specific provider config overrides
+  createdAt     DateTime        @default(now())
+
+  @@unique([chainId, providerId])
+  @@unique([chainId, priority])
+  @@index([chainId])
+}
+
+model AIBudget {
+  id             String       @id @default(cuid())
+  tenantId       String? // Null for global budget
+  learnerId      String? // Optional per-learner budget
+  period         BudgetPeriod @default(MONTHLY)
+  budgetAmount   Float // Budget amount in USD
+  spentAmount    Float        @default(0) // Current period spent amount
+  alertThreshold Float        @default(0.8) // Alert when this percentage is reached
+  hardLimit      Boolean      @default(false) // Stop requests when budget exceeded
+  periodStart    DateTime     @default(now())
+  periodEnd      DateTime?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([tenantId, learnerId, period])
+  @@index([tenantId])
+  @@index([isActive, periodEnd])
+}
+
+model AIProviderHealthLog {
+  id           String               @id @default(cuid())
+  providerId   String
+  status       ProviderHealthStatus
+  latencyMs    Int?
+  errorMessage String?              @db.Text
+  checkedAt    DateTime             @default(now())
+
+  @@index([providerId, checkedAt])
+}
+
+model AIExperiment {
+  id             String             @id @default(cuid())
+  name           String
+  description    String?
+  useCase        String
+  status         AIExperimentStatus @default(DRAFT)
+  startDate      DateTime?
+  endDate        DateTime?
+  trafficPercent Float              @default(0.1) // Percentage of traffic to include
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  variants AIExperimentVariant[]
+  results  AIExperimentResult[]
+
+  @@index([useCase, status])
+}
+
+model AIExperimentVariant {
+  id            String       @id @default(cuid())
+  experimentId  String
+  experiment    AIExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  name          String
+  providerId    String?
+  modelId       String?
+  config        Json? // Variant-specific configuration
+  trafficWeight Float        @default(0.5) // Weight for traffic distribution
+  createdAt     DateTime     @default(now())
+
+  results AIExperimentResult[]
+
+  @@unique([experimentId, name])
+  @@index([experimentId])
+}
+
+model AIExperimentResult {
+  id           String              @id @default(cuid())
+  experimentId String
+  experiment   AIExperiment        @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  variantId    String
+  variant      AIExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  learnerId    String?
+  success      Boolean
+  latencyMs    Int
+  cost         Float
+  qualityScore Float? // Optional quality rating (0-1)
+  userFeedback Int? // User rating (1-5)
+  metadata     Json?
+  createdAt    DateTime            @default(now())
+
+  @@index([experimentId, variantId])
+  @@index([experimentId, createdAt])
+}
+
+enum ProviderType {
+  OPENAI
+  ANTHROPIC
+  GOOGLE
+  META
+  COHERE
+  MISTRAL
+  HUGGINGFACE
+  GROQ
+  TOGETHER
+  REPLICATE
+  AZURE_OPENAI
+  AWS_BEDROCK
+  CUSTOM
+  AIVO_BRAIN
+}
+
+enum ProviderHealthStatus {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+  UNKNOWN
+}
+
+enum ModelQualityTier {
+  ECONOMY // Fast, cheap, lower quality
+  STANDARD // Balanced
+  PREMIUM // Highest quality, slower, more expensive
+}
+
+enum BudgetPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum AIExperimentStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
 }
