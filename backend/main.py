@@ -38,8 +38,12 @@ async def lifespan(app: FastAPI):
     
     try:
         # Initialize database
-        await init_db()
-        logger.info("✅ Database initialized")
+        try:
+            await init_db()
+            logger.info("✅ Database initialized")
+        except Exception as db_error:
+            logger.warning(f"⚠️ Database not available: {str(db_error)}")
+            logger.warning("Running in limited mode without database")
         
         # Initialize WebSocket manager
         await socket_manager.initialize(agent_manager)
@@ -66,7 +70,7 @@ async def lifespan(app: FastAPI):
         logger.info("✅ WebSocket connections closed")
         
         # Cleanup agent instances
-        await agent_manager.cleanup_inactive_brains(max_idle_minutes=0)
+        await agent_manager.cleanup_inactive_brains(inactive_minutes=0)
         logger.info("✅ Agent instances cleaned up")
         
         # Close database connections

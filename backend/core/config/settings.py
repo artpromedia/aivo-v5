@@ -128,7 +128,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore"
     )
     
     @validator("CORS_ORIGINS", pre=True)
@@ -153,10 +154,6 @@ class Settings(BaseSettings):
             "max_connections": self.REDIS_MAX_CONNECTIONS,
             "decode_responses": self.REDIS_DECODE_RESPONSES,
         }
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 # Create global settings instance
 settings = Settings()

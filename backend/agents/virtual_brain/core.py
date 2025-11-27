@@ -13,13 +13,12 @@ import numpy as np
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.memory import ConversationSummaryBufferMemory
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate, ChatPromptTemplate, MessagesPlaceholder
-from langchain.callbacks import AsyncCallbackHandler
-from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_classic.memory import ConversationSummaryBufferMemory
+from langchain_classic.chains import LLMChain
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.callbacks import AsyncCallbackHandler
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from core.config import settings
 from core.logging import setup_logging
