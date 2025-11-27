@@ -115,6 +115,8 @@ model Learner {
   agentStates      AgentState[]
   agentInteractions AgentInteraction[]
   homeworkSessions HomeworkSession[]
+  regulationSessions RegulationSession[]
+  emotionHistory   EmotionHistory[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }
@@ -1648,4 +1650,60 @@ enum HomeworkHintType {
   EXPLANATION     // Explain a concept
   EXAMPLE         // Show a similar example
   DIRECT          // More direct guidance
+}
+
+// =============================================================================
+// Self-Regulation Hub Models
+// =============================================================================
+
+model RegulationSession {
+  id                String               @id @default(cuid())
+  learnerId         String
+  learner           Learner              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  activityId        String               // Reference to specific activity (e.g., "breathing_478", "grounding_54321")
+  activityType      RegulationActivityType
+  emotionBefore     String?              // Emotion identifier before activity
+  emotionLevelBefore Int?                // 1-5 scale
+  emotionAfter      String?              // Emotion identifier after activity
+  emotionLevelAfter Int?                 // 1-5 scale
+  durationSeconds   Int                  @default(0)
+  completed         Boolean              @default(false)
+  effectiveness     Int?                 // 1-5 rating from learner
+  notes             String?              @db.Text
+  triggeredBy       String?              // "manual", "focus_monitor", "scheduled"
+  context           Json?                // Additional context (subject, time of day, etc.)
+  startedAt         DateTime             @default(now())
+  completedAt       DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([learnerId])
+  @@index([activityType])
+  @@index([startedAt])
+}
+
+model EmotionHistory {
+  id          String    @id @default(cuid())
+  learnerId   String
+  learner     Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  emotion     String    // "happy", "sad", "angry", "anxious", "calm", "frustrated", "tired", "excited"
+  level       Int       // 1-5 intensity scale
+  trigger     String?   // What caused this emotion (optional)
+  strategy    String?   // Strategy used or suggested
+  context     Json?     // Additional context (activity, subject, time)
+  source      String    @default("manual") // "manual", "check_in", "post_activity", "focus_monitor"
+  notifyParent Boolean  @default(false) // Whether to notify parent (high distress)
+  timestamp   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([learnerId])
+  @@index([emotion])
+  @@index([timestamp])
+}
+
+enum RegulationActivityType {
+  BREATHING     // Guided breathing exercises
+  MOVEMENT      // Physical movement breaks
+  GROUNDING     // 5-4-3-2-1 sensory grounding, body scan
+  SENSORY       // Fidget activities, calm sounds, visual relaxation
 }

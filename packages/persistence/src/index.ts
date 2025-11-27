@@ -240,4 +240,5 @@ export * from "./safety";
 export * from "./sessions";
 export * from "./admin";
 export * from "./homework";
+export * from "./regulation";
 export { prisma } from "./client";
