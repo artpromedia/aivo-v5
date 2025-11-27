@@ -4,7 +4,7 @@ export * from "./client";
 
 export interface AuthUserClaims {
   sub: string; // userId
-  tenantId: string;
+  tenantId?: string;
   roles: Role[];
   name?: string;
   email?: string;

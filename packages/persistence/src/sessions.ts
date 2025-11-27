@@ -67,7 +67,7 @@ export async function getSessionForLearnerToday(
   subject: string,
   date: string
 ): Promise<SessionRecord | null> {
-  const session = await prisma.session.findFirst({
+  const session = await prisma.plannedSession.findFirst({
     where: {
       learnerId,
       subject,
@@ -87,13 +87,13 @@ export async function getSessionForLearnerToday(
  * Create a new learning session with activities
  */
 export async function createSession(input: CreateSessionInput): Promise<SessionRecord> {
-  const session = await prisma.session.create({
+  const session = await prisma.plannedSession.create({
     data: {
       learnerId: input.learnerId,
       tenantId: input.tenantId,
       date: input.date,
       subject: input.subject,
-      status: "planned",
+      status: "PLANNED",
       plannedMinutes: input.plannedMinutes,
       activities: {
         create: input.activities.map(a => ({
@@ -103,7 +103,7 @@ export async function createSession(input: CreateSessionInput): Promise<SessionR
           title: a.title,
           instructions: a.instructions,
           estimatedMinutes: a.estimatedMinutes,
-          status: a.status
+          status: mapActivityStatus(a.status)
         }))
       }
     },
@@ -119,18 +119,18 @@ export async function createSession(input: CreateSessionInput): Promise<SessionR
  * Start a session (mark as active)
  */
 export async function startSession(sessionId: string): Promise<SessionRecord | null> {
-  const session = await prisma.session.findUnique({
+  const session = await prisma.plannedSession.findUnique({
     where: { id: sessionId },
     include: { activities: true }
   });
 
   if (!session) return null;
 
-  if (session.status === "planned") {
-    const updated = await prisma.session.update({
+  if (session.status === "PLANNED") {
+    const updated = await prisma.plannedSession.update({
       where: { id: sessionId },
       data: {
-        status: "active",
+        status: "ACTIVE",
         updatedAt: new Date()
       },
       include: { activities: true }
@@ -152,9 +152,9 @@ export async function updateActivityStatus(input: UpdateActivityStatusInput): Pr
   if (!activity || activity.sessionId !== input.sessionId) return null;
 
   const now = new Date();
-  const updateData: any = { status: input.status };
+  const updateData: Record<string, unknown> = { status: mapActivityStatus(input.status) };
 
-  if (input.status === "in_progress" && activity.status === "pending") {
+  if (input.status === "in_progress" && activity.status === "PENDING") {
     updateData.startedAt = now;
   } else if (input.status === "completed" || input.status === "skipped") {
     if (!activity.startedAt) {
@@ -169,7 +169,7 @@ export async function updateActivityStatus(input: UpdateActivityStatusInput): Pr
   });
 
   // Check if all activities are done
-  const session = await prisma.session.findUnique({
+  const session = await prisma.plannedSession.findUnique({
     where: { id: input.sessionId },
     include: { activities: true }
   });
@@ -177,7 +177,7 @@ export async function updateActivityStatus(input: UpdateActivityStatusInput): Pr
   if (!session) return null;
 
   const allDone = session.activities.every(
-    a => a.status === "completed" || a.status === "skipped"
+    a => a.status === "COMPLETED" || a.status === "SKIPPED"
   );
 
   if (allDone) {
@@ -186,10 +186,10 @@ export async function updateActivityStatus(input: UpdateActivityStatusInput): Pr
       0
     );
 
-    await prisma.session.update({
+    await prisma.plannedSession.update({
       where: { id: input.sessionId },
       data: {
-        status: "completed",
+        status: "COMPLETED",
         actualMinutes,
         updatedAt: now
       }
@@ -197,7 +197,7 @@ export async function updateActivityStatus(input: UpdateActivityStatusInput): Pr
   }
 
   // Return updated session
-  const updated = await prisma.session.findUnique({
+  const updated = await prisma.plannedSession.findUnique({
     where: { id: input.sessionId },
     include: { activities: true }
   });
@@ -210,7 +210,7 @@ export async function updateActivityStatus(input: UpdateActivityStatusInput): Pr
  * Get recent sessions for a learner
  */
 export async function getRecentSessions(learnerId: string, limit = 10): Promise<SessionRecord[]> {
-  const sessions = await prisma.session.findMany({
+  const sessions = await prisma.plannedSession.findMany({
     where: { learnerId },
     include: { activities: true },
     orderBy: { createdAt: "desc" },
@@ -224,13 +224,26 @@ export async function getRecentSessions(learnerId: string, limit = 10): Promise<
  * Get session by ID
  */
 export async function getSessionById(sessionId: string): Promise<SessionRecord | null> {
-  const session = await prisma.session.findUnique({
+  const session = await prisma.plannedSession.findUnique({
     where: { id: sessionId },
     include: { activities: true }
   });
 
   if (!session) return null;
   return mapSessionToResponse(session);
+}
+
+/**
+ * Map activity status from API format to enum
+ */
+function mapActivityStatus(status: string): "PENDING" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED" {
+  const map: Record<string, "PENDING" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED"> = {
+    pending: "PENDING",
+    in_progress: "IN_PROGRESS",
+    completed: "COMPLETED",
+    skipped: "SKIPPED"
+  };
+  return map[status] ?? "PENDING";
 }
 
 /**
@@ -243,7 +256,7 @@ function mapSessionToResponse(session: any): SessionRecord {
     tenantId: session.tenantId,
     date: session.date,
     subject: session.subject,
-    status: session.status,
+    status: session.status.toLowerCase(),
     plannedMinutes: session.plannedMinutes,
     actualMinutes: session.actualMinutes ?? undefined,
     activities: (session.activities ?? []).map((a: any) => ({
@@ -255,7 +268,7 @@ function mapSessionToResponse(session: any): SessionRecord {
       title: a.title,
       instructions: a.instructions,
       estimatedMinutes: a.estimatedMinutes,
-      status: a.status,
+      status: a.status.toLowerCase(),
       startedAt: a.startedAt?.toISOString(),
       completedAt: a.completedAt?.toISOString()
     })),

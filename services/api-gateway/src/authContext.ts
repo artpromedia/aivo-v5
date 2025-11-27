@@ -4,7 +4,7 @@ import { verifyAccessToken, type AuthTokenPayload } from "@aivo/auth";
 
 export interface RequestUser {
   userId: string;
-  tenantId: string;
+  tenantId?: string;
   roles: Role[];
   name?: string;
   email?: string;

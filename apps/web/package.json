@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "@types/react": "19.2.7",
     "autoprefixer": "^10.4.18",
     "postcss": "^8.4.38",
     "prisma": "^6.19.0",

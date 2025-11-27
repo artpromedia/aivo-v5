@@ -1,17 +1,15 @@
 import { prisma } from "./client";
 import { incrementTenantUsage } from "./governance";
 
-const prismaAny = prisma as any;
-
 export async function logSafetyIncident(args: {
   tenantId: string;
   learnerId?: string;
   type: string;
-  severity: "watch" | "concern" | "critical";
+  severity: "WATCH" | "CONCERN" | "CRITICAL";
   message: string;
   rawModelResponse?: string | null;
 }) {
-  const incident = await prismaAny.safetyIncident.create({
+  const incident = await prisma.safetyIncident.create({
     data: {
       tenantId: args.tenantId,
       learnerId: args.learnerId ?? null,

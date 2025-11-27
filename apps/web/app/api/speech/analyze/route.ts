@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 
 // Placeholder for speech analysis
 // In production, integrate with services like:
@@ -19,7 +18,7 @@ interface AnalysisResult {
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session || !session.user) {
       return NextResponse.json(

@@ -1,11 +1,9 @@
 import { prisma } from "./client";
 
-const prismaAny = prisma as any;
-
 export async function getOrCreateTenantLimits(tenantId: string) {
-  let limits = await prismaAny.tenantLimits.findUnique({ where: { tenantId } });
+  let limits = await prisma.tenantLimits.findUnique({ where: { tenantId } });
   if (!limits) {
-    limits = await prismaAny.tenantLimits.create({ data: { tenantId } });
+    limits = await prisma.tenantLimits.create({ data: { tenantId } });
   }
   return limits;
 }
@@ -17,7 +15,7 @@ export async function updateTenantLimits(args: {
   allowedProviders?: string[] | null;
   blockedProviders?: string[] | null;
 }) {
-  return prismaAny.tenantLimits.upsert({
+  return prisma.tenantLimits.upsert({
     where: { tenantId: args.tenantId },
     create: {
       tenantId: args.tenantId,
@@ -43,7 +41,7 @@ export async function incrementTenantUsage(args: {
   sessionsPlanned?: number;
   safetyIncidents?: number;
 }) {
-  const existing = await prismaAny.tenantUsage.findUnique({
+  const existing = await prisma.tenantUsage.findUnique({
     where: {
       tenantId_date: {
         tenantId: args.tenantId,
@@ -53,7 +51,7 @@ export async function incrementTenantUsage(args: {
   });
 
   if (!existing) {
-  return prismaAny.tenantUsage.create({
+    return prisma.tenantUsage.create({
       data: {
         tenantId: args.tenantId,
         date: args.date,
@@ -65,7 +63,7 @@ export async function incrementTenantUsage(args: {
     });
   }
 
-  return prismaAny.tenantUsage.update({
+  return prisma.tenantUsage.update({
     where: {
       tenantId_date: {
         tenantId: args.tenantId,
@@ -82,7 +80,7 @@ export async function incrementTenantUsage(args: {
 }
 
 export async function getTenantUsageForDate(tenantId: string, date: string) {
-  return prismaAny.tenantUsage.findUnique({
+  return prisma.tenantUsage.findUnique({
     where: {
       tenantId_date: {
         tenantId,
@@ -99,13 +97,13 @@ export async function createAuditLogEntry(args: {
   message: string;
   meta?: unknown;
 }) {
-  return prismaAny.auditLogEntry.create({
+  return prisma.auditLogEntry.create({
     data: {
       tenantId: args.tenantId,
       userId: args.userId,
       type: args.type,
       message: args.message,
-      meta: args.meta ?? undefined
+      meta: args.meta as object ?? undefined
     }
   });
 }

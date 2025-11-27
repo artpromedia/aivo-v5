@@ -1,12 +1,24 @@
+// Force dynamic to avoid static analysis of tfjs imports
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { AgentManager } from '@aivo/brain-model'
+import { auth } from '@/lib/auth'
+
+// Dynamic import to avoid bundling tfjs-node at build time  
+let agentManager: any = null;
+async function getAgentManager() {
+  if (!agentManager) {
+    const { AgentManager } = await import('@aivo/brain-model');
+    agentManager = AgentManager.getInstance();
+  }
+  return agentManager;
+}
 
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session || !session.user) {
       return NextResponse.json(
@@ -27,10 +39,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Get agent manager instance
-    const agentManager = AgentManager.getInstance()
+    const manager = await getAgentManager()
 
     // Process the interaction
-    const result = await agentManager.processLearningInteraction(
+    const result = await manager.processLearningInteraction(
       learnerId,
       interaction
     )
@@ -55,7 +67,7 @@ export async function POST(req: NextRequest) {
 // Get agent metrics for a learner
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session || !session.user) {
       return NextResponse.json(
@@ -74,8 +86,8 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const agentManager = AgentManager.getInstance()
-    const metrics = await agentManager.getAgentMetrics(learnerId)
+    const manager = await getAgentManager()
+    const metrics = await manager.getAgentMetrics(learnerId)
 
     return NextResponse.json({
       success: true,

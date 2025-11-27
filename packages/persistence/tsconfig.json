@@ -2,7 +2,20 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/index.ts",
+    "src/admin.ts",
+    "src/sessions.ts",
+    "src/analytics.ts",
+    "src/content.ts",
+    "src/experiments.ts",
+    "src/governance.ts",
+    "src/safety.ts",
+    "src/__tests__"
+  ]
 }

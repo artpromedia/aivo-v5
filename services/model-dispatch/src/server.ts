@@ -140,7 +140,7 @@ fastify.post("/dispatch", async (request, reply) => {
         tenantId,
         learnerId: parsed.learnerId,
         type: safetyScan.type ?? "inappropriate_language",
-        severity: safetyScan.severity ?? "watch",
+        severity: (safetyScan.severity?.toUpperCase() ?? "WATCH") as "WATCH" | "CONCERN" | "CRITICAL",
         message: `Guardrails flagged output: ${(safetyScan.matches ?? []).join(", ")}`,
         rawModelResponse: result.content
       });

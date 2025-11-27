@@ -29,7 +29,7 @@ export async function getLearnerLearningContext(learnerId: string) {
         }
       },
       brainProfile: true,
-      sessions: {
+      plannedSessions: {
         orderBy: { createdAt: "desc" },
         take: 10
       },
@@ -44,7 +44,7 @@ export async function getLearnerLearningContext(learnerId: string) {
 type LearnerContext = NonNullable<Awaited<ReturnType<typeof getLearnerLearningContext>>>;
 
 function buildBrainProfileFromLearner(learner: LearnerContext) {
-  const gradeLevel = learner.currentGrade ?? 6;
+  const gradeLevel = learner.currentGrade ?? learner.gradeLevel ?? 6;
   const gradeBand = inferGradeBandFromLevel(gradeLevel);
   const profile = learner.brainProfile;
 
@@ -126,7 +126,7 @@ export async function createDifficultyProposal(args: {
       direction: args.direction,
       rationale: args.rationale,
       createdBy: args.createdBy,
-      status: "pending"
+      status: "PENDING"
     }
   });
 }
@@ -135,7 +135,7 @@ export async function listPendingProposalsForLearner(learnerId: string) {
   return prisma.difficultyProposal.findMany({
     where: {
       learnerId,
-      status: "pending"
+      status: "PENDING"
     },
     orderBy: { createdAt: "desc" }
   });
@@ -150,7 +150,7 @@ export async function decideOnProposal(args: {
   return prisma.difficultyProposal.update({
     where: { id: args.proposalId },
     data: {
-      status: args.approve ? "approved" : "rejected",
+      status: args.approve ? "APPROVED" : "REJECTED",
       decidedById: args.decidedById,
       decidedAt: new Date(),
       decisionNotes: args.notes ?? null
@@ -170,7 +170,7 @@ export async function createNotification(args: {
   body: string;
   relatedDifficultyProposalId?: string;
 }) {
-  return prisma.notification.create({
+  return prisma.extendedNotification.create({
     data: {
       tenantId: args.tenantId,
       learnerId: args.learnerId,
@@ -189,7 +189,7 @@ export async function listNotificationsForUser(
   userId: string,
   options?: { unreadOnly?: boolean; limit?: number }
 ) {
-  return prisma.notification.findMany({
+  return prisma.extendedNotification.findMany({
     where: {
       recipientUserId: userId,
       status: options?.unreadOnly ? "unread" : undefined
@@ -200,7 +200,7 @@ export async function listNotificationsForUser(
 }
 
 export async function markNotificationRead(notificationId: string) {
-  return prisma.notification.update({
+  return prisma.extendedNotification.update({
     where: { id: notificationId },
     data: { status: "read" }
   });

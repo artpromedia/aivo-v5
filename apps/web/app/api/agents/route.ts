@@ -3,26 +3,42 @@
  * 
  * REST API for agent interactions, session management, and coordination.
  * Handles authentication, agent lifecycle, and error recovery.
+ * 
+ * NOTE: Uses dynamic imports to avoid bundling @tensorflow/tfjs-node 
+ * at build time, since it requires native bindings.
  */
 
+// Force dynamic rendering to avoid static analysis of tfjs-node imports
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { auth } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { 
-	PersonalizedLearningAgent, 
-	AITutorAgent, 
-	SpeechAnalysisAgent,
-	AgentOrchestrator 
-} from "@aivo/agents";
-import type { AgentConfig } from "@aivo/agents";
+
+// Dynamic imports for agent modules (to avoid tfjs-node bundling issues)
+let agentModules: any = null;
+async function getAgentModules() {
+	if (!agentModules) {
+		agentModules = await import("@aivo/agents");
+	}
+	return agentModules;
+}
 
 const prisma = new PrismaClient();
 
-// Initialize orchestrator
-const orchestrator = new AgentOrchestrator();
-
 // Agent registry
 const agentRegistry = new Map<string, Map<string, any>>();
+
+// Orchestrator instance (initialized lazily)
+let orchestrator: any = null;
+async function getOrchestrator() {
+	if (!orchestrator) {
+		const { AgentOrchestrator } = await getAgentModules();
+		orchestrator = new AgentOrchestrator();
+	}
+	return orchestrator;
+}
 
 // Session tracking
 interface SessionInfo {
@@ -40,7 +56,7 @@ const activeSessions = new Map<string, SessionInfo>();
  */
 export async function POST(request: NextRequest) {
 	// Check authentication
-	const session = await getServerSession();
+	const session = await auth();
 
 	if (!session) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -144,8 +160,9 @@ async function handleStartSession(learnerId: string, data: any) {
 		});
 
 		// Register agents with orchestrator
-		await orchestrator.registerAgent(learningAgent);
-		await orchestrator.registerAgent(tutorAgent);
+		const orch = await getOrchestrator();
+		await orch.registerAgent(learningAgent);
+		await orch.registerAgent(tutorAgent);
 
 		// Store agents in registry
 		if (!agentRegistry.has(learnerId)) {
@@ -210,7 +227,7 @@ async function handleStartSession(learnerId: string, data: any) {
 		};
 
 		// Execute orchestrated initialization
-		const orchestrationResult = await orchestrator.orchestrate(initializationPlan);
+		const orchestrationResult = await orch.orchestrate(initializationPlan);
 
 		return NextResponse.json({
 			sessionId,
@@ -501,7 +518,7 @@ async function handleGetInsights(learnerId: string, data: any) {
  * Get session status and active agents
  */
 export async function GET(request: NextRequest) {
-	const session = await getServerSession();
+	const session = await auth();
 
 	if (!session) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -540,8 +557,10 @@ export async function GET(request: NextRequest) {
  * Helper functions
  */
 
-async function createAgent(type: string, learnerId: string, configOverrides?: Partial<AgentConfig>): Promise<any> {
-	const baseConfig: AgentConfig = {
+async function createAgent(type: string, learnerId: string, configOverrides?: Record<string, any>): Promise<any> {
+	const { PersonalizedLearningAgent, AITutorAgent, SpeechAnalysisAgent } = await getAgentModules();
+	
+	const baseConfig = {
 		learnerId,
 		agentId: `${type}-agent-${learnerId}-${Date.now()}`,
 		agentType: type,

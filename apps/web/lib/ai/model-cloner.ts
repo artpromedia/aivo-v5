@@ -7,11 +7,13 @@ import { prisma } from "@/lib/prisma";
 import type { LearnerProfile, PersonalizedModelConfig } from "@/lib/types/models";
 import path from "path";
 
-// Import federated learning components
-import { ModelCloner } from "@aivo/agents/ml/ModelCloner";
-import { FederatedLearningManager } from "@aivo/agents/ml/FederatedLearning";
-import { AssessmentDataProcessor } from "@aivo/agents/ml/AssessmentDataProcessor";
-import type { BaselineAssessmentData } from "@aivo/agents/ml/AssessmentDataProcessor";
+// Import federated learning components from main package export
+import { 
+  ModelCloner, 
+  FederatedLearningManager, 
+  AssessmentDataProcessor,
+  type BaselineAssessmentData 
+} from "@aivo/agents";
 
 interface FineTuningArtifacts {
   fileId: string;

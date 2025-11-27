@@ -165,7 +165,7 @@ fastify.post("/auth/login", async (request, reply) => {
   tenantId: user.tenantId ?? undefined,
   roles: roleEnums,
       name: user.name ?? undefined,
-      email: user.email
+      email: user.email ?? ""
     },
     DEV_JWT_SECRET
   );
@@ -893,7 +893,6 @@ fastify.get("/admin/tenants/:tenantId", async (request, reply) => {
   }
 
   const tenant = await getTenantById(params.tenantId);
-  // @ts-expect-error tenantConfig model may not be in current schema
   const config = await prisma.tenantConfig.findUnique({
     where: { tenantId: params.tenantId }
   });
@@ -1315,7 +1314,6 @@ fastify.get("/analytics/learners/:learnerId", async (request, reply) => {
 
   const learner = await prisma.learner.findUnique({
     where: { id: learnerId },
-    // @ts-expect-error brainProfile may not be in current schema
     include: { brainProfile: true }
   });
 
@@ -1323,7 +1321,6 @@ fastify.get("/analytics/learners/:learnerId", async (request, reply) => {
     return reply.status(404).send({ error: "Learner not found" });
   }
 
-  // @ts-expect-error brainProfile may not be in current schema
   const brainProfile = learner.brainProfile as any | null;
   const subjects: LearnerSubjectProgressOverview[] = [];
 

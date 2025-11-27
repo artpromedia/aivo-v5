@@ -1,4 +1,5 @@
 import { prisma } from "./client";
+import { TenantType } from "@prisma/client";
 
 /**
  * Admin data persistence layer
@@ -9,7 +10,7 @@ import { prisma } from "./client";
 
 export interface CreateTenantInput {
   name: string;
-  type: "district" | "independent_school" | "clinic" | "homeschool_network";
+  type: TenantType;
   region: string;
 }
 

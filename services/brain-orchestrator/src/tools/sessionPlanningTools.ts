@@ -139,8 +139,8 @@ export const gatherLearnerContextTool: AgentTool<void, LearnerContextSummary> = 
 
     return {
       learnerId: record.id,
-      tenantId: record.tenantId,
-      displayName: record.displayName ?? "Learner",
+      tenantId: record.tenantId ?? undefined,
+      displayName: `${record.firstName} ${record.lastName}`.trim() || "Learner",
       region: determineRegion(record),
       currentGrade: brainProfile.currentGrade,
       brainProfile,

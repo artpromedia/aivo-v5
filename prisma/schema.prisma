@@ -12,14 +12,19 @@ model User {
   id             String             @id @default(cuid())
   email          String?            @unique
   username       String             @unique
+  name           String?
   password       String
   role           Role
+  tenantId       String?
+  tenant         Tenant?            @relation(fields: [tenantId], references: [id])
   isActive       Boolean            @default(true)
   lastLogin      DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   profile        Profile?
+  roles          RoleAssignment[]   @relation("UserRoles")
   learners       Learner[]          @relation("GuardianLearners")
+  ownedLearners  Learner[]          @relation("LearnerOwner")
   learnerProfile Learner?
   teacherClasses Class[]            @relation("TeacherClasses")
   approvals      ApprovalRequest[]  @relation("ApproverRequests")
@@ -63,11 +68,27 @@ model Learner {
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   guardianId      String
   guardian        User               @relation("GuardianLearners", fields: [guardianId], references: [id])
+  ownerId         String?
+  owner           User?              @relation("LearnerOwner", fields: [ownerId], references: [id])
+  tenantId        String?
+  tenant          Tenant?            @relation(fields: [tenantId], references: [id])
+  districtId      String?
+  district        District?          @relation(fields: [districtId], references: [id])
+  schoolId        String?
+  school          School?            @relation(fields: [schoolId], references: [id])
   firstName       String
   lastName        String
+  region          String?            @default("north_america")
   dateOfBirth     DateTime
   gradeLevel      Int
+  currentGrade    Int?
   actualLevel     Float?
+  brainProfile    BrainProfile?
+  difficultyProposals DifficultyProposal[]
+  plannedSessions PlannedSession[]
+  progressSnapshots SubjectProgressSnapshot[]
+  telemetryEvents TelemetryEvent[]
+  safetyIncidents SafetyIncident[]
   diagnoses       Diagnosis[]
   accommodations  Json?
   iepGoals        IEPGoal[]
@@ -1141,4 +1162,368 @@ model AgentInteraction {
   @@index([learnerId])
   @@index([agentId])
   @@index([createdAt])
+}
+
+// ============================================================================
+// MULTI-TENANT MODELS
+// These support the federated multi-tenant structure where each child has
+// their own learning brain while being part of a district/school hierarchy
+// ============================================================================
+
+model Tenant {
+  id              String         @id @default(cuid())
+  name            String
+  type            TenantType     @default(DISTRICT)
+  region          String         @default("north_america")
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  config          TenantConfig?
+  users           User[]
+  learners        Learner[]
+  districts       District[]
+  schools         School[]
+  roleAssignments RoleAssignment[]
+  difficultyProposals DifficultyProposal[]
+  notifications   ExtendedNotification[]
+  plannedSessions PlannedSession[]
+  telemetryEvents TelemetryEvent[]
+  tenantLimits    TenantLimits?
+  tenantUsage     TenantUsage[]
+  auditLogs       AuditLogEntry[]
+  safetyIncidents SafetyIncident[]
+
+  @@index([region])
+  @@index([type])
+}
+
+model TenantConfig {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  defaultRegion    String   @default("north_america")
+  allowedProviders Json     @default("[\"openai\", \"anthropic\"]")
+  blockedProviders Json     @default("[]")
+  dataResidency    String?
+  curricula        Json     @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model District {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  country   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schools         School[]
+  learners        Learner[]
+  roleAssignments RoleAssignment[]
+
+  @@index([tenantId])
+}
+
+model School {
+  id         String    @id @default(cuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  districtId String?
+  district   District? @relation(fields: [districtId], references: [id])
+  name       String
+  city       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  learners        Learner[]
+  roleAssignments RoleAssignment[]
+
+  @@index([tenantId])
+  @@index([districtId])
+}
+
+model RoleAssignment {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  districtId String?
+  district   District? @relation(fields: [districtId], references: [id])
+  schoolId   String?
+  school     School?   @relation(fields: [schoolId], references: [id])
+  role       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+  @@index([role])
+}
+
+enum TenantType {
+  DISTRICT
+  INDEPENDENT_SCHOOL
+  CLINIC
+  HOMESCHOOL_NETWORK
+}
+
+// ============================================================================
+// BRAIN PROFILE - The learner's personalized learning configuration
+// This is the "virtual brain" that adapts to each child's unique needs
+// ============================================================================
+
+model BrainProfile {
+  id              String   @id @default(cuid())
+  learnerId       String   @unique
+  learner         Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  region          String   @default("north_america")
+  currentGrade    Int
+  gradeBand       String   // k_5, 6_8, 9_12
+  subjectLevels   Json     @default("[]") // Array of {subject, level, lastAssessed}
+  neurodiversity  Json     @default("{}") // ADHD, Dyslexia, Autism configs
+  preferences     Json     @default("{}") // Learning style preferences
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([region])
+  @@index([gradeBand])
+}
+
+// ============================================================================
+// DIFFICULTY PROPOSAL - System for adjusting learning difficulty
+// Allows AI to propose changes, with parent/teacher approval
+// ============================================================================
+
+model DifficultyProposal {
+  id            String    @id @default(cuid())
+  learnerId     String
+  learner       Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subject       String
+  fromLevel     Float
+  toLevel       Float
+  direction     String    // "easier" | "harder"
+  rationale     String    @db.Text
+  createdBy     String    // "system" | "teacher" | "parent"
+  status        DifficultyProposalStatus @default(PENDING)
+  decidedById   String?
+  decidedAt     DateTime?
+  decisionNotes String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  notifications ExtendedNotification[]
+
+  @@index([learnerId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+enum DifficultyProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ============================================================================
+// PLANNED SESSION - Learning sessions with activities
+// Tracks daily learning plans and activity completion
+// ============================================================================
+
+model PlannedSession {
+  id             String           @id @default(cuid())
+  learnerId      String
+  learner        Learner          @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  date           String           // YYYY-MM-DD format
+  subject        String
+  status         PlannedSessionStatus @default(PLANNED)
+  plannedMinutes Int
+  actualMinutes  Int?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  activities     SessionActivity[]
+
+  @@index([learnerId, date])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model SessionActivity {
+  id               String   @id @default(cuid())
+  sessionId        String
+  session          PlannedSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  learnerId        String
+  subject          String
+  type             String
+  title            String
+  instructions     String   @db.Text
+  estimatedMinutes Int
+  status           SessionActivityStatus @default(PENDING)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([status])
+}
+
+enum PlannedSessionStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionActivityStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+// ============================================================================
+// ANALYTICS & TELEMETRY - Track learner progress and engagement
+// ============================================================================
+
+model SubjectProgressSnapshot {
+  id              String   @id @default(cuid())
+  learnerId       String
+  learner         Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  subject         String
+  date            String   // YYYY-MM-DD
+  masteryScore    Float
+  minutesPracticed Int
+  difficultyLevel Float
+  createdAt       DateTime @default(now())
+
+  @@unique([learnerId, subject, date])
+  @@index([learnerId])
+  @@index([date])
+}
+
+model TelemetryEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  learnerId String
+  learner   Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  type      String
+  subject   String?
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([learnerId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// GOVERNANCE - Rate limiting, usage tracking, and audit logs
+// ============================================================================
+
+model TenantLimits {
+  id                 String   @id @default(cuid())
+  tenantId           String   @unique
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  maxDailyLlmCalls   Int?
+  maxDailyTutorTurns Int?
+  allowedProviders   Json     @default("[\"openai\", \"anthropic\"]")
+  blockedProviders   Json     @default("[]")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model TenantUsage {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  date            String   // YYYY-MM-DD
+  llmCalls        Int      @default(0)
+  tutorTurns      Int      @default(0)
+  sessionsPlanned Int      @default(0)
+  safetyIncidents Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, date])
+  @@index([tenantId])
+  @@index([date])
+}
+
+model AuditLogEntry {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String
+  message   String   @db.Text
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// SAFETY - Track and respond to safety incidents
+// ============================================================================
+
+model SafetyIncident {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  learnerId        String?
+  learner          Learner? @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+  type             String
+  severity         SafetySeverity
+  message          String   @db.Text
+  rawModelResponse String?  @db.Text
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([learnerId])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+enum SafetySeverity {
+  WATCH
+  CONCERN
+  CRITICAL
+}
+
+// ============================================================================
+// EXTENDED NOTIFICATION - Multi-tenant notifications with more fields
+// ============================================================================
+
+model ExtendedNotification {
+  id                         String    @id @default(cuid())
+  tenantId                   String
+  tenant                     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  learnerId                  String?
+  recipientUserId            String
+  audience                   String    // "parent" | "teacher" | "admin"
+  type                       String
+  title                      String
+  body                       String    @db.Text
+  status                     String    @default("unread") // "unread" | "read"
+  relatedDifficultyProposalId String?
+  difficultyProposal         DifficultyProposal? @relation(fields: [relatedDifficultyProposalId], references: [id])
+  createdAt                  DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([recipientUserId])
+  @@index([status])
 }
