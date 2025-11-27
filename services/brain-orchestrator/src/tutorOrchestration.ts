@@ -6,7 +6,6 @@
  */
 
 import { AITutorAgent, type TutorInteraction } from "@aivo/agents";
-import type { AgentConfig } from "@aivo/agents";
 import { PrismaClient } from "@prisma/client";
 
 export interface CurrentQuestion {
@@ -82,7 +81,7 @@ export class TutorOrchestrationService {
 		}
 
 		// Create new agent
-		const config: AgentConfig = {
+		const config = {
 			learnerId,
 			agentId: `tutor-agent-${learnerId}`,
 			agentType: "tutor",

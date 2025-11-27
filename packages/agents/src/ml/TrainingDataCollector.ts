@@ -6,7 +6,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import type { LearningContext, LearningDecision } from "@aivo/agents";
+import type { LearningContext, LearningDecision } from "../PersonalizedLearningAgent";
 
 export interface TrainingDataPoint {
 	id: string;

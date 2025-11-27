@@ -647,14 +647,16 @@ Keep the conversation flowing toward learning.
 	 */
 	private async initializeSubjectModules(subjects: string[]): Promise<void> {
 		// Load subject-specific knowledge bases
-		this.state.context.subjectExpertise = {};
+		const expertise: Record<string, { initialized: boolean; lastUpdated: Date }> = {};
 
 		for (const subject of subjects) {
-			this.state.context.subjectExpertise[subject] = {
+			expertise[subject] = {
 				initialized: true,
 				lastUpdated: new Date()
 			};
 		}
+		
+		this.state.context.subjectExpertise = expertise;
 	}
 
 	/**

@@ -9,13 +9,13 @@ export declare function getOrCreateExperiment(args: {
         description?: string;
     }[];
 }): Promise<{
-    tenantId: string;
-    name: string;
     id: string;
-    createdAt: Date;
-    status: string;
-    updatedAt: Date;
+    tenantId: string;
     description: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    name: string;
+    status: string;
     key: string;
     variants: import("@prisma/client/runtime/library").JsonValue;
 }>;
@@ -30,10 +30,10 @@ export declare function getAssignmentForLearner(args: {
     learnerId: string;
     experimentId: string;
 }): Promise<{
-    learnerId: string;
     id: string;
-    variantKey: string;
     experimentId: string;
+    learnerId: string;
+    variantKey: string;
     assignedAt: Date;
 } | null>;
 export declare function recordFeedback(args: {
@@ -49,19 +49,19 @@ export declare function recordFeedback(args: {
     experimentKey?: string;
     variantKey?: string;
 }): Promise<{
-    targetType: string;
-    learnerId: string | null;
-    tenantId: string;
-    targetId: string;
-    userId: string | null;
     id: string;
+    tenantId: string;
     createdAt: Date;
+    label: string | null;
+    learnerId: string | null;
+    variantKey: string | null;
+    targetType: string;
+    targetId: string;
     role: string;
     rating: number;
-    label: string | null;
     comment: string | null;
     experimentKey: string | null;
-    variantKey: string | null;
+    userId: string | null;
 }>;
 export declare function aggregateFeedbackForTarget(args: {
     tenantId: string;

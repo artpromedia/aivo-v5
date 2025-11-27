@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@aivo/types": "workspace:*"
+    "@aivo/types": "workspace:*",
+    "@aivo/persistence": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json"

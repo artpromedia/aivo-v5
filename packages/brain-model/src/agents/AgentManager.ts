@@ -322,7 +322,23 @@ export class AgentManager {
     }
   }
 
-  async getAgentMetrics(learnerId: string) {
+  async getAgentMetrics(learnerId: string): Promise<{
+    totalInteractions: number;
+    successRate: number;
+    avgDuration: number;
+    recentInteractions: Array<{
+      id: string;
+      learnerId: string;
+      agentId: string;
+      interactionType: string;
+      input: unknown;
+      output: unknown;
+      durationMs: number | null;
+      success: boolean;
+      errorMessage: string | null;
+      createdAt: Date;
+    }>;
+  }> {
     const interactions = await prisma.agentInteraction.findMany({
       where: { learnerId },
       orderBy: { createdAt: 'desc' },

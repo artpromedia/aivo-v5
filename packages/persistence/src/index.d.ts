@@ -1,18 +1,97 @@
-import { Prisma, Role } from "@prisma/client";
-
-export declare function getLearnerLearningContext(learnerId: string): Promise<any>;
-export declare function getLearnerWithBrainProfile(learnerId: string): Promise<any>;
-export declare function upsertPersonalizedModel(args: {
-    learnerId: string;
-    modelId?: string | null;
-    systemPrompt?: string | null;
-    vectorStoreId?: string | null;
-    configuration?: Prisma.InputJsonValue;
-    status?: string;
-    summary?: string | null;
-    performanceMetrics?: Prisma.InputJsonValue;
-    lastTrainedAt?: Date | null;
-}): Promise<any>;
+import { Prisma } from "@prisma/client";
+export declare function getLearnerLearningContext(learnerId: string): Promise<({
+    sessions: {
+        id: string;
+        tenantId: string;
+        subject: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        learnerId: string;
+        date: string;
+        plannedMinutes: number;
+        actualMinutes: number | null;
+    }[];
+    owner: {
+        id: string;
+        name: string | null;
+        email: string;
+    };
+    brainProfile: {
+        id: string;
+        region: string;
+        updatedAt: Date;
+        learnerId: string;
+        currentGrade: number;
+        gradeBand: string;
+        subjectLevels: Prisma.JsonValue;
+        neurodiversity: Prisma.JsonValue;
+        preferences: Prisma.JsonValue;
+    } | null;
+    progressSnapshots: {
+        id: string;
+        subject: string;
+        learnerId: string;
+        date: string;
+        masteryScore: number;
+        minutesPracticed: number;
+        difficultyLevel: number;
+    }[];
+} & {
+    id: string;
+    tenantId: string;
+    region: string;
+    createdAt: Date;
+    displayName: string;
+    currentGrade: number;
+    ownerId: string;
+}) | null>;
+export declare function getLearnerWithBrainProfile(learnerId: string): Promise<{
+    brainProfile: {
+        learnerId: string;
+        id: string;
+        region: string;
+        currentGrade: number;
+        updatedAt: Date;
+        gradeBand: string;
+        subjectLevels: string | number | boolean | Prisma.JsonObject | Prisma.JsonArray;
+        neurodiversity: string | number | boolean | Prisma.JsonObject | Prisma.JsonArray;
+        preferences: string | number | boolean | Prisma.JsonObject | Prisma.JsonArray;
+    };
+    sessions: {
+        id: string;
+        tenantId: string;
+        subject: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        learnerId: string;
+        date: string;
+        plannedMinutes: number;
+        actualMinutes: number | null;
+    }[];
+    owner: {
+        id: string;
+        name: string | null;
+        email: string;
+    };
+    progressSnapshots: {
+        id: string;
+        subject: string;
+        learnerId: string;
+        date: string;
+        masteryScore: number;
+        minutesPracticed: number;
+        difficultyLevel: number;
+    }[];
+    id: string;
+    tenantId: string;
+    region: string;
+    createdAt: Date;
+    displayName: string;
+    currentGrade: number;
+    ownerId: string;
+} | null>;
 export declare function upsertBrainProfile(args: {
     learnerId: string;
     tenantId?: string;
@@ -22,47 +101,81 @@ export declare function upsertBrainProfile(args: {
     subjectLevels: Prisma.InputJsonValue;
     neurodiversity: Prisma.InputJsonValue;
     preferences: Prisma.InputJsonValue;
-}): Promise<any>;
-export declare function createApprovalRequest(args: {
+}): Promise<{
+    id: string;
+    region: string;
+    updatedAt: Date;
     learnerId: string;
-    requesterId: string;
-    approverId: string;
-    type: string;
-    details: Prisma.InputJsonValue;
-    comments?: string;
-}): Promise<any>;
+    currentGrade: number;
+    gradeBand: string;
+    subjectLevels: Prisma.JsonValue;
+    neurodiversity: Prisma.JsonValue;
+    preferences: Prisma.JsonValue;
+}>;
 export declare function createDifficultyProposal(args: {
     learnerId: string;
-    requesterId: string;
-    approverId: string;
+    tenantId: string;
     subject: string;
     fromLevel: number;
     toLevel: number;
     direction: string;
     rationale: string;
     createdBy: "system" | "teacher" | "parent";
-}): Promise<any>;
-export declare function listApprovalRequests(filters?: {
-    learnerId?: string;
-    approverId?: string;
-    status?: string;
-    limit?: number;
-}): Promise<any[]>;
-export declare function listPendingProposalsForLearner(learnerId: string): Promise<any[]>;
-export declare function decideOnApprovalRequest(args: {
-    approvalRequestId: string;
-    approverId: string;
+}): Promise<{
+    id: string;
+    tenantId: string;
+    subject: string;
+    createdAt: Date;
     status: string;
-    comments?: string;
-}): Promise<any>;
+    createdBy: string;
+    learnerId: string;
+    fromLevel: number;
+    toLevel: number;
+    direction: string;
+    rationale: string;
+    decidedById: string | null;
+    decidedAt: Date | null;
+    decisionNotes: string | null;
+}>;
+export declare function listPendingProposalsForLearner(learnerId: string): Promise<{
+    id: string;
+    tenantId: string;
+    subject: string;
+    createdAt: Date;
+    status: string;
+    createdBy: string;
+    learnerId: string;
+    fromLevel: number;
+    toLevel: number;
+    direction: string;
+    rationale: string;
+    decidedById: string | null;
+    decidedAt: Date | null;
+    decisionNotes: string | null;
+}[]>;
 export declare function decideOnProposal(args: {
     proposalId: string;
     approve: boolean;
     decidedById: string;
     notes?: string;
-}): Promise<any>;
+}): Promise<{
+    id: string;
+    tenantId: string;
+    subject: string;
+    createdAt: Date;
+    status: string;
+    createdBy: string;
+    learnerId: string;
+    fromLevel: number;
+    toLevel: number;
+    direction: string;
+    rationale: string;
+    decidedById: string | null;
+    decidedAt: Date | null;
+    decisionNotes: string | null;
+}>;
 export declare function createNotification(args: {
-    tenantId?: string;
+    tenantId: string;
     learnerId: string;
     recipientUserId: string;
     audience: string;
@@ -70,33 +183,69 @@ export declare function createNotification(args: {
     title: string;
     body: string;
     relatedDifficultyProposalId?: string;
-}): Promise<any>;
+}): Promise<{
+    id: string;
+    tenantId: string;
+    title: string;
+    createdAt: Date;
+    type: string;
+    body: string;
+    status: string;
+    learnerId: string;
+    audience: string;
+    relatedDifficultyProposalId: string | null;
+    relatedBaselineAssessmentId: string | null;
+    relatedSessionId: string | null;
+    recipientUserId: string;
+}>;
 export declare function listNotificationsForUser(userId: string, options?: {
     unreadOnly?: boolean;
     limit?: number;
-}): Promise<any[]>;
-export declare function markNotificationRead(args: {
-    notificationId: string;
-    userId: string;
 }): Promise<{
-    count: number;
+    id: string;
+    tenantId: string;
+    title: string;
+    createdAt: Date;
+    type: string;
+    body: string;
+    status: string;
+    learnerId: string;
+    audience: string;
+    relatedDifficultyProposalId: string | null;
+    relatedBaselineAssessmentId: string | null;
+    relatedSessionId: string | null;
+    recipientUserId: string;
+}[]>;
+export declare function markNotificationRead(notificationId: string): Promise<{
+    id: string;
+    tenantId: string;
+    title: string;
+    createdAt: Date;
+    type: string;
+    body: string;
+    status: string;
+    learnerId: string;
+    audience: string;
+    relatedDifficultyProposalId: string | null;
+    relatedBaselineAssessmentId: string | null;
+    relatedSessionId: string | null;
+    recipientUserId: string;
 }>;
-export declare function findUserWithRolesByEmail(email: string): Promise<null | {
+export declare function findUserWithRolesByEmail(email: string): Promise<{
     user: {
         id: string;
-        email: string | null;
-        username: string;
-        role: Role;
-        password: string;
+        email: string;
+        name: string | null;
+        tenantId: string;
         createdAt: Date;
-        updatedAt: Date;
     };
-    roles: Role[];
-}>;
-
+    roles: string[];
+} | null>;
 export * from "./analytics";
 export * from "./content";
 export * from "./experiments";
 export * from "./governance";
 export * from "./safety";
+export * from "./sessions";
+export * from "./admin";
 export { prisma } from "./client";

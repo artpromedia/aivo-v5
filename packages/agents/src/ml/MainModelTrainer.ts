@@ -185,16 +185,11 @@ export class MainModelTrainer {
 				path_output: "categoricalCrossentropy"
 			},
 			metrics: {
-				content_output: ["accuracy"],
-				difficulty_output: ["accuracy"],
-				path_output: ["accuracy"]
-			},
-			lossWeights: {
-				content_output: 1.0,
-				difficulty_output: 0.8,
-				path_output: 0.6
+				content_output: "accuracy",
+				difficulty_output: "accuracy",
+				path_output: "accuracy"
 			}
-		});
+		} as tf.ModelCompileArgs);
 
 		return this.model;
 	}

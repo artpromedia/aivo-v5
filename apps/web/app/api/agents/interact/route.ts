@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@repo/auth/config'
-import { AgentManager } from '@repo/brain-model/agents/AgentManager'
+import { authOptions } from '@/lib/auth'
+import { AgentManager } from '@aivo/brain-model'
 
 export async function POST(req: NextRequest) {
   try {

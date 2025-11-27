@@ -134,7 +134,11 @@ export class FederatedAggregationService {
 						learnerId,
 						weightDeltas: deltas,
 						numSamples: lastSession.samples,
-						trainingMetrics: lastSession.metrics,
+						trainingMetrics: {
+							loss: lastSession.metrics.loss,
+							accuracy: lastSession.metrics.accuracy,
+							epochs: lastSession.epochs
+						},
 						timestamp: lastSession.timestamp
 					});
 

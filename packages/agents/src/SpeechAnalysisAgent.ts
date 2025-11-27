@@ -5,7 +5,7 @@
  * Provides real-time phoneme analysis, error detection, and personalized recommendations.
  */
 
-import { BaseAgent, AgentResponse, type AgentConfig } from "./base/AgentFramework";
+import { BaseAgent, AgentResponse, type AgentConfig } from "./lib/agents/base/AgentFramework";
 import * as tf from "@tensorflow/tfjs-node";
 import { PrismaClient } from "@prisma/client";
 
@@ -104,6 +104,23 @@ export class SpeechAnalysisAgent extends BaseAgent {
 	constructor(config: AgentConfig, prisma?: PrismaClient) {
 		super(config);
 		this.prisma = prisma || new PrismaClient();
+	}
+
+	/**
+	 * Log method for consistent logging
+	 */
+	protected log(message: string, level: 'info' | 'warn' | 'error' = 'info'): void {
+		const prefix = `[SpeechAnalysisAgent]`;
+		switch (level) {
+			case 'warn':
+				console.warn(`${prefix} ${message}`);
+				break;
+			case 'error':
+				console.error(`${prefix} ${message}`);
+				break;
+			default:
+				console.log(`${prefix} ${message}`);
+		}
 	}
 
 	/**

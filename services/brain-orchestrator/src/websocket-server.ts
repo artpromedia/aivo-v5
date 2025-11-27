@@ -9,7 +9,7 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
+import Redis from "ioredis";
 import { verify } from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import { PersonalizedLearningAgent } from "@aivo/agents";
@@ -144,19 +144,16 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 
 	// Setup Redis adapter for horizontal scaling
 	if (process.env.REDIS_HOST) {
-		const pubClient = createClient({
-			url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`
-		});
+		const redisOptions = {
+			host: process.env.REDIS_HOST,
+			port: parseInt(process.env.REDIS_PORT || "6379", 10),
+			password: process.env.REDIS_PASSWORD
+		};
+		const pubClient = new Redis(redisOptions);
 		const subClient = pubClient.duplicate();
 
-		Promise.all([pubClient.connect(), subClient.connect()])
-			.then(() => {
-				io.adapter(createAdapter(pubClient, subClient));
-				console.log("✅ Redis adapter connected for horizontal scaling");
-			})
-			.catch((err) => {
-				console.error("❌ Redis adapter connection failed:", err);
-			});
+		io.adapter(createAdapter(pubClient as any, subClient as any));
+		console.log("✅ Redis adapter connected for horizontal scaling");
 	} else {
 		console.log("ℹ️  Running without Redis adapter (single instance mode)");
 	}

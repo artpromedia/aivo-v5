@@ -207,15 +207,6 @@ export class AIVOModelCloner {
     const systemPrompt = this.generateSystemPrompt(profile);
     const fineTuningArtifacts = await this.prepareFineTuningData(profile);
 
-  /**
-   * Legacy fine-tuning approach (fallback when main model unavailable)
-   */
-  private async cloneWithFineTuning(profile: LearnerProfile): Promise<string> {
-    console.log("Using fine-tuning approach (legacy fallback)");
-    
-    const systemPrompt = this.generateSystemPrompt(profile);
-    const fineTuningArtifacts = await this.prepareFineTuningData(profile);
-
     const fineTuningJob = this.openai
       ? await this.openai.fineTuning.jobs.create({
           training_file: fineTuningArtifacts.fileId,
