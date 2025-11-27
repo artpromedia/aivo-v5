@@ -38,8 +38,9 @@ async function hasLearnerAccess(userId: string, learnerId: string): Promise<bool
     select: { role: true },
   });
 
+  const adminRoles = ["SUPER_ADMIN", "GLOBAL_ADMIN", "DISTRICT_ADMIN", "SCHOOL_ADMIN"];
   const hasElevatedRole = userRoles.some(
-    (r) => r.role === "TEACHER" || r.role === "ADMIN" || r.role === "PLATFORM_ADMIN"
+    (r) => r.role === "TEACHER" || r.role === "THERAPIST" || adminRoles.includes(r.role)
   );
 
   return hasElevatedRole;

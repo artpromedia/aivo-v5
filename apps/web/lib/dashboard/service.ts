@@ -537,7 +537,8 @@ export async function getApprovalsForUser(userId: string, role: Role) {
 }
 
 export async function getTeacherDashboard(userId: string, role: Role): Promise<TeacherDashboardData> {
-  if (role !== Role.TEACHER && role !== Role.ADMIN) {
+  const adminRoles: Role[] = [Role.SUPER_ADMIN, Role.GLOBAL_ADMIN, Role.DISTRICT_ADMIN, Role.SCHOOL_ADMIN];
+  if (role !== Role.TEACHER && !adminRoles.includes(role)) {
     throw new Error("Only teachers or admins can view this dashboard");
   }
 

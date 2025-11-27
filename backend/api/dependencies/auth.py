@@ -98,7 +98,8 @@ async def verify_learner_access(
     if learner.parent_id == current_user.id:
         return True
     
-    if current_user.role.value in ["admin", "super_admin"]:
+    admin_roles = ["super_admin", "global_admin", "district_admin", "school_admin"]
+    if current_user.role.value in admin_roles:
         return True
     
     return False

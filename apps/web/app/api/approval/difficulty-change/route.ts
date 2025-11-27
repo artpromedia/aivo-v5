@@ -136,8 +136,9 @@ export async function PATCH(request: NextRequest) {
 
     const canGuardianAct =
       isGuardianRole(session.user.role) && approvalRequest.learner?.guardianId === session.user.id;
+    const adminRoles: Role[] = [Role.SUPER_ADMIN, Role.GLOBAL_ADMIN, Role.DISTRICT_ADMIN, Role.SCHOOL_ADMIN];
     const canAct =
-      approvalRequest.approverId === session.user.id || canGuardianAct || session.user.role === Role.ADMIN;
+      approvalRequest.approverId === session.user.id || canGuardianAct || adminRoles.includes(session.user.role);
 
     if (!canAct) {
       logWarn("Difficulty change decision unauthorized", context, {

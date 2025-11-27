@@ -11,9 +11,10 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  const adminRoles = ["SUPER_ADMIN", "GLOBAL_ADMIN", "DISTRICT_ADMIN", "SCHOOL_ADMIN"];
   const learners = await prisma.learner.findMany({
     where:
-      session.user.role === "ADMIN"
+      adminRoles.includes(session.user.role)
         ? {}
         : isGuardianRole(session.user.role)
           ? { guardianId: session.user.id }

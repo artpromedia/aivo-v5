@@ -15,11 +15,22 @@ from db.database import Base
 
 
 class UserRole(str, enum.Enum):
-    PARENT = "parent"
+    # Platform-level roles
+    SUPER_ADMIN = "super_admin"
+    GLOBAL_ADMIN = "global_admin"
+    FINANCE_ADMIN = "finance_admin"
+    TECH_SUPPORT = "tech_support"
+    LEGAL_COMPLIANCE = "legal_compliance"
+    
+    # Organizational roles
+    DISTRICT_ADMIN = "district_admin"
+    SCHOOL_ADMIN = "school_admin"
+    
+    # Educational roles
     TEACHER = "teacher"
     THERAPIST = "therapist"
-    ADMIN = "admin"
-    SUPER_ADMIN = "super_admin"
+    PARENT = "parent"
+    LEARNER = "learner"
 
 
 class User(Base):

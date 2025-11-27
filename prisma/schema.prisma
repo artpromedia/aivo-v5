@@ -871,8 +871,20 @@ model MLTrainingData {
 }
 
 enum Role {
-  ADMIN
+  // Platform-level roles
+  SUPER_ADMIN       // Full platform access
+  GLOBAL_ADMIN      // Platform operations
+  FINANCE_ADMIN     // Billing & financial management
+  TECH_SUPPORT      // Technical support staff
+  LEGAL_COMPLIANCE  // Compliance & legal oversight
+  
+  // Organizational roles
+  DISTRICT_ADMIN    // District-level management
+  SCHOOL_ADMIN      // School-level management
+  
+  // Educational roles
   TEACHER
+  THERAPIST
   PARENT
   LEARNER
 }
@@ -1266,6 +1278,50 @@ model RoleAssignment {
   @@unique([userId, tenantId])
   @@index([tenantId])
   @@index([role])
+}
+
+// ============================================================================
+// PERMISSIONS - Role-based access control system
+// ============================================================================
+
+model Permission {
+  id          String           @id @default(cuid())
+  code        String           @unique // e.g., "manage_platform", "view_analytics"
+  name        String           // Human-readable name
+  description String?          // What this permission allows
+  category    String           // Grouping: "platform", "organization", "education", "data"
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  role         Role
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedAt    DateTime   @default(now())
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
+}
+
+model RoleChangeAudit {
+  id          String   @id @default(cuid())
+  userId      String   // User whose role changed
+  changedBy   String   // Admin who made the change
+  oldRole     Role?
+  newRole     Role
+  tenantId    String?
+  reason      String?  // Why the role was changed
+  metadata    Json?    // Additional context
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([changedBy])
+  @@index([createdAt])
 }
 
 enum TenantType {

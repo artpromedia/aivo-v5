@@ -1,6 +1,7 @@
 export * from "./observability";
 export * from "./governance";
 export * from "./ai-providers";
+export * from "./roles";
 
 export type Region =
   | "north_america"
@@ -50,7 +51,9 @@ export type LearningPreference = {
   prefersShortSessions?: boolean;
 };
 
-export type Role =
+// Re-export Role from roles.ts - this is now the source of truth
+// Legacy role type kept for backward compatibility during migration
+export type LegacyRoleType =
   | "learner"
   | "parent"
   | "teacher"

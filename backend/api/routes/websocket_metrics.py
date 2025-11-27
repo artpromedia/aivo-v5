@@ -16,12 +16,12 @@ router = APIRouter()
 
 @router.get("/metrics")
 async def get_websocket_metrics(
-    current_user: User = Depends(require_role("admin", "super_admin"))
+    current_user: User = Depends(require_role("super_admin", "global_admin", "tech_support"))
 ) -> Dict[str, Any]:
     """
     Get comprehensive WebSocket metrics
     
-    Requires admin or super_admin role
+    Requires super_admin, global_admin, or tech_support role
     
     Returns:
     - connections: Active, total, and disconnection counts

@@ -84,7 +84,8 @@ export async function GET(request: NextRequest, { params }: { params: { learnerI
 }
 
 function canAccessLesson(userId: string, role: Role, learner: { id: string; userId: string; guardianId: string }): boolean {
-  if (role === "ADMIN") return true;
+  const adminRoles = ["SUPER_ADMIN", "GLOBAL_ADMIN", "DISTRICT_ADMIN", "SCHOOL_ADMIN"];
+  if (adminRoles.includes(role)) return true;
   if (learner.userId === userId) return true;
   if (isGuardianRole(role) && learner.guardianId === userId) return true;
   return false;

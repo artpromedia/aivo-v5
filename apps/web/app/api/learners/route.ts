@@ -117,7 +117,8 @@ export async function POST(request: Request) {
 }
 
 function guardianFilter(user: { id: string; role: Role }): Prisma.LearnerWhereInput {
-  if (user.role === Role.ADMIN) {
+  const adminRoles: Role[] = [Role.SUPER_ADMIN, Role.GLOBAL_ADMIN, Role.DISTRICT_ADMIN, Role.SCHOOL_ADMIN];
+  if (adminRoles.includes(user.role)) {
     return {};
   }
 
