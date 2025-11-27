@@ -68,6 +68,9 @@ import type {
   ListTenantUsageResponse
 } from "./governance-contracts";
 
+// Re-export sensory contracts for convenience
+export * from "./sensory-contracts";
+
 export class AivoApiClient {
   constructor(private baseUrl: string, private getToken?: () => Promise<string | null>) {}
 

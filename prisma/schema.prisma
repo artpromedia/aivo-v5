@@ -117,6 +117,7 @@ model Learner {
   homeworkSessions HomeworkSession[]
   regulationSessions RegulationSession[]
   emotionHistory   EmotionHistory[]
+  sensoryProfile   SensoryProfile?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }
@@ -1706,4 +1707,101 @@ enum RegulationActivityType {
   MOVEMENT      // Physical movement breaks
   GROUNDING     // 5-4-3-2-1 sensory grounding, body scan
   SENSORY       // Fidget activities, calm sounds, visual relaxation
+}
+
+// =============================================================================
+// Sensory Profile - Accessibility Accommodations for Neurodiverse Learners
+// =============================================================================
+
+model SensoryProfile {
+  id              String    @id @default(cuid())
+  learnerId       String    @unique
+  learner         Learner   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  name            String?   // Custom profile name (e.g., "School Mode", "Home Mode")
+  presetId        String?   // Reference to preset (e.g., "asd-low-sensory", "adhd-focus")
+  isActive        Boolean   @default(true)
+  
+  // Visual accommodations
+  visual          Json      @default("{}")
+  // {
+  //   reduceAnimations: boolean,
+  //   reduceMotion: boolean,
+  //   highContrast: boolean,
+  //   darkMode: boolean,
+  //   reducedClutter: boolean,
+  //   fontSize: "small" | "medium" | "large" | "x-large",
+  //   fontFamily: "default" | "dyslexic" | "sans-serif" | "serif",
+  //   lineSpacing: "normal" | "relaxed" | "loose",
+  //   colorScheme: "default" | "warm" | "cool" | "muted",
+  //   flashingContent: "allow" | "warn" | "block"
+  // }
+  
+  // Auditory accommodations
+  auditory        Json      @default("{}")
+  // {
+  //   muteAllSounds: boolean,
+  //   soundVolume: number (0-100),
+  //   noBackgroundMusic: boolean,
+  //   noSoundEffects: boolean,
+  //   textToSpeechEnabled: boolean,
+  //   textToSpeechSpeed: number (0.5-2.0),
+  //   textToSpeechVoice: string,
+  //   audioDescriptions: boolean
+  // }
+  
+  // Motor accommodations
+  motor           Json      @default("{}")
+  // {
+  //   largerClickTargets: boolean,
+  //   noDoubleClick: boolean,
+  //   noDragAndDrop: boolean,
+  //   increaseSpacing: boolean,
+  //   stickyKeys: boolean,
+  //   keyboardOnly: boolean,
+  //   touchAccommodations: boolean,
+  //   hoverDelay: number (ms)
+  // }
+  
+  // Cognitive accommodations
+  cognitive       Json      @default("{}")
+  // {
+  //   oneThingAtATime: boolean,
+  //   noPopups: boolean,
+  //   noAutoplay: boolean,
+  //   simplifyInstructions: boolean,
+  //   showProgressIndicator: boolean,
+  //   limitChoices: number | null,
+  //   extendedTime: boolean,
+  //   timeMultiplier: number (1.0-3.0),
+  //   breakReminders: boolean,
+  //   breakFrequency: number (minutes)
+  // }
+  
+  // Environment accommodations
+  environment     Json      @default("{}")
+  // {
+  //   fullScreenMode: boolean,
+  //   minimizeDistractions: boolean,
+  //   hideChat: boolean,
+  //   hideNotifications: boolean,
+  //   whiteNoise: "none" | "rain" | "ocean" | "forest" | "pink"
+  // }
+  
+  // Trigger avoidances
+  triggers        Json?
+  // {
+  //   avoidColors: string[],
+  //   avoidPatterns: string[] ("stripes", "polka-dots", "checkers"),
+  //   avoidFlashing: boolean,
+  //   contentWarnings: string[] ("loud", "sudden", "crowded")
+  // }
+  
+  // Effectiveness tracking
+  lastEffectivenessCheck DateTime?
+  effectivenessScore     Float?    // 0-1 based on learning outcomes with these settings
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([presetId])
 }
