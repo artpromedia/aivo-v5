@@ -1,10 +1,4 @@
-import {
-  ApprovalStatus,
-  ApprovalType,
-  PersonalizedModelStatus,
-  Prisma,
-  Role
-} from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "./client";
 
 const DEFAULT_REGION = "north_america";
@@ -21,35 +15,25 @@ function extractJsonObject(value: Prisma.JsonValue | null | undefined) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
+// --- Learner queries -------------------------------------------------------
+
 export async function getLearnerLearningContext(learnerId: string) {
   return prisma.learner.findUnique({
     where: { id: learnerId },
     include: {
-      guardian: {
+      owner: {
         select: {
           id: true,
-          username: true,
-          profile: true
+          name: true,
+          email: true
         }
       },
-      user: {
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          profile: true
-        }
-      },
-      learningModel: true,
-      assessments: {
+      brainProfile: true,
+      sessions: {
         orderBy: { createdAt: "desc" },
         take: 10
       },
-      focusData: {
-        orderBy: { timestamp: "desc" },
-        take: 10
-      },
-      progress: {
+      progressSnapshots: {
         orderBy: { date: "desc" },
         take: 10
       }
@@ -60,23 +44,20 @@ export async function getLearnerLearningContext(learnerId: string) {
 type LearnerContext = NonNullable<Awaited<ReturnType<typeof getLearnerLearningContext>>>;
 
 function buildBrainProfileFromLearner(learner: LearnerContext) {
-  const gradeLevel = learner.actualLevel ?? learner.gradeLevel ?? 6;
+  const gradeLevel = learner.currentGrade ?? 6;
   const gradeBand = inferGradeBandFromLevel(gradeLevel);
-  const config = extractJsonObject(learner.learningModel?.configuration ?? null);
-  const subjectLevels = Array.isArray((config as any).subjectLevels)
-    ? ((config as any).subjectLevels as Prisma.JsonValue)
-    : [];
+  const profile = learner.brainProfile;
 
   return {
     learnerId: learner.id,
-    id: learner.learningModel?.id ?? `synthetic-${learner.id}`,
-    region: (config.region as string) ?? DEFAULT_REGION,
+    id: profile?.id ?? `synthetic-${learner.id}`,
+    region: profile?.region ?? learner.region ?? DEFAULT_REGION,
     currentGrade: gradeLevel,
-    updatedAt: learner.learningModel?.updatedAt ?? learner.updatedAt,
-    gradeBand,
-    subjectLevels,
-    neurodiversity: (config.neurodiversity as Prisma.JsonValue) ?? {},
-    preferences: (config.preferences as Prisma.JsonValue) ?? {}
+    updatedAt: profile?.updatedAt ?? learner.createdAt,
+    gradeBand: profile?.gradeBand ?? gradeBand,
+    subjectLevels: profile?.subjectLevels ?? [],
+    neurodiversity: profile?.neurodiversity ?? {},
+    preferences: profile?.preferences ?? {}
   };
 }
 
@@ -86,55 +67,8 @@ export async function getLearnerWithBrainProfile(learnerId: string) {
 
   return {
     ...learner,
-    tenantId: DEFAULT_TENANT,
-    displayName: `${learner.firstName} ${learner.lastName}`.trim(),
-    currentGrade: learner.gradeLevel,
-    ownerId: learner.guardianId,
     brainProfile: buildBrainProfileFromLearner(learner)
-  } as LearnerContext & {
-    tenantId: string;
-    displayName: string;
-    currentGrade: number;
-    ownerId: string;
-    brainProfile: ReturnType<typeof buildBrainProfileFromLearner>;
   };
-}
-
-export async function upsertPersonalizedModel(args: {
-  learnerId: string;
-  modelId?: string | null;
-  systemPrompt?: string | null;
-  vectorStoreId?: string | null;
-  configuration?: Prisma.InputJsonValue;
-  status?: PersonalizedModelStatus;
-  performanceMetrics?: Prisma.InputJsonValue;
-  lastTrainedAt?: Date | null;
-}) {
-  return prisma.personalizedModel.upsert({
-    where: { learnerId: args.learnerId },
-    create: {
-      learnerId: args.learnerId,
-      modelId: args.modelId ?? `model-${args.learnerId}`,
-      systemPrompt:
-        args.systemPrompt ??
-        "You are a personalized learning companion who adapts to the learner's current needs.",
-      vectorStoreId: args.vectorStoreId ?? null,
-      configuration: args.configuration ?? {},
-  status: args.status ?? PersonalizedModelStatus.TRAINING,
-      performanceMetrics: args.performanceMetrics ?? Prisma.JsonNull,
-      lastTrainedAt: args.lastTrainedAt ?? null
-    },
-    update: {
-      modelId: args.modelId ?? undefined,
-      systemPrompt: args.systemPrompt ?? undefined,
-      vectorStoreId: args.vectorStoreId ?? undefined,
-      configuration: args.configuration ?? undefined,
-  status: args.status ?? undefined,
-      performanceMetrics: args.performanceMetrics ?? undefined,
-      lastTrainedAt: args.lastTrainedAt ?? undefined,
-      updatedAt: new Date()
-    }
-  });
 }
 
 export async function upsertBrainProfile(args: {
@@ -147,45 +81,34 @@ export async function upsertBrainProfile(args: {
   neurodiversity: Prisma.InputJsonValue;
   preferences: Prisma.InputJsonValue;
 }) {
-  return upsertPersonalizedModel({
-    learnerId: args.learnerId,
-    configuration: {
+  return prisma.brainProfile.upsert({
+    where: { learnerId: args.learnerId },
+    create: {
+      learnerId: args.learnerId,
+      region: args.region,
+      currentGrade: args.currentGrade,
+      gradeBand: args.gradeBand,
+      subjectLevels: args.subjectLevels,
+      neurodiversity: args.neurodiversity,
+      preferences: args.preferences
+    },
+    update: {
       region: args.region,
       currentGrade: args.currentGrade,
       gradeBand: args.gradeBand,
       subjectLevels: args.subjectLevels,
       neurodiversity: args.neurodiversity,
       preferences: args.preferences,
-      tenantId: args.tenantId ?? DEFAULT_TENANT
+      updatedAt: new Date()
     }
   });
 }
 
-export async function createApprovalRequest(args: {
-  learnerId: string;
-  requesterId: string;
-  approverId: string;
-  type: ApprovalType;
-  details: Prisma.InputJsonValue;
-  comments?: string;
-}) {
-  return prisma.approvalRequest.create({
-    data: {
-      learnerId: args.learnerId,
-      requesterId: args.requesterId,
-      approverId: args.approverId,
-      type: args.type,
-      status: ApprovalStatus.PENDING,
-      details: args.details,
-      comments: args.comments ?? null
-    }
-  });
-}
+// --- Difficulty proposals --------------------------------------------------
 
 export async function createDifficultyProposal(args: {
   learnerId: string;
-  requesterId: string;
-  approverId: string;
+  tenantId: string;
   subject: string;
   fromLevel: number;
   toLevel: number;
@@ -193,57 +116,28 @@ export async function createDifficultyProposal(args: {
   rationale: string;
   createdBy: "system" | "teacher" | "parent";
 }) {
-  return createApprovalRequest({
-    learnerId: args.learnerId,
-    requesterId: args.requesterId,
-    approverId: args.approverId,
-    type: "DIFFICULTY_CHANGE",
-    details: {
+  return prisma.difficultyProposal.create({
+    data: {
+      learnerId: args.learnerId,
+      tenantId: args.tenantId,
       subject: args.subject,
       fromLevel: args.fromLevel,
       toLevel: args.toLevel,
       direction: args.direction,
       rationale: args.rationale,
-      createdBy: args.createdBy
+      createdBy: args.createdBy,
+      status: "pending"
     }
-  });
-}
-
-export async function listApprovalRequests(filters?: {
-  learnerId?: string;
-  approverId?: string;
-  status?: ApprovalStatus;
-  limit?: number;
-}) {
-  return prisma.approvalRequest.findMany({
-    where: {
-      learnerId: filters?.learnerId,
-      approverId: filters?.approverId,
-      status: filters?.status
-    },
-    orderBy: { createdAt: "desc" },
-    take: filters?.limit
   });
 }
 
 export async function listPendingProposalsForLearner(learnerId: string) {
-  return listApprovalRequests({ learnerId, status: "PENDING" });
-}
-
-export async function decideOnApprovalRequest(args: {
-  approvalRequestId: string;
-  approverId: string;
-  status: "APPROVED" | "REJECTED" | "EXPIRED";
-  comments?: string;
-}) {
-  return prisma.approvalRequest.update({
-    where: { id: args.approvalRequestId },
-    data: {
-      approverId: args.approverId,
-      status: args.status,
-      comments: args.comments ?? undefined,
-      decidedAt: new Date()
-    }
+  return prisma.difficultyProposal.findMany({
+    where: {
+      learnerId,
+      status: "pending"
+    },
+    orderBy: { createdAt: "desc" }
   });
 }
 
@@ -253,16 +147,21 @@ export async function decideOnProposal(args: {
   decidedById: string;
   notes?: string;
 }) {
-  return decideOnApprovalRequest({
-    approvalRequestId: args.proposalId,
-    approverId: args.decidedById,
-    status: args.approve ? "APPROVED" : "REJECTED",
-    comments: args.notes
+  return prisma.difficultyProposal.update({
+    where: { id: args.proposalId },
+    data: {
+      status: args.approve ? "approved" : "rejected",
+      decidedById: args.decidedById,
+      decidedAt: new Date(),
+      decisionNotes: args.notes ?? null
+    }
   });
 }
 
+// --- Notifications ---------------------------------------------------------
+
 export async function createNotification(args: {
-  tenantId?: string;
+  tenantId: string;
   learnerId: string;
   recipientUserId: string;
   audience: string;
@@ -273,18 +172,15 @@ export async function createNotification(args: {
 }) {
   return prisma.notification.create({
     data: {
-      userId: args.recipientUserId,
+      tenantId: args.tenantId,
       learnerId: args.learnerId,
+      recipientUserId: args.recipientUserId,
+      audience: args.audience,
       type: args.type,
       title: args.title,
-      message: args.body,
-      data: {
-        tenantId: args.tenantId ?? DEFAULT_TENANT,
-        audience: args.audience,
-        relatedDifficultyProposalId: args.relatedDifficultyProposalId ?? null
-      },
-      read: false,
-      createdAt: new Date()
+      body: args.body,
+      status: "unread",
+      relatedDifficultyProposalId: args.relatedDifficultyProposalId ?? null
     }
   });
 }
@@ -293,77 +189,54 @@ export async function listNotificationsForUser(
   userId: string,
   options?: { unreadOnly?: boolean; limit?: number }
 ) {
-  const rows = await prisma.notification.findMany({
+  return prisma.notification.findMany({
     where: {
-      userId,
-      read: options?.unreadOnly ? false : undefined
+      recipientUserId: userId,
+      status: options?.unreadOnly ? "unread" : undefined
     },
     orderBy: { createdAt: "desc" },
     take: options?.limit ?? 50
   });
-
-  return rows.map((row) => {
-    const data = extractJsonObject(row.data ?? null);
-    return {
-      id: row.id,
-      learnerId: row.learnerId ?? data.learnerId ?? null,
-      tenantId: data.tenantId ?? DEFAULT_TENANT,
-      recipientUserId: row.userId,
-      audience: data.audience ?? "parent",
-      type: row.type,
-      title: row.title,
-      body: row.message,
-      createdAt: row.createdAt,
-      status: row.read ? "read" : "unread",
-      relatedDifficultyProposalId: data.relatedDifficultyProposalId ?? undefined
-    };
-  });
 }
 
-export async function markNotificationRead(args: { notificationId: string; userId: string }) {
-  return prisma.notification.updateMany({
-    where: {
-      id: args.notificationId,
-      userId: args.userId
-    },
-    data: {
-      read: true
-    }
+export async function markNotificationRead(notificationId: string) {
+  return prisma.notification.update({
+    where: { id: notificationId },
+    data: { status: "read" }
   });
 }
 
 // --- Auth helpers ----------------------------------------------------------
 
-export async function findUserWithRolesByEmail(email: string): Promise<
-  | null
-  | {
-      user: {
-        id: string;
-        email: string | null;
-        username: string;
-        role: Role;
-        password: string;
-        createdAt: Date;
-        updatedAt: Date;
-      };
-      roles: Role[];
-    }
-> {
+export async function findUserWithRolesByEmail(email: string) {
   const user = await prisma.user.findUnique({
-    where: { email }
+    where: { email },
+    include: {
+      roles: true
+    }
   });
 
   if (!user) return null;
 
   return {
-    user,
-    roles: [user.role]
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      tenantId: user.tenantId,
+      createdAt: user.createdAt
+    },
+    roles: user.roles.map(r => r.role)
   };
 }
+
+// --- Re-exports from submodules --------------------------------------------
 
 export * from "./analytics";
 export * from "./content";
 export * from "./experiments";
 export * from "./governance";
 export * from "./safety";
+export * from "./sessions";
+export * from "./admin";
 export { prisma } from "./client";

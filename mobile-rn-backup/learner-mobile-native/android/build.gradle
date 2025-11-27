@@ -1,0 +1,68 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 23
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+        ndkVersion = "25.1.8937393"
+        kotlinVersion = "1.9.24"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.4")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
+allprojects {
+    repositories {
+        maven {
+            // Android JSC is installed from npm
+            url("$rootDir/../node_modules/jsc-android/dist")
+        }
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+    
+    configurations.all {
+        resolutionStrategy {
+            // Force all react-native dependencies to use the same version
+            force 'com.facebook.react:react-android:0.73.9'
+        }
+    }
+}
+
+subprojects {
+    // Force all modules to use react-android from Maven Central instead of react-native
+    configurations.all {
+        resolutionStrategy {
+            dependencySubstitution {
+                substitute module('com.facebook.react:react-native') using module('com.facebook.react:react-android:0.74.5')
+            }
+            // Force compatible androidx versions for SDK 34 / AGP 8.1.4
+            force 'androidx.core:core:1.13.1'
+            force 'androidx.core:core-ktx:1.13.1'
+        }
+    }
+    
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('com.android.library') || project.plugins.hasPlugin('com.android.application')) {
+            android {
+                buildFeatures {
+                    buildConfig = true
+                }
+                
+                // Add namespace if not specified (for third-party libraries)
+                if (!android.namespace) {
+                    android.namespace = "com.${project.name.replace('-', '.')}"
+                }
+            }
+        }
+    }
+}

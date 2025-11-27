@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AivoApiClient } from "@aivo/api-client";
 import type { District, School, Tenant, TenantConfig } from "@aivo/types";
 
 const client = new AivoApiClient("http://localhost:4000", async () => null);
 
-// In this mock, the district admin is tied to tenant-1 in the api-gateway authContext.
 const CURRENT_TENANT_ID = "tenant-1";
 
 type TenantWithConfig = {
@@ -47,72 +47,156 @@ export default function DistrictAdminTenantPage() {
   const totalSchools = schools.length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
-      <section className="max-w-6xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold mb-2">District Admin – Overview</h1>
-          <p className="text-sm text-slate-300">
-            View your district&apos;s schools and curriculum configuration.
-          </p>
-        </div>
+    <main className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 p-6">
+      {/* Back Navigation */}
+      <Link 
+        href="/"
+        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+      >
+        <span className="text-lg">←</span> Back to Console
+      </Link>
 
-        {loading && <p className="text-sm text-slate-400">Loading…</p>}
-        {error && <p className="text-sm text-red-400">Error: {error}</p>}
-
-        {tenantInfo && (
-          <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-            <h2 className="text-sm font-semibold mb-1">Tenant</h2>
-            <p className="text-sm">{tenantInfo.tenant.name}</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Region: {tenantInfo.tenant.region} • Type: {tenantInfo.tenant.type}
-            </p>
-            <div className="mt-3">
-              <h3 className="text-xs font-semibold text-slate-300 mb-1">
-                Active Curricula
-              </h3>
-              <ul className="space-y-1">
-                {tenantInfo.config.curricula.map((c) => (
-                  <li key={c.id} className="text-xs text-slate-300">
-                    <span className="font-medium">{c.label}</span> – {c.region} ({c.standard})
-                  </li>
-                ))}
-              </ul>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <header className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+              🏢
             </div>
-          </section>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">District Overview</h1>
+              <p className="text-slate-500 mt-1">
+                View your district&apos;s schools and curriculum configuration
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {loading && (
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+            <div className="animate-spin text-4xl mb-3">🌟</div>
+            <p className="text-slate-500">Loading district data...</p>
+          </div>
         )}
 
-        <section className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-            <h2 className="text-sm font-semibold mb-2">Districts</h2>
-            {districts.length === 0 && (
-              <p className="text-xs text-slate-400">No districts configured.</p>
-            )}
-            <ul className="space-y-2">
-              {districts.map((d) => (
-                <li key={d.id} className="text-xs text-slate-300">
-                  <span className="font-medium">{d.name}</span> – {d.country}
-                </li>
-              ))}
-            </ul>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <p className="text-red-600">Error: {error}</p>
           </div>
-          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-            <h2 className="text-sm font-semibold mb-2">
-              Schools <span className="text-xs text-slate-400">({totalSchools})</span>
-            </h2>
-            {schools.length === 0 && (
-              <p className="text-xs text-slate-400">No schools configured.</p>
-            )}
-            <ul className="space-y-2">
-              {schools.map((s) => (
-                <li key={s.id} className="text-xs text-slate-300">
-                  <span className="font-medium">{s.name}</span>
-                  {s.city ? <span className="text-slate-400"> – {s.city}</span> : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      </section>
+        )}
+
+        {tenantInfo && (
+          <>
+            {/* Tenant Info */}
+            <section className="bg-white rounded-3xl shadow-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">🏫</span>
+                <h2 className="text-lg font-semibold text-slate-900">Tenant Information</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3 mb-6">
+                <div className="bg-lavender-50 rounded-2xl p-4">
+                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Name</p>
+                  <p className="font-semibold text-slate-900">{tenantInfo.tenant.name}</p>
+                </div>
+                <div className="bg-sky-50 rounded-2xl p-4">
+                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Region</p>
+                  <p className="font-semibold text-slate-900">{tenantInfo.tenant.region}</p>
+                </div>
+                <div className="bg-mint-50 rounded-2xl p-4">
+                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Type</p>
+                  <p className="font-semibold text-slate-900">{tenantInfo.tenant.type.replace(/_/g, " ")}</p>
+                </div>
+              </div>
+              
+              {/* Curricula */}
+              <div className="border-t border-lavender-200 pt-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <span>📚</span> Active Curricula
+                </h3>
+                <div className="grid gap-2">
+                  {tenantInfo.config.curricula.map((c) => (
+                    <div key={c.id} className="bg-lavender-50 rounded-xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📖</span>
+                        <span className="font-medium text-slate-900">{c.label}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-full">{c.region}</span>
+                        <span className="text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-full">{c.standard}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Districts and Schools Grid */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Districts */}
+              <section className="bg-white rounded-3xl shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">🏛️</span>
+                  <h2 className="text-lg font-semibold text-slate-900">Districts</h2>
+                </div>
+                {districts.length === 0 ? (
+                  <div className="bg-lavender-50 rounded-2xl p-4 text-center">
+                    <span className="text-3xl mb-2 block">📋</span>
+                    <p className="text-slate-500">No districts configured yet</p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {districts.map((d) => (
+                      <li key={d.id} className="bg-lavender-50 rounded-xl p-3 flex items-center gap-3">
+                        <span className="text-lg">🏛️</span>
+                        <div>
+                          <p className="font-medium text-slate-900">{d.name}</p>
+                          <p className="text-xs text-slate-500">{d.country}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              {/* Schools */}
+              <section className="bg-white rounded-3xl shadow-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🏫</span>
+                    <h2 className="text-lg font-semibold text-slate-900">Schools</h2>
+                  </div>
+                  <span className="text-sm bg-violet-100 text-violet-700 px-3 py-1 rounded-full font-medium">
+                    {totalSchools} total
+                  </span>
+                </div>
+                {schools.length === 0 ? (
+                  <div className="bg-lavender-50 rounded-2xl p-4 text-center">
+                    <span className="text-3xl mb-2 block">🏫</span>
+                    <p className="text-slate-500">No schools configured yet</p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2 max-h-64 overflow-y-auto">
+                    {schools.map((s) => (
+                      <li key={s.id} className="bg-lavender-50 rounded-xl p-3 flex items-center gap-3">
+                        <span className="text-lg">🏫</span>
+                        <div>
+                          <p className="font-medium text-slate-900">{s.name}</p>
+                          {s.city && <p className="text-xs text-slate-500">{s.city}</p>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+          </>
+        )}
+
+        {/* Footer */}
+        <div className="text-center text-slate-400 text-sm py-4">
+          💜 Supporting neurodiverse learners across your district
+        </div>
+      </div>
     </main>
   );
 }

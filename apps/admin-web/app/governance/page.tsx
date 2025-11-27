@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AivoApiClient } from "@aivo/api-client";
 import type {
   GetTenantLimitsResponse,
@@ -26,7 +27,6 @@ type GovernanceClient = AivoApiClient & {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 const client = new AivoApiClient(API_BASE_URL, async () => null) as GovernanceClient;
 
-// TODO: derive this from /me once auth wiring is complete
 const DEMO_TENANT_ID = "tenant-1";
 
 export default function GovernancePage() {
@@ -92,7 +92,7 @@ export default function GovernancePage() {
         .map((token) => token.trim())
         .filter(Boolean);
 
-  await client.updateTenantLimits(DEMO_TENANT_ID, {
+      await client.updateTenantLimits(DEMO_TENANT_ID, {
         maxDailyLlmCalls: maxDailyLlmCalls ? Number(maxDailyLlmCalls) : null,
         maxDailyTutorTurns: maxDailyTutorTurns ? Number(maxDailyTutorTurns) : null,
         allowedProviders: allowed.length ? allowed : null,
@@ -110,115 +110,185 @@ export default function GovernancePage() {
   const latestUsage = usage[0];
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
-      <section className="max-w-6xl mx-auto space-y-6">
-        <header>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Operations</p>
-          <h1 className="text-3xl font-semibold text-white">Governance dashboard</h1>
-          <p className="text-sm text-slate-400">
-            Monitor tenant usage, update AI guardrails, and review audit events in one calm view.
-          </p>
-          <p className="mt-2 text-xs font-mono text-slate-500">
-            Managing policies for tenant: <span className="text-slate-200">{activeTenantId}</span>
-          </p>
+    <main className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 p-6">
+      {/* Back Navigation */}
+      <Link 
+        href="/"
+        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+      >
+        <span className="text-lg">←</span> Back to Console
+      </Link>
+
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <header className="bg-white rounded-3xl shadow-xl p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+              🔒
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Governance Dashboard</h1>
+              <p className="text-slate-500 mt-1">
+                Monitor usage, update AI guardrails, and review audit events
+              </p>
+              <p className="text-xs text-violet-600 font-mono mt-2">
+                Managing: {activeTenantId}
+              </p>
+            </div>
+          </div>
         </header>
 
         {error && (
-          <div className="rounded-xl border border-red-700 bg-red-900/40 p-3 text-sm text-red-100">
-            {error}
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <p className="text-red-600">{error}</p>
           </div>
         )}
 
-        {loading && <p className="text-xs text-slate-400">Loading governance data…</p>}
-
-        <div className="grid gap-4 md:grid-cols-[1.4fr_1.4fr_1.2fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Today&apos;s usage</h2>
-            {latestUsage ? (
-              <ul className="mt-3 space-y-1 text-sm text-slate-200">
-                <li>LLM calls: {latestUsage.llmCalls}</li>
-                <li>Tutor turns: {latestUsage.tutorTurns}</li>
-                <li>Sessions planned: {latestUsage.sessionsPlanned}</li>
-                <li>Safety incidents: {latestUsage.safetyIncidents}</li>
-              </ul>
-            ) : (
-              <p className="mt-3 text-sm text-slate-400">
-                No usage data yet. Activity appears as learners work with AIVO.
-              </p>
-            )}
+        {loading && (
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+            <div className="animate-spin text-4xl mb-3">🌟</div>
+            <p className="text-slate-500">Loading governance data...</p>
           </div>
+        )}
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Tenant limits</h2>
-            <div className="mt-3 space-y-3 text-sm">
-              <label className="block">
-                <span className="text-xs uppercase text-slate-400">Max daily LLM calls</span>
-                <input
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-slate-100"
-                  value={maxDailyLlmCalls}
-                  onChange={(event) => setMaxDailyLlmCalls(event.target.value)}
-                  placeholder="unlimited"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs uppercase text-slate-400">Max daily tutor turns</span>
-                <input
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-slate-100"
-                  value={maxDailyTutorTurns}
-                  onChange={(event) => setMaxDailyTutorTurns(event.target.value)}
-                  placeholder="unlimited"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs uppercase text-slate-400">Allowed providers</span>
-                <input
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-slate-100"
-                  value={allowedProviders}
-                  onChange={(event) => setAllowedProviders(event.target.value)}
-                  placeholder="openai,anthropic"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs uppercase text-slate-400">Blocked providers</span>
-                <input
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-slate-100"
-                  value={blockedProviders}
-                  onChange={(event) => setBlockedProviders(event.target.value)}
-                  placeholder=""
-                />
-              </label>
-              <div className="flex justify-end">
+        {!loading && (
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Today's Usage */}
+            <section className="bg-white rounded-3xl shadow-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">📈</span>
+                <h2 className="text-lg font-semibold text-slate-900">Today&apos;s Usage</h2>
+              </div>
+              {latestUsage ? (
+                <div className="space-y-3">
+                  <div className="bg-violet-50 rounded-2xl p-4">
+                    <p className="text-xs text-slate-500 uppercase mb-1">LLM Calls</p>
+                    <p className="text-2xl font-bold text-violet-600">{latestUsage.llmCalls}</p>
+                  </div>
+                  <div className="bg-sky-50 rounded-2xl p-4">
+                    <p className="text-xs text-slate-500 uppercase mb-1">Tutor Turns</p>
+                    <p className="text-2xl font-bold text-sky-600">{latestUsage.tutorTurns}</p>
+                  </div>
+                  <div className="bg-mint-50 rounded-2xl p-4">
+                    <p className="text-xs text-slate-500 uppercase mb-1">Sessions Planned</p>
+                    <p className="text-2xl font-bold text-emerald-600">{latestUsage.sessionsPlanned}</p>
+                  </div>
+                  <div className={`rounded-2xl p-4 ${latestUsage.safetyIncidents > 0 ? 'bg-red-50' : 'bg-slate-50'}`}>
+                    <p className="text-xs text-slate-500 uppercase mb-1">Safety Incidents</p>
+                    <p className={`text-2xl font-bold ${latestUsage.safetyIncidents > 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                      {latestUsage.safetyIncidents}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-lavender-50 rounded-2xl p-4 text-center">
+                  <span className="text-3xl mb-2 block">📊</span>
+                  <p className="text-slate-500 text-sm">
+                    No usage data yet. Activity appears as learners work with AIVO.
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* Tenant Limits */}
+            <section className="bg-white rounded-3xl shadow-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">⚙️</span>
+                <h2 className="text-lg font-semibold text-slate-900">Tenant Limits</h2>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                    Max Daily LLM Calls
+                  </label>
+                  <input
+                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    value={maxDailyLlmCalls}
+                    onChange={(e) => setMaxDailyLlmCalls(e.target.value)}
+                    placeholder="unlimited"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                    Max Daily Tutor Turns
+                  </label>
+                  <input
+                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    value={maxDailyTutorTurns}
+                    onChange={(e) => setMaxDailyTutorTurns(e.target.value)}
+                    placeholder="unlimited"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                    Allowed Providers
+                  </label>
+                  <input
+                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    value={allowedProviders}
+                    onChange={(e) => setAllowedProviders(e.target.value)}
+                    placeholder="openai,anthropic"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                    Blocked Providers
+                  </label>
+                  <input
+                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    value={blockedProviders}
+                    onChange={(e) => setBlockedProviders(e.target.value)}
+                    placeholder=""
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleSaveLimits}
                   disabled={saving}
-                  className="rounded-full bg-orange-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60"
+                  className="w-full py-3 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
                 >
-                  {saving ? "Saving…" : "Save limits"}
+                  {saving ? "Saving..." : "💾 Save Limits"}
                 </button>
               </div>
-            </div>
-          </div>
+            </section>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Recent governance events</h2>
-            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-sm text-slate-200">
-              {logs.length === 0 ? (
-                <p className="text-slate-400">No audit log entries yet.</p>
-              ) : (
-                logs.map((log) => (
-                  <div key={log.id} className="border-b border-slate-800 pb-2 last:border-none last:pb-0">
-                    <p>{log.message}</p>
-                    <p className="text-xs text-slate-500">
-                      {log.type} • {new Date(log.createdAt).toLocaleString()}
-                    </p>
+            {/* Audit Logs */}
+            <section className="bg-white rounded-3xl shadow-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">📋</span>
+                <h2 className="text-lg font-semibold text-slate-900">Recent Events</h2>
+              </div>
+              <div className="max-h-[400px] overflow-y-auto space-y-3">
+                {logs.length === 0 ? (
+                  <div className="bg-lavender-50 rounded-2xl p-4 text-center">
+                    <span className="text-3xl mb-2 block">📝</span>
+                    <p className="text-slate-500 text-sm">No audit log entries yet</p>
                   </div>
-                ))
-              )}
-            </div>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="bg-lavender-50 rounded-xl p-4">
+                      <p className="text-sm text-slate-900">{log.message}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+                          {log.type}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {new Date(log.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
           </div>
+        )}
+
+        {/* Footer */}
+        <div className="text-center text-slate-400 text-sm py-4">
+          💜 Responsible AI governance for neurodiverse education
         </div>
-      </section>
+      </div>
     </main>
   );
 }

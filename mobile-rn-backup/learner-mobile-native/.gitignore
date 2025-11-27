@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+build/
+dist/
+*.log
+
+# React Native
+.expo/
+.expo-shared/
+*.jsbundle
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/gradle/
+android/local.properties
+*.apk
+*.aab
+
+# iOS
+ios/build/
+ios/Pods/
+ios/**/*.xcworkspace/xcuserdata/
+ios/**/*.xcworkspace/xcshareddata/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.orig
+*.bak
+.watchmanconfig

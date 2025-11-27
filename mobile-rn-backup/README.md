@@ -4,7 +4,7 @@ React Native (Expo) mobile applications for AIVO learning platform.
 
 ## Apps
 
-### 📱 Learner Mobile
+### 📱 Learner Mobile (Expo)
 Student-facing mobile app with speech therapy, adaptive learning sessions, and AI tutoring.
 
 **Features:**
@@ -15,6 +15,20 @@ Student-facing mobile app with speech therapy, adaptive learning sessions, and A
 - 📴 Offline queue for learning continuity
 
 **Path:** `mobile/learner-mobile/`
+
+### 📱 Learner Mobile Native (React Native)
+Full-featured React Native app with Virtual Brain AI integration, real-time WebSocket communication, and adaptive learning.
+
+**Features:**
+- 🤖 Virtual Brain chat with cognitive state monitoring
+- 📡 Real-time WebSocket for instant AI responses
+- 🎨 Material Design UI with animations
+- 🔒 Secure MMKV storage with token refresh
+- 📊 Progress tracking and skill mastery
+- 🗺️ Bottom tab navigation + stack navigation
+
+**Path:** `mobile/learner-mobile-native/`  
+**Docs:** See `mobile/learner-mobile-native/README.md` and `NEXT_STEPS.md`
 
 ### 👨‍👩‍👧 Parent-Teacher Mobile
 Parent and teacher portal for monitoring learner progress and managing approvals.

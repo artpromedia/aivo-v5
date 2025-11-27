@@ -3,5 +3,53 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  
+  /* Friendly color tokens */
+  --color-primary: #7C3AED;
+  --color-primary-light: #A78BFA;
+  --color-lavender: #FAF5FF;
+  --color-mint: #6EE7B7;
+  --color-sunshine: #FCD34D;
+  --color-sky: #7DD3FC;
+  --color-coral: #FF7B5C;
+}
+
+/* Friendly base styles */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg, #FAF5FF 0%, #FFFFFF 50%, #F8FAFC 100%);
+  min-height: 100vh;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F8FAFC;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }

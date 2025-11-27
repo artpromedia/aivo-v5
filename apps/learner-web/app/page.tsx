@@ -40,9 +40,26 @@ const SUBJECT_LABELS: Record<string, string> = {
   other: "Learning"
 };
 
+const SUBJECT_EMOJIS: Record<string, string> = {
+  math: "🔢",
+  ela: "📝",
+  reading: "📖",
+  writing: "✏️",
+  science: "🔬",
+  social_studies: "🌍",
+  sel: "💚",
+  speech: "🗣️",
+  other: "📚"
+};
+
 function subjectLabel(subject?: SubjectCode) {
   if (!subject) return "learning";
   return SUBJECT_LABELS[subject] ?? subject.toUpperCase();
+}
+
+function subjectEmoji(subject?: SubjectCode) {
+  if (!subject) return "🌟";
+  return SUBJECT_EMOJIS[subject] ?? "📚";
 }
 
 type LearnerHomeProps = {
@@ -66,50 +83,105 @@ function LearnerHome({ overview, loading, error }: LearnerHomeProps) {
   }, [overview]);
 
   const heroCopy = useMemo(() => {
-    if (loading) return "Checking your learner profile…";
-    if (error) return `We couldn’t load your learner details (${error}).`;
+    if (loading) return "Getting everything ready for you…";
+    if (error) return "Hmm, we couldn't load your details. Let's try again!";
     if (!overview) {
-      return "We’ll guide you through a gentle setup experience to personalize today’s calm session.";
+      return "Let's set up your learning space together! 🌈";
     }
     if (overview.focusSubject) {
-      return `We’ll practice ${subjectLabel(overview.focusSubject.subject)} with calm scaffolding at your comfort level.`;
+      return `Today we'll explore ${subjectLabel(overview.focusSubject.subject)} at your pace. No rush! ${subjectEmoji(overview.focusSubject.subject)}`;
     }
-    return `We’ll craft a calm plan tailored to ${gradeLabel(overview.currentGrade)}.`;
+    return `Ready to learn something amazing today? Let's go! ✨`;
   }, [overview, loading, error]);
 
-  const firstName = overview?.displayName?.split(" ")[0] ?? "AIVO learner";
+  const firstName = overview?.displayName?.split(" ")[0] ?? "Friend";
 
   return (
-    <main className={`flex min-h-screen flex-col items-center justify-center p-6 ${theme.background}`}>
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-b from-lavender-100 via-white to-slate-50">
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-10 w-24 h-24 bg-primary-100 rounded-full opacity-60 blur-2xl" />
+      <div className="absolute bottom-20 right-10 w-32 h-32 bg-mint/30 rounded-full opacity-60 blur-2xl" />
+      
       <section
-        className={`max-w-xl w-full rounded-2xl shadow-soft-coral ${theme.card} p-6`}
+        className="max-w-xl w-full bg-white rounded-3xl shadow-card p-8 relative"
         aria-label="Learner dashboard"
       >
-        <div
-          className={`inline-flex items-center gap-2 rounded-pill px-3 py-1 text-xs font-semibold bg-gradient-to-r ${theme.gradient} text-white`}
-        >
-          <span>{badgeText}</span>
+        {/* Avatar header */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-400 rounded-2xl flex items-center justify-center shadow-soft-primary">
+            <span className="text-white text-2xl font-bold">
+              {firstName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {loading ? "Welcome back!" : `Hi, ${firstName}! 👋`}
+            </h1>
+            <div className="inline-flex items-center gap-2 mt-1 px-3 py-1 bg-primary-50 text-primary-600 rounded-full text-xs font-medium">
+              <span>📚</span>
+              <span>{badgeText}</span>
+            </div>
+          </div>
         </div>
-        <h1 className={`mt-4 text-2xl font-bold ${theme.accent}`}>
-          {loading ? "Welcome back" : `Welcome back, ${firstName}`}
-        </h1>
-        <p className={`mt-2 text-sm ${theme.text}`}>
-          {heroCopy}
-        </p>
-        {error && (
-          <p className="mt-3 text-xs text-red-300" role="alert">
-            Need help? Refresh or check the API gateway running on port 4000.
+
+        {/* Hero message */}
+        <div className="bg-lavender-100 rounded-2xl p-5 mb-6">
+          <p className="text-slate-700 text-base leading-relaxed">
+            {heroCopy}
           </p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-coral-light rounded-xl flex items-center gap-3">
+            <span className="text-xl">😅</span>
+            <p className="text-sm text-coral-dark">
+              Don't worry! Just refresh the page or check if everything's connected.
+            </p>
+          </div>
         )}
+
+        {/* Quick stats */}
+        {overview && !error && (
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="bg-mint/20 rounded-xl p-4 text-center">
+              <span className="text-2xl">🎯</span>
+              <p className="text-xs text-mint-dark font-medium mt-1">On Track</p>
+            </div>
+            <div className="bg-sunshine/20 rounded-xl p-4 text-center">
+              <span className="text-2xl">⭐</span>
+              <p className="text-xs text-sunshine-dark font-medium mt-1">Great Job</p>
+            </div>
+            <div className="bg-sky/20 rounded-xl p-4 text-center">
+              <span className="text-2xl">🌟</span>
+              <p className="text-xs text-sky-dark font-medium mt-1">Keep Going</p>
+            </div>
+          </div>
+        )}
+
+        {/* Start button */}
         <Link
           href="/session"
           aria-disabled={loading || !!error}
-          className={`mt-6 inline-flex w-full items-center justify-center rounded-pill px-4 py-3 text-sm font-semibold text-white shadow-soft-coral transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-coral ${
-            loading || error ? "bg-coral/50 cursor-not-allowed" : "bg-coral hover:-translate-y-0.5 hover:shadow-lg"
+          className={`block w-full text-center rounded-2xl px-6 py-4 text-base font-semibold text-white shadow-soft-primary transition-all duration-200 ${
+            loading || error 
+              ? "bg-primary-300 cursor-not-allowed" 
+              : "bg-gradient-to-r from-primary-600 to-primary-500 hover:-translate-y-1 hover:shadow-lg active:translate-y-0"
           }`}
         >
-          {loading ? "Preparing…" : "Start today’s calm session"}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Preparing…
+            </span>
+          ) : (
+            <span>🚀 Start Learning</span>
+          )}
         </Link>
+
+        {/* Friendly footer */}
+        <p className="text-center text-sm text-slate-400 mt-4">
+          Take your time. You've got this! 💪
+        </p>
       </section>
     </main>
   );

@@ -8,6 +8,54 @@ const config = {
   theme: {
     extend: {
       colors: {
+        // Friendly lavender palette
+        lavender: {
+          50: '#FAF5FF',
+          100: '#F5EBFF',
+          200: '#E9D5FF',
+          300: '#D4BFFF',
+          400: '#C084FC',
+          500: '#A855F7',
+        },
+        // Primary violet
+        violet: {
+          50: '#F5F3FF',
+          100: '#EDE9FE',
+          200: '#DDD6FE',
+          300: '#C4B5FD',
+          400: '#A78BFA',
+          500: '#7C3AED',
+          600: '#6D28D9',
+          700: '#5B21B6',
+          800: '#4C1D95',
+          900: '#3B0764',
+        },
+        // Friendly accent colors
+        mint: {
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981',
+        },
+        sunshine: {
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          200: '#FDE68A',
+          300: '#FCD34D',
+          400: '#FBBF24',
+          500: '#F59E0B',
+        },
+        sky: {
+          50: '#F0F9FF',
+          100: '#E0F2FE',
+          200: '#BAE6FD',
+          300: '#7DD3FC',
+          400: '#38BDF8',
+          500: '#0EA5E9',
+        },
+        // Keep coral for compatibility
         coral: {
           50: '#fff5f3',
           100: '#ffe8e3',

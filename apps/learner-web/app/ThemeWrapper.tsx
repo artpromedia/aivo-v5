@@ -9,7 +9,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4
 const client = new AivoApiClient(API_BASE_URL);
 
 export function ThemeWrapper({ children }: { children: React.ReactNode }) {
-  const [gradeBand, setGradeBand] = useState<GradeBand>("6_8");
+  const [gradeBand, setGradeBand] = useState<GradeBand>("k_5");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function ThemeWrapper({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       } catch (e) {
-        // On error, use default middle-school theme
+        // On error, use default theme
         if (active) setLoading(false);
       }
     }
@@ -46,10 +46,15 @@ export function ThemeWrapper({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-400 text-sm flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-          Loading your learner theme…
+      <div className="min-h-screen bg-gradient-to-b from-lavender-100 to-white flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <span className="text-3xl">🌟</span>
+          </div>
+          <div className="text-primary-600 text-sm font-medium flex items-center gap-2 justify-center">
+            <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            Preparing your space…
+          </div>
         </div>
       </div>
     );

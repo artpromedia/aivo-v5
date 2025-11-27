@@ -28,6 +28,17 @@ import {
   PrismaClient,
   Role
 } from "@prisma/client";
+
+const PASSWORD_PLACEHOLDER = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
+const prisma = new PrismaClient();
+
+async function seedCoreData() {
+  const adminUser = await prisma.user.create({
+    data: {
+      username: "admin_demo",
+      email: "admin@aivo.local",
+      password: PASSWORD_PLACEHOLDER,
       role: Role.ADMIN
     }
   });

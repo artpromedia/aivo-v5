@@ -30,6 +30,41 @@ model Tenant {
   limits           TenantLimits?
   auditLogs        AuditLogEntry[]
   safetyIncidents  SafetyIncident[]
+  config           TenantConfig?
+  districts        District[]
+  schools          School[]
+}
+
+model TenantConfig {
+  id               String   @id @default(cuid())
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId         String   @unique
+  defaultRegion    String
+  allowedProviders Json     // Array of provider names
+  dataResidency    String?
+  curricula        Json     // Array of curriculum config objects
+}
+
+model District {
+  id        String   @id @default(cuid())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  name      String
+  country   String
+  createdAt DateTime @default(now())
+
+  schools   School[]
+}
+
+model School {
+  id         String    @id @default(cuid())
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  tenantId   String
+  district   District? @relation(fields: [districtId], references: [id])
+  districtId String?
+  name       String
+  city       String?
+  createdAt  DateTime  @default(now())
 }
 
 model User {
@@ -58,6 +93,9 @@ model RoleAssignment {
   districtId String?
   schoolId   String?
   role       String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, tenantId], name: "userId_tenantId")
 }
 
 model Learner {

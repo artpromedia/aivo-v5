@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+﻿import { randomUUID } from "crypto";
 import Fastify from "fastify";
 import { z } from "zod";
 import fetch from "node-fetch";
@@ -11,7 +11,19 @@ import {
   getOrCreateTenantLimits,
   getTenantUsageForDate,
   updateTenantLimits,
-  createAuditLogEntry
+  createAuditLogEntry,
+  // Session persistence
+  getSessionForLearnerToday,
+  createSession,
+  startSession as dbStartSession,
+  updateActivityStatus as dbUpdateActivityStatus,
+  getSessionById,
+  // Admin persistence
+  listTenants,
+  getTenantById,
+  listDistrictsForTenant,
+  listSchoolsForTenant,
+  listRoleAssignmentsForTenant
 } from "@aivo/persistence";
 import {
   createDifficultyProposal as dbCreateDifficultyProposal,
@@ -478,7 +490,7 @@ fastify.post("/baseline/submit", async (request, reply) => {
     summary: {
       subjectLevels: [],
       notes:
-        "Mock summary – persisted baseline assessment in Postgres, real scoring TBD"
+        "Mock summary â€“ persisted baseline assessment in Postgres, real scoring TBD"
     },
     updatedBrainProfile: {
       learnerId: learner.id,
@@ -632,120 +644,9 @@ fastify.post("/difficulty/proposals/:id/decision", async (request, reply) => {
 });
 
 // --- In-memory mock data for Admin views ---
-
-const mockTenants: Tenant[] = [
-  {
-    id: "tenant-1",
-    type: "district",
-    name: "Sunrise Unified School District",
-    region: "north_america",
-    createdAt: new Date().toISOString(),
-    isActive: true
-  },
-  {
-    id: "tenant-2",
-    type: "independent_school",
-    name: "Riverstone Neurodiversity Academy",
-    region: "europe",
-    createdAt: new Date().toISOString(),
-    isActive: true
-  }
-];
-
-const mockTenantConfigs: TenantConfig[] = [
-  {
-    tenantId: "tenant-1",
-    name: "Sunrise Unified School District",
-    defaultRegion: "north_america",
-    allowedProviders: ["openai", "anthropic", "google", "meta"],
-    dataResidency: "us",
-    curricula: [
-      {
-        id: "curr-1",
-        label: "US Common Core (Math, ELA)",
-        region: "north_america",
-        standard: "us_common_core",
-        subjects: ["math", "ela", "reading", "writing"]
-      }
-    ]
-  },
-  {
-    tenantId: "tenant-2",
-    name: "Riverstone Neurodiversity Academy",
-    defaultRegion: "europe",
-    allowedProviders: ["openai", "anthropic"],
-    dataResidency: "eu",
-    curricula: [
-      {
-        id: "curr-2",
-        label: "Local National Curriculum",
-        region: "europe",
-        standard: "local_national",
-        subjects: ["math", "science", "sel"]
-      }
-    ]
-  }
-];
-
-const mockDistricts: District[] = [
-  {
-    id: "district-1",
-    tenantId: "tenant-1",
-    name: "Sunrise District Central",
-    country: "USA",
-    createdAt: new Date().toISOString()
-  }
-];
-
-const mockSchools: School[] = [
-  {
-    id: "school-1",
-    tenantId: "tenant-1",
-    districtId: "district-1",
-    name: "Sunrise Middle School",
-    city: "Springfield",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "school-2",
-    tenantId: "tenant-1",
-    districtId: "district-1",
-    name: "Sunrise High School",
-    city: "Springfield",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "school-3",
-    tenantId: "tenant-2",
-    districtId: null,
-    name: "Riverstone Neurodiversity Academy",
-    city: "London",
-    createdAt: new Date().toISOString()
-  }
-];
-
-const mockRoleAssignments: RoleAssignment[] = [
-  {
-    userId: "user-district-admin",
-    tenantId: "tenant-1",
-    districtId: "district-1",
-    schoolId: null,
-    role: "district_admin"
-  },
-  {
-    userId: "user-teacher-1",
-    tenantId: "tenant-1",
-    districtId: "district-1",
-    schoolId: "school-1",
-    role: "teacher"
-  }
-];
-
 // --- Caregiver notifications now persisted via @aivo/persistence ---
 
-// --- In-memory sessions (mock) ---
-
-const mockSessions: LearnerSession[] = [];
+// --- Session persistence schemas ---
 
 const planSessionSchema = z.object({
   learnerId: z.string(),
@@ -762,94 +663,6 @@ const updateTenantLimitsSchema = z.object({
 });
 
 // Helper to create a calm, short session from scratch
-function createMockSession(
-  learnerId: string,
-  tenantId: string,
-  subject: string
-): LearnerSession {
-  const id = `session-${Date.now()}`;
-  const date = new Date().toISOString().slice(0, 10);
-
-  // TODO (later): Call brain-orchestrator/model-dispatch here to generate
-  // personalised activities based on the learner's brain profile and
-  // curriculum for this subject, e.g.:
-  //
-  // const brainProfile = await fetchBrainProfile(learnerId);
-  // const plan = await fetch("http://brain-orchestrator:PORT/sessions/plan", { ... });
-  // const activitiesFromBrain = plan.activities.map( ... );
-  //
-  // For now we keep a simple, hand-crafted sequence that follows the
-  // same shape the orchestrator would return.
-
-  const activities: SessionActivity[] = [
-    {
-      id: `${id}-act-1`,
-      sessionId: id,
-      learnerId,
-      subject: subject as any,
-      type: "calm_check_in",
-      title: "Calm Check-In",
-      instructions:
-        "Take a deep breath. On a scale from 1 to 5, how ready do you feel to learn right now?",
-      estimatedMinutes: 2,
-      status: "pending"
-    },
-    {
-      id: `${id}-act-2`,
-      sessionId: id,
-      learnerId,
-      subject: subject as any,
-      type: "micro_lesson",
-      title: "Micro Lesson",
-      instructions:
-        "We will review one small idea. You’ll see an example, then try one similar question.",
-      estimatedMinutes: 5,
-      status: "pending"
-    },
-    {
-      id: `${id}-act-3`,
-      sessionId: id,
-      learnerId,
-      subject: subject as any,
-      type: "guided_practice",
-      title: "Guided Practice",
-      instructions:
-        "Try 2–3 practice items. You can ask for a hint anytime. If it feels too hard, you can skip one.",
-      estimatedMinutes: 7,
-      status: "pending"
-    },
-    {
-      id: `${id}-act-4`,
-      sessionId: id,
-      learnerId,
-      subject: subject as any,
-      type: "reflection",
-      title: "Reflection",
-      instructions:
-        "What felt okay? What felt too hard? Choose one thing you’d like AIVO to remember for next time.",
-      estimatedMinutes: 3,
-      status: "pending"
-    }
-  ];
-
-  const now = new Date().toISOString();
-
-  const session: LearnerSession = {
-    id,
-    learnerId,
-    tenantId,
-    date,
-    subject: subject as any,
-    status: "planned",
-    plannedMinutes: activities.reduce((sum, a) => sum + a.estimatedMinutes, 0),
-    activities,
-    createdAt: now,
-    updatedAt: now
-  };
-
-  return session;
-}
-
 // --- Session routes ---
 
 // GET /sessions/today?learnerId=...&subject=...
@@ -862,12 +675,7 @@ fastify.get("/sessions/today", async (request, reply) => {
     .parse(request.query);
 
   const today = new Date().toISOString().slice(0, 10);
-  const existing = mockSessions.find(
-    (s) =>
-      s.learnerId === query.learnerId &&
-      s.subject === (query.subject as any) &&
-      s.date === today
-  );
+  const existing = await getSessionForLearnerToday(query.learnerId, query.subject, today);
 
   return reply.send({ session: existing ?? null });
 });
@@ -925,21 +733,67 @@ fastify.post("/sessions/start", async (request, reply) => {
       }
     }
 
-    let session = mockSessions.find(
-      (s) =>
-        s.learnerId === body.learnerId &&
-        s.subject === (body.subject as any) &&
-        s.date === today
-    );
+    let session = await getSessionForLearnerToday(body.learnerId, body.subject, today);
 
     if (!session) {
-      session = createMockSession(body.learnerId, tenantId, body.subject);
-      mockSessions.push(session);
+      const sessionId = `session-${Date.now()}`;
+      const activities = [
+        {
+          id: `${sessionId}-act-1`,
+          type: "calm_check_in" as const,
+          title: "Calm Check-In",
+          instructions:
+            "Take a deep breath. On a scale from 1 to 5, how ready do you feel to learn right now?",
+          estimatedMinutes: 2,
+          status: "pending" as const
+        },
+        {
+          id: `${sessionId}-act-2`,
+          type: "micro_lesson" as const,
+          title: "Micro Lesson",
+          instructions:
+            "We will review one small idea. You'll see an example, then try one similar question.",
+          estimatedMinutes: 5,
+          status: "pending" as const
+        },
+        {
+          id: `${sessionId}-act-3`,
+          type: "guided_practice" as const,
+          title: "Guided Practice",
+          instructions:
+            "Try 2-3 practice items. You can ask for a hint anytime. If it feels too hard, you can skip one.",
+          estimatedMinutes: 7,
+          status: "pending" as const
+        },
+        {
+          id: `${sessionId}-act-4`,
+          type: "reflection" as const,
+          title: "Reflection",
+          instructions:
+            "What felt okay? What felt too hard? Choose one thing you'd like AIVO to remember for next time.",
+          estimatedMinutes: 3,
+          status: "pending" as const
+        }
+      ];
+      const plannedMinutes = activities.reduce((sum, a) => sum + a.estimatedMinutes, 0);
+
+      session = await createSession({
+        learnerId: body.learnerId,
+        tenantId,
+        subject: body.subject,
+        date: today,
+        plannedMinutes,
+        activities
+      });
     }
 
-    if (session.status === "planned") {
-      session.status = "active";
-      session.updatedAt = new Date().toISOString();
+    // Start the session if it's in planned state
+    if (session && session.status === "planned") {
+      session = await dbStartSession(session.id) ?? session;
+    }
+
+    if (!session) {
+      return reply.status(500).send({ error: "Failed to create session" });
     }
 
     await incrementTenantUsage({
@@ -995,49 +849,17 @@ fastify.patch("/sessions/:sessionId/activities/:activityId", async (request, rep
     })
     .parse(request.body);
 
-  const session = mockSessions.find((s) => s.id === params.sessionId);
-  if (!session) {
-    return reply.status(404).send({ error: "Session not found" });
+  const updatedSession = await dbUpdateActivityStatus({
+    sessionId: params.sessionId,
+    activityId: params.activityId,
+    status: body.status
+  });
+
+  if (!updatedSession) {
+    return reply.status(404).send({ error: "Session or activity not found" });
   }
 
-  const activity = session.activities.find((a) => a.id === params.activityId);
-  if (!activity) {
-    return reply.status(404).send({ error: "Activity not found" });
-  }
-
-  const now = new Date().toISOString();
-
-  if (body.status === "in_progress" && activity.status === "pending") {
-    activity.status = "in_progress";
-    activity.startedAt = now;
-  } else if (body.status === "completed") {
-    activity.status = "completed";
-    if (!activity.startedAt) {
-      activity.startedAt = now;
-    }
-    activity.completedAt = now;
-  } else if (body.status === "skipped") {
-    activity.status = "skipped";
-    if (!activity.startedAt) {
-      activity.startedAt = now;
-    }
-    activity.completedAt = now;
-  }
-
-  const allDone = session.activities.every(
-    (a) => a.status === "completed" || a.status === "skipped"
-  );
-  if (allDone) {
-    session.status = "completed";
-    session.actualMinutes = session.activities.reduce(
-      (sum, a) => sum + a.estimatedMinutes,
-      0
-    );
-  }
-
-  session.updatedAt = now;
-
-  const response = { session };
+  const response = { session: updatedSession };
   return reply.send(response);
 });
 
@@ -1051,8 +873,9 @@ fastify.get("/admin/tenants", async (request, reply) => {
     return reply.status(err.statusCode ?? 403).send({ error: err.message });
   }
 
+  const tenants = await listTenants();
   const response: ListTenantsResponse = {
-    tenants: mockTenants
+    tenants: tenants as any
   };
   return reply.send(response);
 });
@@ -1069,16 +892,18 @@ fastify.get("/admin/tenants/:tenantId", async (request, reply) => {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
-  const tenant = mockTenants.find((t) => t.id === params.tenantId);
-  const config = mockTenantConfigs.find((c) => c.tenantId === params.tenantId);
+  const tenant = await getTenantById(params.tenantId);
+  const config = await prisma.tenantConfig.findUnique({
+    where: { tenantId: params.tenantId }
+  });
 
-  if (!tenant || !config) {
+  if (!tenant) {
     return reply.status(404).send({ error: "Tenant not found" });
   }
 
   const response: GetTenantConfigResponse = {
-    tenant,
-    config
+    tenant: tenant as any,
+    config: (config || {}) as any
   };
 
   return reply.send(response);
@@ -1098,7 +923,7 @@ fastify.get("/admin/tenants/:tenantId/districts", async (request, reply) => {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
-  const districts = mockDistricts.filter((d) => d.tenantId === params.tenantId);
+  const districts = await listDistrictsForTenant(params.tenantId);
   const response: ListDistrictsResponse = { districts };
   return reply.send(response);
 });
@@ -1118,10 +943,7 @@ fastify.get("/admin/tenants/:tenantId/schools", async (request, reply) => {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
-  let schools = mockSchools.filter((s) => s.tenantId === params.tenantId);
-  if (query.districtId) {
-    schools = schools.filter((s) => s.districtId === query.districtId);
-  }
+  const schools = await listSchoolsForTenant(params.tenantId, query.districtId);
 
   const response: ListSchoolsResponse = { schools };
   return reply.send(response);
@@ -1141,8 +963,8 @@ fastify.get("/admin/tenants/:tenantId/roles", async (request, reply) => {
     return reply.status(403).send({ error: "Forbidden for this tenant" });
   }
 
-  const assignments = mockRoleAssignments.filter((a) => a.tenantId === params.tenantId);
-  const response: ListRoleAssignmentsResponse = { assignments };
+  const assignments = await listRoleAssignmentsForTenant(params.tenantId);
+  const response: ListRoleAssignmentsResponse = { assignments: assignments as any };
   return reply.send(response);
 });
 
@@ -1446,7 +1268,7 @@ fastify.post("/caregiver/notifications/:id/read", async (request, reply) => {
     return reply.status(401).send({ error: "Unauthenticated" });
   }
 
-  await dbMarkNotificationRead(params.id, user.userId);
+  await dbMarkNotificationRead(params.id);
   const records = await listNotificationsForUser(user.userId);
   const updated = records.find((n: any) => n.id === params.id) as any;
 
