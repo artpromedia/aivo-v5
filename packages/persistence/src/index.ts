@@ -239,4 +239,5 @@ export * from "./governance";
 export * from "./safety";
 export * from "./sessions";
 export * from "./admin";
+export * from "./homework";
 export { prisma } from "./client";

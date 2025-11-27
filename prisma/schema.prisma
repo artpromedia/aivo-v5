@@ -114,6 +114,7 @@ model Learner {
   accommodationMetrics AccommodationEffectiveness[] @relation("LearnerAccommodationMetrics")
   agentStates      AgentState[]
   agentInteractions AgentInteraction[]
+  homeworkSessions HomeworkSession[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }
@@ -1526,4 +1527,125 @@ model ExtendedNotification {
   @@index([tenantId])
   @@index([recipientUserId])
   @@index([status])
+}
+
+// ============================================================================
+// HOMEWORK HELPER - Scaffolded homework assistance for learners
+// ============================================================================
+
+model HomeworkSession {
+  id                  String                @id @default(cuid())
+  learnerId           String
+  learner             Learner               @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  title               String
+  subject             String?               // Detected or specified subject
+  gradeLevel          Int?                  // Detected or specified grade level
+  status              HomeworkSessionStatus @default(UNDERSTAND)
+  difficultyMode      HomeworkDifficultyMode @default(SCAFFOLDED)
+  parentAssistMode    Boolean               @default(false)
+  hintsUsed           Int                   @default(0)
+  maxHintsPerStep     Int                   @default(3)
+  currentStepHints    Int                   @default(0)
+  problemAnalysis     Json?                 // Stored ProblemAnalysis from UNDERSTAND step
+  solutionPlan        Json?                 // Stored SolutionPlan from PLAN step
+  finalAnswer         Json?                 // Learner's final answer
+  verificationResult  Json?                 // Stored VerificationResult from CHECK step
+  completedAt         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  
+  files               HomeworkFile[]
+  workProducts        HomeworkWorkProduct[]
+  hints               HomeworkHint[]
+
+  @@index([learnerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum HomeworkSessionStatus {
+  UNDERSTAND
+  PLAN
+  SOLVE
+  CHECK
+  COMPLETE
+}
+
+enum HomeworkDifficultyMode {
+  SIMPLIFIED    // Extra scaffolding, simpler language
+  SCAFFOLDED    // Standard scaffolding with hints
+  STANDARD      // Minimal assistance
+}
+
+model HomeworkFile {
+  id              String           @id @default(cuid())
+  sessionId       String
+  session         HomeworkSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  filename        String
+  mimeType        String
+  fileUrl         String           // URL to stored file
+  fileSize        Int?             // Size in bytes
+  ocrStatus       OcrStatus        @default(PENDING)
+  extractedText   String?          @db.Text
+  ocrConfidence   Float?           // 0-1 confidence score
+  ocrMetadata     Json?            // Additional OCR metadata (word positions, etc.)
+  inputType       HomeworkInputType @default(UPLOAD)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([sessionId])
+  @@index([ocrStatus])
+}
+
+enum OcrStatus {
+  PENDING
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+enum HomeworkInputType {
+  UPLOAD        // File upload
+  CAMERA        // Camera capture
+  TEXT          // Direct text input
+  DOCUMENT      // PDF/Document upload
+}
+
+model HomeworkWorkProduct {
+  id              String           @id @default(cuid())
+  sessionId       String
+  session         HomeworkSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  step            HomeworkSessionStatus
+  inputType       String           // "analysis", "plan", "solution_step", "verification"
+  inputData       Json?            // Input provided by learner
+  outputData      Json             // AI-generated guidance/feedback
+  isComplete      Boolean          @default(false)
+  confidence      Float?           // AI confidence in the output
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([sessionId])
+  @@index([step])
+}
+
+model HomeworkHint {
+  id              String           @id @default(cuid())
+  sessionId       String
+  session         HomeworkSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  step            HomeworkSessionStatus
+  hintNumber      Int              // 1, 2, or 3 for the step
+  hintType        HomeworkHintType
+  content         String           @db.Text
+  wasHelpful      Boolean?         // Learner feedback
+  createdAt       DateTime         @default(now())
+
+  @@index([sessionId])
+  @@index([step])
+}
+
+enum HomeworkHintType {
+  NUDGE           // Gentle pointer in right direction
+  EXPLANATION     // Explain a concept
+  EXAMPLE         // Show a similar example
+  DIRECT          // More direct guidance
 }
