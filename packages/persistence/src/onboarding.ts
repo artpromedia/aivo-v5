@@ -351,7 +351,7 @@ export async function getOnboardingAnalytics(
  * Get aggregated onboarding metrics (for admin dashboard)
  */
 export async function getOnboardingMetrics(
-  organizationId?: string
+  tenantId?: string
 ): Promise<{
   totalUsers: number;
   completedOnboarding: number;
@@ -360,28 +360,25 @@ export async function getOnboardingMetrics(
   averageCompletionTimeMs: number;
   stepCompletionRates: Record<string, number>;
 }> {
-  // Base filter
-  const where = organizationId
-    ? { organizationId }
-    : {};
-
   // Get user counts by status
+  const whereClause = tenantId ? { tenantId } : undefined;
   const statusCounts = await prisma.user.groupBy({
     by: ["onboardingStatus"],
-    where,
+    where: whereClause,
     _count: { id: true },
   });
 
   type StatusCount = { onboardingStatus: string; _count: { id: number } };
-  const totalUsers = statusCounts.reduce((sum: number, s: StatusCount) => sum + s._count.id, 0);
-  const completedOnboarding = (statusCounts as StatusCount[]).find(s => s.onboardingStatus === "COMPLETE")?._count.id || 0;
-  const pending = (statusCounts as StatusCount[]).find(s => s.onboardingStatus === "PENDING")?._count.id || 0;
+  const typedStatusCounts = statusCounts as unknown as StatusCount[];
+  const totalUsers = typedStatusCounts.reduce((sum: number, s: StatusCount) => sum + s._count.id, 0);
+  const completedOnboarding = typedStatusCounts.find(s => s.onboardingStatus === "COMPLETE")?._count.id || 0;
+  const pending = typedStatusCounts.find(s => s.onboardingStatus === "PENDING")?._count.id || 0;
   const inProgress = totalUsers - completedOnboarding - pending;
 
   // Get average completion time for completed users
   const completedUsers = await prisma.user.findMany({
     where: {
-      ...where,
+      ...(tenantId ? { tenantId } : {}),
       onboardingStatus: "COMPLETE",
       onboardingStartedAt: { not: null },
       onboardingCompletedAt: { not: null },

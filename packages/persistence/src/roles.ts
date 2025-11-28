@@ -422,7 +422,7 @@ export async function logRoleChange(input: {
       newRole: input.newRole,
       tenantId: input.tenantId ?? null,
       reason: input.reason ?? null,
-      metadata: input.metadata ?? null
+      metadata: input.metadata as object | undefined
     }
   });
 
