@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { applyRateLimit, addRateLimitHeaders } from "@/lib/middleware/rate-limit";
 import { 
   getHomeworkSessionById, 
   createHomeworkHint,
@@ -33,6 +34,16 @@ export async function POST(
         { error: "Unauthorized" },
         { status: 401 }
       );
+    }
+
+    // Apply rate limiting (AI tier: 20 requests per minute per user)
+    const { response: rateLimitResponse, result: rateLimitResult } = await applyRateLimit(
+      request,
+      { tier: 'ai', userId: session.user.id }
+    );
+    
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const { id: sessionId } = await params;
@@ -102,7 +113,7 @@ export async function POST(
     // Increment hint counters
     await incrementHomeworkHints(sessionId);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       hint: {
         ...hint,
         createdAt: hint.createdAt.toISOString()
@@ -110,6 +121,8 @@ export async function POST(
       hintsRemaining: maxHints - hintsUsed - 1,
       suggestions: hintContent.suggestions
     });
+    
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("Request hint error:", error);
     return NextResponse.json(

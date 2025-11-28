@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { applyRateLimit, addRateLimitHeaders } from '@/lib/middleware/rate-limit'
 
 // Placeholder for speech analysis
 // In production, integrate with services like:
@@ -27,6 +28,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Apply rate limiting (AI tier: 20 requests per minute per user)
+    const { response: rateLimitResponse, result: rateLimitResult } = await applyRateLimit(
+      req,
+      { tier: 'ai', userId: session.user.id }
+    );
+    
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const formData = await req.formData()
     const audioFile = formData.get('audio') as File
     const targetSound = formData.get('targetSound') as string
@@ -48,7 +59,8 @@ export async function POST(req: NextRequest) {
     // Log the attempt
     await logSpeechAttempt(learnerId, targetSound, targetWord, result.accuracy)
 
-    return NextResponse.json(result)
+    const response = NextResponse.json(result)
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error('Speech analysis error:', error)
     

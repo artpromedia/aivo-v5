@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { buildBaseUsername, hashPassword, resolveUniqueUsername } from "@/lib/passwords";
 import { isGuardianRole } from "@/lib/roles";
+import { applyRateLimit, addRateLimitHeaders, getClientIp } from "@/lib/middleware/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -24,8 +25,18 @@ const registerSchema = z.object({
   })
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting (auth tier: 10 requests per 15 minutes per IP)
+    const { response: rateLimitResponse, result: rateLimitResult } = await applyRateLimit(
+      request,
+      { tier: 'auth', identifier: `ip:${getClientIp(request)}` }
+    );
+    
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
 
@@ -72,13 +83,15 @@ export async function POST(request: Request) {
       include: { profile: true }
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       userId: created.id,
       username: created.username,
       email: created.email,
       role: created.role,
       profile: created.profile
     });
+    
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("Registration failed", error);
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
