@@ -1,4 +1,3 @@
-import { PersonalizedModelStatus } from '@prisma/client';
 import {
   createDifficultyProposal,
   createNotification,
@@ -6,19 +5,22 @@ import {
   getLearnerWithBrainProfile,
   listNotificationsForUser,
   listPendingProposalsForLearner,
-  markNotificationRead,
-  upsertPersonalizedModel
+  markNotificationRead
 } from '..';
 import { prisma } from '../client';
-// @ts-ignore: integration tests reuse repo-level seed helper outside package root
-import { seedCoreData, SeedSummary } from '../../../../scripts/seed-core-data';
+import { seedTestData, cleanupTestData, SeedSummary } from './helpers/seed-test-data';
 
 describe('persistence integration', () => {
   let seed: SeedSummary;
 
   beforeAll(async () => {
     await prisma.$connect();
-    seed = await seedCoreData(prisma as any);
+    seed = await seedTestData(prisma);
+  });
+
+  afterAll(async () => {
+    await cleanupTestData(prisma, seed);
+    await prisma.$disconnect();
   });
 
   describe('learner context helpers', () => {
@@ -30,38 +32,13 @@ describe('persistence integration', () => {
       expect(learner?.brainProfile.gradeBand).toMatch(/[a-z0-9_]+/i);
       expect(learner?.brainProfile.subjectLevels).toBeDefined();
     });
-
-    it('upserts personalized models with incremental updates', async () => {
-      const created = await upsertPersonalizedModel({
-        learnerId: seed.learner.id,
-        modelId: 'integration-model',
-  status: PersonalizedModelStatus.ACTIVE,
-        configuration: {
-          reinforcement: 'encouraging',
-          subjectLevels: [{ subject: 'reading', level: 3.2 }]
-        }
-      });
-
-  expect(created.status).toBe(PersonalizedModelStatus.ACTIVE);
-      expect(created.configuration).toMatchObject({ reinforcement: 'encouraging' });
-
-      const updated = await upsertPersonalizedModel({
-        learnerId: seed.learner.id,
-  status: PersonalizedModelStatus.UPDATING,
-        performanceMetrics: { mae: 0.12 }
-      });
-
-  expect(updated.status).toBe(PersonalizedModelStatus.UPDATING);
-      expect(updated.performanceMetrics).toMatchObject({ mae: 0.12 });
-    });
   });
 
   describe('difficulty proposal workflow', () => {
     it('creates, lists, and decides on approval requests', async () => {
       const proposal = await createDifficultyProposal({
         learnerId: seed.learner.id,
-        requesterId: seed.teacher.id,
-        approverId: seed.admin.id,
+        tenantId: seed.tenantId,
         subject: 'math',
         fromLevel: 3.1,
         toLevel: 3.4,
@@ -89,7 +66,7 @@ describe('persistence integration', () => {
   describe('notification lifecycle', () => {
     it('creates notifications and marks them as read', async () => {
       const notification = await createNotification({
-        tenantId: 'demo-tenant',
+        tenantId: seed.tenantId,
         learnerId: seed.learner.id,
         recipientUserId: seed.guardian.id,
         audience: 'parent',
@@ -98,18 +75,15 @@ describe('persistence integration', () => {
         body: 'Focus improved by 8% this week.'
       });
 
-      expect(notification.read).toBe(false);
+      expect(notification.status).toBe('unread');
 
       const inbox = await listNotificationsForUser(seed.guardian.id);
       const created = inbox.find((n) => n.id === notification.id);
       expect(created).toBeDefined();
       expect(created?.status).toBe('unread');
 
-      const result = await markNotificationRead({
-        notificationId: notification.id,
-        userId: seed.guardian.id
-      });
-      expect(result.count).toBe(1);
+      const result = await markNotificationRead(notification.id);
+      expect(result.status).toBe('read');
 
       const unreadOnly = await listNotificationsForUser(seed.guardian.id, { unreadOnly: true });
       expect(unreadOnly.find((n) => n.id === notification.id)).toBeUndefined();

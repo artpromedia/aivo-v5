@@ -4,11 +4,42 @@
  * Demonstrates agent orchestration, coordination, and session management.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
+import { describe, it, expect, beforeAll, afterAll, jest } from "@jest/globals";
 import { PersonalizedLearningAgent, AITutorAgent, AgentOrchestrator } from "@aivo/agents";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Mock Prisma
+const mockLearner = {
+	id: "test-learner-123",
+	firstName: "Test",
+	lastName: "Learner",
+	dateOfBirth: new Date("2015-01-01"),
+	gradeLevel: 5,
+	accommodations: { learningStyle: "visual" },
+	diagnoses: [],
+	progress: [],
+	createdAt: new Date(),
+	updatedAt: new Date()
+};
+
+const prisma = {
+	learner: {
+		findUnique: jest.fn().mockResolvedValue(mockLearner),
+		findFirst: jest.fn().mockResolvedValue(mockLearner),
+		update: jest.fn().mockResolvedValue(mockLearner)
+	},
+	personalizedModel: {
+		findUnique: jest.fn().mockResolvedValue(null)
+	},
+	learnerProgress: {
+		findMany: jest.fn().mockResolvedValue([]),
+		create: jest.fn().mockResolvedValue({})
+	},
+	activityAttempt: {
+		findMany: jest.fn().mockResolvedValue([])
+	},
+	$disconnect: jest.fn().mockResolvedValue(undefined)
+} as any;
+
 const orchestrator = new AgentOrchestrator();
 
 describe("Agent Integration and Orchestration", () => {

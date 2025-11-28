@@ -262,12 +262,20 @@ export class AgentOrchestrator extends EventEmitter {
       throw new Error(`Orchestration plan ${planId ?? ''} timed out`);
     }
 
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error(`Orchestration plan ${planId ?? ''} timed out`)), remaining),
-      ),
-    ]);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    
+    const timeoutPromise = new Promise<T>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(`Orchestration plan ${planId ?? ''} timed out`)), remaining);
+    });
+
+    try {
+      const result = await Promise.race([promise, timeoutPromise]);
+      return result;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   private setupJobProcessing(): void {

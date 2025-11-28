@@ -176,6 +176,13 @@ export abstract class BaseAgent extends EventEmitter {
     }
   }
 
+  /**
+   * Get current agent state (public accessor for testing/debugging)
+   */
+  public getAgentState(): AgentState {
+    return this.state;
+  }
+
   protected abstract initializeSpecificComponents(): Promise<void>;
   abstract processInput(input: unknown): Promise<AgentResponse>;
   abstract generateInsight(): Promise<unknown>;

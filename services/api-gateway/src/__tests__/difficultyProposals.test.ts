@@ -1,4 +1,5 @@
 import { prisma } from '../db';
+import { TenantType, Role, DifficultyProposalStatus } from '@prisma/client';
 
 const prismaAny = prisma as any;
 // Simple persistence test hitting Prisma directly, independent of HTTP or AI models.
@@ -17,7 +18,7 @@ describe('Difficulty proposals persistence', () => {
       update: {},
       create: {
         id: tenantId,
-        type: 'district',
+        type: TenantType.DISTRICT,
         name: 'Test Tenant',
         region: 'north_america',
         isActive: true,
@@ -30,7 +31,9 @@ describe('Difficulty proposals persistence', () => {
       create: {
         id: ownerUserId,
         email: 'owner@example.com',
-        name: 'Owner User',
+        username: 'owner_test',
+        password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+        role: Role.PARENT,
         tenantId,
       },
     });
@@ -40,13 +43,23 @@ describe('Difficulty proposals persistence', () => {
       update: {},
       create: {
         id: learnerId,
-        displayName: 'Test Learner',
-        currentGrade: 7,
-        region: 'north_america',
+        firstName: 'Test',
+        lastName: 'Learner',
+        gradeLevel: 7,
+        dateOfBirth: new Date('2010-01-01'),
         tenant: {
           connect: { id: tenantId },
         },
-        owner: {
+        user: {
+          create: {
+            email: `learner_${Date.now()}@test.com`,
+            username: `learner_test_${Date.now()}`,
+            password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+            role: Role.LEARNER,
+            tenantId,
+          },
+        },
+        guardian: {
           connect: { id: ownerUserId },
         },
       },
@@ -55,7 +68,12 @@ describe('Difficulty proposals persistence', () => {
 
   afterAll(async () => {
     await prismaAny.difficultyProposal.deleteMany({ where: { learnerId } });
+    // Get learner to find associated user
+    const learner = await prisma.learner.findUnique({ where: { id: learnerId }, select: { userId: true } });
     await prisma.learner.deleteMany({ where: { id: learnerId } });
+    if (learner?.userId) {
+      await prisma.user.deleteMany({ where: { id: learner.userId } });
+    }
     await prisma.user.deleteMany({ where: { id: ownerUserId } });
     await prisma.tenant.deleteMany({ where: { id: tenantId } });
     await prisma.$disconnect();
@@ -72,7 +90,7 @@ describe('Difficulty proposals persistence', () => {
         direction: 'harder',
         rationale: 'Test rationale',
         createdBy: 'system',
-        status: 'pending',
+        status: DifficultyProposalStatus.PENDING,
       },
     });
 
@@ -88,12 +106,12 @@ describe('Difficulty proposals persistence', () => {
     const updated = await prismaAny.difficultyProposal.update({
       where: { id: created.id },
       data: {
-        status: 'approved',
+        status: DifficultyProposalStatus.APPROVED,
         decidedById: 'tester',
       },
     });
 
-    expect(updated.status).toBe('approved');
+    expect(updated.status).toBe(DifficultyProposalStatus.APPROVED);
     expect(updated.decidedById).toBe('tester');
   });
 });

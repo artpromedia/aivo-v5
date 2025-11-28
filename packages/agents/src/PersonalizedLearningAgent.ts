@@ -271,21 +271,37 @@ export class PersonalizedLearningAgent extends BaseAgent {
 	async processInput(input: LearningContext): Promise<AgentResponse> {
 		this.state.status = "processing";
 
+		// Normalize input with defaults to handle missing fields
+		const normalizedInput: LearningContext = {
+			...input,
+			recentPerformance: {
+				accuracy: input.recentPerformance?.accuracy ?? 70,
+				responseTime: input.recentPerformance?.responseTime ?? [],
+				hintsUsed: input.recentPerformance?.hintsUsed ?? 0,
+				attemptsPerQuestion: input.recentPerformance?.attemptsPerQuestion ?? [],
+				consecutiveCorrect: input.recentPerformance?.consecutiveCorrect ?? 0,
+				consecutiveIncorrect: input.recentPerformance?.consecutiveIncorrect ?? 0,
+				engagementScore: input.recentPerformance?.engagementScore ?? 50
+			},
+			focusLevel: input.focusLevel ?? 50,
+			strugglesDetected: input.strugglesDetected ?? []
+		};
+
 		try {
 			// Analyze current learning state
-			const analysis = await this.analyzeLearningState(input);
+			const analysis = await this.analyzeLearningState(normalizedInput);
 
 			// Make decision based on analysis
-			const decision = await this.makeLearningDecision(analysis, input);
+			const decision = await this.makeLearningDecision(analysis, normalizedInput);
 
 			// Apply accommodations if needed
 			const adaptedDecision = await this.applyAccommodations(decision);
 
 			// Generate personalized feedback
-			const feedback = await this.generatePersonalizedFeedback(input, adaptedDecision);
+			const feedback = await this.generatePersonalizedFeedback(normalizedInput, adaptedDecision);
 
 			// Update memory
-			this.updateLearningMemory(input, decision);
+			this.updateLearningMemory(normalizedInput, decision);
 
 			// Save decision for analysis
 			this.adaptationHistory.push(decision);
@@ -908,8 +924,9 @@ decision,
 	}
 
 	private assessPerformanceLevel(
-		performance: PerformanceMetrics
+		performance: PerformanceMetrics | undefined
 	): "struggling" | "developing" | "proficient" | "mastery" {
+		if (!performance || performance.accuracy === undefined) return "developing";
 		if (performance.accuracy < 50) return "struggling";
 		if (performance.accuracy < 70) return "developing";
 		if (performance.accuracy < 90) return "proficient";
@@ -917,19 +934,21 @@ decision,
 	}
 
 	private assessEngagementLevel(context: LearningContext): "low" | "medium" | "high" {
-		if (context.recentPerformance.engagementScore < 40) return "low";
-		if (context.recentPerformance.engagementScore < 70) return "medium";
+		const engagementScore = context.recentPerformance?.engagementScore;
+		if (engagementScore === undefined || engagementScore < 40) return "low";
+		if (engagementScore < 70) return "medium";
 		return "high";
 	}
 
 	private assessCognitiveLoad(
 		context: LearningContext
 	): "low" | "optimal" | "high" | "overload" {
+		const perf = context.recentPerformance;
 		const indicators = [
-			context.recentPerformance.hintsUsed > 5,
-			context.focusLevel < 40,
-			mean(context.recentPerformance.responseTime) > 30,
-			context.strugglesDetected.length > 3
+			(perf?.hintsUsed ?? 0) > 5,
+			(context.focusLevel ?? 50) < 40,
+			mean(perf?.responseTime ?? []) > 30,
+			(context.strugglesDetected?.length ?? 0) > 3
 		];
 
 		const overloadScore = indicators.filter((i) => i).length;
@@ -941,16 +960,17 @@ decision,
 	}
 
 	private async inferEmotionalState(context: LearningContext): Promise<EmotionalState> {
+		const perf = context.recentPerformance;
 		// Simple heuristic-based inference
-		if (context.recentPerformance.consecutiveIncorrect >= 3) {
+		if ((perf?.consecutiveIncorrect ?? 0) >= 3) {
 			return {
 				primary: "frustrated",
 				confidence: 0.7,
-				indicators: { consecutiveErrors: context.recentPerformance.consecutiveIncorrect }
+				indicators: { consecutiveErrors: perf?.consecutiveIncorrect ?? 0 }
 			};
 		}
 
-		if (context.recentPerformance.engagementScore < 30) {
+		if ((perf?.engagementScore ?? 50) < 30) {
 			return {
 				primary: "bored",
 				confidence: 0.6,
