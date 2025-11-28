@@ -1,4 +1,0 @@
-{
-  "extends": "../../tsconfig.mobile.base.json",
-  "include": ["App.tsx", "src"]
-}
