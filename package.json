@@ -14,6 +14,10 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "test:ci": "jest --ci --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=json-summary",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "test:changed": "jest --onlyChanged",
@@ -31,6 +35,7 @@
     "ios": "expo run:ios"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/react": "^18.3.27",
