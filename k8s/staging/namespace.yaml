@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    app.kubernetes.io/name: aivo
+    app.kubernetes.io/instance: aivo-staging
+    environment: staging
+  annotations:
+    description: "AIVO v5 staging environment for pre-production testing"

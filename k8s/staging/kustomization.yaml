@@ -1,0 +1,26 @@
+# Staging Kustomization
+# Apply with: kubectl apply -k k8s/staging/
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: staging
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - database.yaml
+  - redis.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: aivo
+  app.kubernetes.io/instance: staging
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: aivo/platform
+    newTag: staging

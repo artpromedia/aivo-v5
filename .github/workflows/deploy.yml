@@ -1,15 +1,26 @@
-name: Deploy to Production
+name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 env:
   NODE_VERSION: '20'
   PNPM_VERSION: '10'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # Run tests and type checks
@@ -103,7 +114,9 @@ jobs:
     name: Build Docker Images
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
     
     steps:
       - name: Checkout code
@@ -127,6 +140,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' }}
       
       - name: Build and push Web App
         uses: docker/build-push-action@v5
@@ -195,11 +209,116 @@ jobs:
           ignore_missing: true
           ignore_empty: true
 
-  # Deploy to production
+  # Deploy to staging environment
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.aivo.education
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+      
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name aivo-cluster --region us-east-1
+      
+      - name: Deploy to staging
+        run: |
+          kubectl set image deployment/aivo-web \
+            web=${{ secrets.DOCKER_USERNAME }}/aivo-platform:${{ github.sha }} \
+            -n staging
+          kubectl rollout status deployment/aivo-web -n staging --timeout=300s
+      
+      - name: Run staging migrations
+        run: |
+          kubectl run prisma-migrate-staging-${{ github.run_id }} \
+            --rm -i --restart=Never \
+            --image=${{ secrets.DOCKER_USERNAME }}/aivo-platform:${{ github.sha }} \
+            --env="DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" \
+            -n staging \
+            -- pnpm prisma migrate deploy
+      
+      - name: Run smoke tests
+        run: |
+          chmod +x ./scripts/smoke-tests.sh
+          ./scripts/smoke-tests.sh https://staging.aivo.education
+      
+      - name: Notify staging deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Staging deployment: ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Run E2E tests against staging
+  staging-e2e-tests:
+    name: Staging E2E Tests
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+      
+      - name: Run E2E tests against staging
+        run: pnpm exec playwright test --project=chromium
+        env:
+          BASE_URL: https://staging.aivo.education
+          CI: true
+          TEST_USER_EMAIL: ${{ secrets.STAGING_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-e2e-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # Deploy to production (requires manual approval after staging E2E passes)
   deploy:
     name: Deploy to Production
-    needs: [build, sentry-release]
+    needs: [build, sentry-release, staging-e2e-tests]
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://aivo.education
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:

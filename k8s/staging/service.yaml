@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aivo-web
+  namespace: staging
+  labels:
+    app: aivo
+    component: web
+    environment: staging
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: aivo
+    component: web
+    environment: staging
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: staging
+  labels:
+    app: postgres
+    environment: staging
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: postgres
+    environment: staging
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: staging
+  labels:
+    app: redis
+    environment: staging
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: redis
+    environment: staging
