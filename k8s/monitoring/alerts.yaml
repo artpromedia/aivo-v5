@@ -1,0 +1,315 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+  labels:
+    app: prometheus
+data:
+  aivo-alerts.yml: |
+    groups:
+      # ==========================================================================
+      # Infrastructure Alerts
+      # ==========================================================================
+      - name: infrastructure
+        rules:
+          # High error rate
+          - alert: HighErrorRate
+            expr: |
+              (
+                sum(rate(aivo_http_requests_total{status_code=~"5.."}[5m])) 
+                / 
+                sum(rate(aivo_http_requests_total[5m]))
+              ) > 0.05
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High error rate detected"
+              description: "Error rate is {{ $value | humanizePercentage }} in the last 5 minutes"
+              runbook_url: "https://docs.aivo.education/runbooks/high-error-rate"
+
+          # Slow response times (p95)
+          - alert: SlowResponseTime
+            expr: |
+              histogram_quantile(0.95, 
+                sum(rate(aivo_http_request_duration_seconds_bucket[5m])) by (le)
+              ) > 2
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Slow response times detected"
+              description: "95th percentile response time is {{ $value }}s"
+              runbook_url: "https://docs.aivo.education/runbooks/slow-response"
+
+          # Very slow response times (p99)
+          - alert: VerySlowResponseTime
+            expr: |
+              histogram_quantile(0.99, 
+                sum(rate(aivo_http_request_duration_seconds_bucket[5m])) by (le)
+              ) > 5
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Very slow response times detected"
+              description: "99th percentile response time is {{ $value }}s"
+              runbook_url: "https://docs.aivo.education/runbooks/slow-response"
+
+          # High memory usage
+          - alert: HighMemoryUsage
+            expr: |
+              (
+                container_memory_usage_bytes{container!=""}
+                / 
+                container_spec_memory_limit_bytes{container!=""}
+              ) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage detected"
+              description: "Container {{ $labels.container }} is using {{ $value | humanizePercentage }} of memory limit"
+
+          # High CPU usage
+          - alert: HighCPUUsage
+            expr: |
+              (
+                sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod, container)
+                /
+                sum(container_spec_cpu_quota{container!=""}/container_spec_cpu_period{container!=""}) by (pod, container)
+              ) > 0.9
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage detected"
+              description: "Container {{ $labels.container }} is using {{ $value | humanizePercentage }} of CPU limit"
+
+          # Pod restart loop
+          - alert: PodRestartLoop
+            expr: |
+              increase(kube_pod_container_status_restarts_total[1h]) > 5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod in restart loop"
+              description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last hour"
+
+      # ==========================================================================
+      # Database Alerts
+      # ==========================================================================
+      - name: database
+        rules:
+          # Database connection pool exhausted
+          - alert: DatabaseConnectionPoolExhausted
+            expr: aivo_db_connection_pool_size{state="idle"} < 2
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Database connection pool nearly exhausted"
+              description: "Only {{ $value }} idle connections remaining"
+              runbook_url: "https://docs.aivo.education/runbooks/db-connections"
+
+          # Slow database queries
+          - alert: SlowDatabaseQueries
+            expr: |
+              histogram_quantile(0.95, 
+                sum(rate(aivo_db_query_duration_seconds_bucket[5m])) by (le, operation)
+              ) > 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Slow database queries detected"
+              description: "{{ $labels.operation }} queries taking {{ $value }}s on average"
+
+          # High database error rate
+          - alert: HighDatabaseErrorRate
+            expr: |
+              (
+                sum(rate(aivo_db_queries_total{status="error"}[5m])) 
+                / 
+                sum(rate(aivo_db_queries_total[5m]))
+              ) > 0.01
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High database error rate"
+              description: "Database error rate is {{ $value | humanizePercentage }}"
+
+      # ==========================================================================
+      # AI/LLM Service Alerts
+      # ==========================================================================
+      - name: ai-services
+        rules:
+          # AI service latency
+          - alert: AIServiceLatency
+            expr: |
+              histogram_quantile(0.95, 
+                sum(rate(aivo_ai_request_duration_seconds_bucket[5m])) by (le, provider)
+              ) > 30
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "AI service is slow"
+              description: "{{ $labels.provider }} AI requests taking {{ $value }}s on average"
+
+          # AI service errors
+          - alert: AIServiceErrors
+            expr: |
+              (
+                sum(rate(aivo_ai_requests_total{status="error"}[5m])) by (provider)
+                / 
+                sum(rate(aivo_ai_requests_total[5m])) by (provider)
+              ) > 0.1
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High AI service error rate"
+              description: "{{ $labels.provider }} error rate is {{ $value | humanizePercentage }}"
+
+          # AI cost spike
+          - alert: AICostSpike
+            expr: |
+              increase(aivo_ai_cost_usd[1h]) > 100
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "AI cost spike detected"
+              description: "AI costs increased by ${{ $value }} in the last hour"
+
+      # ==========================================================================
+      # Business Alerts
+      # ==========================================================================
+      - name: business
+        rules:
+          # No recent assessments
+          - alert: NoRecentAssessments
+            expr: increase(aivo_assessment_completions_total[1h]) == 0
+            for: 2h
+            labels:
+              severity: info
+            annotations:
+              summary: "No assessments completed recently"
+              description: "No assessments have been completed in the last 2 hours"
+
+          # No active learning sessions during business hours
+          - alert: NoActiveSessions
+            expr: |
+              sum(aivo_active_learning_sessions) == 0
+              and on() (hour() >= 8 and hour() <= 20)
+            for: 30m
+            labels:
+              severity: info
+            annotations:
+              summary: "No active learning sessions"
+              description: "No learners are currently in active sessions during business hours"
+
+          # Homework session abandonment
+          - alert: HighHomeworkAbandonment
+            expr: |
+              (
+                sum(rate(aivo_learning_sessions_total{type="homework", completion_status="abandoned"}[1h]))
+                /
+                sum(rate(aivo_learning_sessions_total{type="homework"}[1h]))
+              ) > 0.3
+            for: 1h
+            labels:
+              severity: warning
+            annotations:
+              summary: "High homework session abandonment rate"
+              description: "{{ $value | humanizePercentage }} of homework sessions are being abandoned"
+
+          # Low assessment scores
+          - alert: LowAssessmentScores
+            expr: |
+              histogram_quantile(0.5, 
+                sum(rate(aivo_assessment_scores_bucket[24h])) by (le)
+              ) < 50
+            for: 24h
+            labels:
+              severity: info
+            annotations:
+              summary: "Assessment scores are low"
+              description: "Median assessment score is {{ $value }}%"
+
+      # ==========================================================================
+      # WebSocket Alerts
+      # ==========================================================================
+      - name: websocket
+        rules:
+          # WebSocket connection drop
+          - alert: WebSocketConnectionDrop
+            expr: |
+              (
+                delta(aivo_websocket_connections_active[5m]) < -100
+                and
+                aivo_websocket_connections_active > 0
+              )
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Significant WebSocket connection drop"
+              description: "Lost {{ $value }} WebSocket connections in the last 5 minutes"
+
+      # ==========================================================================
+      # Authentication Alerts
+      # ==========================================================================
+      - name: authentication
+        rules:
+          # High authentication failure rate
+          - alert: HighAuthFailureRate
+            expr: |
+              (
+                sum(rate(aivo_auth_attempts_total{status="failure"}[5m]))
+                /
+                sum(rate(aivo_auth_attempts_total[5m]))
+              ) > 0.2
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High authentication failure rate"
+              description: "{{ $value | humanizePercentage }} of authentication attempts are failing"
+
+          # Potential brute force attack
+          - alert: PotentialBruteForce
+            expr: |
+              sum(rate(aivo_auth_attempts_total{status="failure"}[1m])) > 10
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Potential brute force attack detected"
+              description: "{{ $value }} failed auth attempts per second"
+              runbook_url: "https://docs.aivo.education/runbooks/brute-force"
+
+      # ==========================================================================
+      # Cache Alerts
+      # ==========================================================================
+      - name: cache
+        rules:
+          # Low cache hit rate
+          - alert: LowCacheHitRate
+            expr: |
+              (
+                sum(rate(aivo_cache_hits_total[5m]))
+                /
+                (sum(rate(aivo_cache_hits_total[5m])) + sum(rate(aivo_cache_misses_total[5m])))
+              ) < 0.8
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Low cache hit rate"
+              description: "Cache hit rate is {{ $value | humanizePercentage }}"

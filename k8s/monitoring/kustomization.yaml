@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources:
+  - namespace.yaml
+  - prometheus.yaml
+  - grafana.yaml
+  - alertmanager.yaml
+  - alerts.yaml
+  - jaeger.yaml
+
+# Add common labels to all resources
+commonLabels:
+  app.kubernetes.io/part-of: aivo
+  app.kubernetes.io/managed-by: kustomize
+
+# ConfigMap generator for dashboards
+configMapGenerator:
+  - name: grafana-dashboards
+    files:
+      - dashboards/aivo-overview.json
+      - dashboards/aivo-learning.json
+      - dashboards/aivo-infrastructure.json
+
+# Image customization (for different environments)
+images:
+  - name: prom/prometheus
+    newTag: v2.47.0
+  - name: grafana/grafana
+    newTag: "10.2.0"
+  - name: prom/alertmanager
+    newTag: v0.26.0
+  - name: jaegertracing/all-in-one
+    newTag: "1.51"
