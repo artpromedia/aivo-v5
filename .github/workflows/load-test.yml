@@ -1,0 +1,295 @@
+name: Load Testing
+
+on:
+  # Weekly schedule (Sundays at 2 AM UTC)
+  schedule:
+    - cron: '0 2 * * 0'
+  
+  # Manual trigger with options
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Test scenario to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - normal
+          - peak
+          - stress
+      target_url:
+        description: 'Target URL (leave empty for staging)'
+        required: false
+        type: string
+      run_websocket:
+        description: 'Include WebSocket tests'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  K6_VERSION: '0.54.0'
+
+jobs:
+  load-test:
+    name: Run Load Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    services:
+      # Optional: Redis for caching during tests
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - name: Install k6 types
+        working-directory: load-tests
+        run: pnpm install
+      
+      - name: Set target URL
+        id: target
+        run: |
+          if [ -n "${{ github.event.inputs.target_url }}" ]; then
+            echo "url=${{ github.event.inputs.target_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ secrets.STAGING_URL || 'https://staging.aivo.app' }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set scenario
+        id: scenario
+        run: |
+          if [ -n "${{ github.event.inputs.scenario }}" ]; then
+            echo "name=${{ github.event.inputs.scenario }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=smoke" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Run Smoke Test
+        if: steps.scenario.outputs.name == 'smoke'
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=learner-journey-results.json \
+            --env BASE_URL=${{ steps.target.outputs.url }} \
+            --env SCENARIO=smoke \
+            scenarios/learner-journey.ts
+        continue-on-error: true
+      
+      - name: Run Normal Load Test
+        if: steps.scenario.outputs.name == 'normal'
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=learner-journey-results.json \
+            --env BASE_URL=${{ steps.target.outputs.url }} \
+            --env SCENARIO=normal \
+            scenarios/learner-journey.ts
+        continue-on-error: true
+      
+      - name: Run Peak Load Test
+        if: steps.scenario.outputs.name == 'peak'
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=learner-journey-results.json \
+            --env BASE_URL=${{ steps.target.outputs.url }} \
+            --env SCENARIO=peak \
+            scenarios/learner-journey.ts
+        continue-on-error: true
+      
+      - name: Run Stress Test
+        if: steps.scenario.outputs.name == 'stress'
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=learner-journey-results.json \
+            --env BASE_URL=${{ steps.target.outputs.url }} \
+            --env SCENARIO=stress \
+            scenarios/learner-journey.ts
+        continue-on-error: true
+      
+      - name: Run API Load Test
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=api-load-results.json \
+            --env BASE_URL=${{ steps.target.outputs.url }} \
+            scenarios/api-load.ts
+        continue-on-error: true
+      
+      - name: Run WebSocket Load Test
+        if: github.event.inputs.run_websocket != 'false'
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=websocket-load-results.json \
+            --env BASE_URL=${{ steps.target.outputs.url }} \
+            --env WS_URL=${{ secrets.STAGING_WS_URL || 'wss://staging.aivo.app' }} \
+            scenarios/websocket-load.ts
+        continue-on-error: true
+      
+      - name: Analyze Results
+        working-directory: load-tests
+        run: node analyze-results.js
+        continue-on-error: true
+      
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results-${{ github.run_number }}
+          path: |
+            load-tests/*-results.json
+            load-tests/*-report.md
+          retention-days: 30
+      
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reports = [
+              'load-tests/learner-journey-report.md',
+              'load-tests/api-load-report.md',
+              'load-tests/websocket-load-report.md'
+            ];
+            
+            let comment = '## 📊 Load Test Results\n\n';
+            
+            for (const report of reports) {
+              if (fs.existsSync(report)) {
+                comment += fs.readFileSync(report, 'utf8') + '\n\n---\n\n';
+              }
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Send Slack Notification
+        if: failure() && github.event_name == 'schedule'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ Weekly Load Test Failed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "⚠️ Weekly Load Test Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Scenario:*\n${{ steps.scenario.outputs.name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Results"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  soak-test:
+    name: Soak Test (Weekly)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - name: Install k6 types
+        working-directory: load-tests
+        run: pnpm install
+      
+      - name: Run Soak Test
+        working-directory: load-tests
+        run: |
+          k6 run \
+            --out json=soak-test-results.json \
+            --env BASE_URL=${{ secrets.STAGING_URL || 'https://staging.aivo.app' }} \
+            --env SCENARIO=soak \
+            scenarios/learner-journey.ts
+        continue-on-error: true
+      
+      - name: Analyze Soak Test Results
+        working-directory: load-tests
+        run: node analyze-results.js soak-test-results.json
+      
+      - name: Upload Soak Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: soak-test-results-${{ github.run_number }}
+          path: |
+            load-tests/soak-test-results.json
+            load-tests/soak-test-report.md
+          retention-days: 30

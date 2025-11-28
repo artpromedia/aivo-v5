@@ -1,0 +1,19 @@
+{
+  "name": "@aivo/load-tests",
+  "version": "1.0.0",
+  "description": "k6 load tests for AIVO v5",
+  "private": true,
+  "scripts": {
+    "test:smoke": "k6 run --config config.ts scenarios/learner-journey.ts --env SCENARIO=smoke",
+    "test:normal": "k6 run --config config.ts scenarios/learner-journey.ts --env SCENARIO=normal",
+    "test:peak": "k6 run --config config.ts scenarios/learner-journey.ts --env SCENARIO=peak",
+    "test:stress": "k6 run --config config.ts scenarios/learner-journey.ts --env SCENARIO=stress",
+    "test:soak": "k6 run --config config.ts scenarios/learner-journey.ts --env SCENARIO=soak",
+    "test:api": "k6 run scenarios/api-load.ts",
+    "test:websocket": "k6 run scenarios/websocket-load.ts",
+    "analyze": "node analyze-results.js"
+  },
+  "devDependencies": {
+    "@types/k6": "^0.54.0"
+  }
+}
