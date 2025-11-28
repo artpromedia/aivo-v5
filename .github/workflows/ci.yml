@@ -265,3 +265,165 @@ jobs:
           else
             echo "No E2E test results found" >> $GITHUB_STEP_SUMMARY
           fi
+
+  # Security scanning job
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint  # Run after lint to ensure code is valid
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Node.js dependency audit
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit Node.js dependencies
+        run: pnpm audit --audit-level=high
+        continue-on-error: true  # Don't fail on warnings, but report them
+
+      - name: Create audit report
+        run: |
+          pnpm audit --json > audit-report.json || true
+          echo "## Dependency Audit Results" >> $GITHUB_STEP_SUMMARY
+          if [ -f audit-report.json ]; then
+            echo "Audit report generated. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit-report
+          path: audit-report.json
+          retention-days: 30
+
+      # Snyk vulnerability scanning
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true  # Don't fail the build, but report issues
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --all-projects --json-file-output=snyk-report.json
+
+      - name: Upload Snyk report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snyk-report
+          path: snyk-report.json
+          retention-days: 30
+
+      # Python dependency check (for backend)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Audit Python dependencies
+        run: |
+          pip install pip-audit
+          cd backend
+          pip-audit -r requirements.txt --format json --output ../pip-audit-report.json || true
+          cd ..
+        continue-on-error: true
+
+      - name: Upload Python audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-audit-report
+          path: pip-audit-report.json
+          retention-days: 30
+
+      - name: Security scan summary
+        if: always()
+        run: |
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| pnpm audit | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snyk scan | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| pip-audit | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the Security tab and artifacts for detailed results." >> $GITHUB_STEP_SUMMARY
+
+  # License compliance check
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    needs: lint
+    continue-on-error: true  # Don't block on license issues
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install license checker
+        run: pnpm add -g license-checker
+
+      - name: Check licenses
+        run: |
+          license-checker --json --out license-report.json || true
+          license-checker --summary || true
+
+      - name: Check for problematic licenses
+        run: |
+          echo "## License Check" >> $GITHUB_STEP_SUMMARY
+          # Check for GPL, AGPL licenses that may have copyleft requirements
+          if license-checker --failOn 'GPL; AGPL; LGPL' 2>/dev/null; then
+            echo "✅ No problematic licenses found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Found licenses that may require review" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-report
+          path: license-report.json
+          retention-days: 30

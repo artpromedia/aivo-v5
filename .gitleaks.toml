@@ -1,0 +1,154 @@
+# Gitleaks configuration for AIVO v5
+# https://github.com/gitleaks/gitleaks
+
+title = "AIVO Gitleaks Config"
+
+[extend]
+# Use the default gitleaks config as a base
+useDefault = true
+
+[allowlist]
+description = "Allowlisted files and patterns"
+
+# Allowed file paths (regex patterns)
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.sample$''',
+  '''\.env\.template$''',
+  '''docs/.*\.md$''',
+  '''README\.md$''',
+  '''SECURITY\.md$''',
+  '''\.github/.*\.md$''',
+  '''pnpm-lock\.yaml$''',
+  '''package-lock\.json$''',
+  '''yarn\.lock$''',
+  '''.*\.test\.(ts|tsx|js|jsx)$''',
+  '''.*\.spec\.(ts|tsx|js|jsx)$''',
+  '''__tests__/.*''',
+  '''__mocks__/.*''',
+  '''fixtures/.*''',
+  '''test-data/.*''',
+  '''k8s/staging/secrets\.yaml\.template$''',
+]
+
+# Allowed regex patterns (for false positives)
+regexes = [
+  '''EXAMPLE_.*''',
+  '''PLACEHOLDER_.*''',
+  '''YOUR_.*_HERE''',
+  '''<your-.*>''',
+  '''dummy[-_]?key''',
+  '''test[-_]?key''',
+  '''fake[-_]?key''',
+  '''sample[-_]?key''',
+]
+
+# Allowed specific commits (if needed)
+commits = []
+
+# Allowed stop words
+stopwords = [
+  "example",
+  "test",
+  "fake",
+  "mock",
+  "dummy",
+  "placeholder",
+  "sample",
+]
+
+# Custom rules for AIVO-specific patterns
+[[rules]]
+id = "aivo-api-key"
+description = "AIVO API Key"
+regex = '''(?i)(aivo[_-]?api[_-]?key|AIVO_API_KEY)[\s]*[=:]\s*['\"]?([a-zA-Z0-9_\-]{32,})'''
+secretGroup = 2
+entropy = 3.5
+keywords = ["aivo", "api", "key"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|api_secret)[\s]*[=:]\s*['\"]?([a-zA-Z0-9_\-]{20,})'''
+secretGroup = 2
+entropy = 3.5
+keywords = ["api", "key", "secret"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret"
+regex = '''(?i)(jwt[_-]?secret|JWT_SECRET)[\s]*[=:]\s*['\"]?([a-zA-Z0-9_\-!@#$%^&*]{16,})'''
+secretGroup = 2
+entropy = 3.0
+keywords = ["jwt", "secret"]
+
+[[rules]]
+id = "database-url"
+description = "Database Connection String"
+regex = '''(?i)(database[_-]?url|DATABASE_URL|postgres://|postgresql://|mysql://|mongodb://)[\s]*[=:]\s*['\"]?([^\s'\"]+)'''
+secretGroup = 2
+keywords = ["database", "postgres", "mysql", "mongodb", "url"]
+
+[[rules]]
+id = "redis-url"
+description = "Redis Connection String"
+regex = '''(?i)(redis[_-]?url|REDIS_URL|redis://)[\s]*[=:]\s*['\"]?([^\s'\"]+@[^\s'\"]+)'''
+secretGroup = 2
+keywords = ["redis", "url"]
+
+[[rules]]
+id = "sentry-dsn"
+description = "Sentry DSN"
+regex = '''(?i)(sentry[_-]?dsn|SENTRY_DSN)[\s]*[=:]\s*['\"]?(https://[a-f0-9]+@[^\s'\"]+)'''
+secretGroup = 2
+keywords = ["sentry", "dsn"]
+
+[[rules]]
+id = "stripe-key"
+description = "Stripe API Key"
+regex = '''(?i)(sk_live_|sk_test_|pk_live_|pk_test_)[a-zA-Z0-9]{24,}'''
+keywords = ["stripe", "sk_", "pk_"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''(?i)(AKIA|ABIA|ACCA|ASIA)[A-Z0-9]{16}'''
+keywords = ["aws", "akia"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
+keywords = ["private", "key", "begin"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google API Key"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+keywords = ["google", "aiza"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''(ghp_|gho_|ghu_|ghs_|ghr_)[A-Za-z0-9_]{36,}'''
+keywords = ["github", "ghp_", "gho_"]
+
+[[rules]]
+id = "slack-webhook"
+description = "Slack Webhook URL"
+regex = '''https://hooks\.slack\.com/services/T[A-Z0-9]{8,}/B[A-Z0-9]{8,}/[a-zA-Z0-9]{24}'''
+keywords = ["slack", "webhook", "hooks"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{20,}T3BlbkFJ[a-zA-Z0-9]{20,}'''
+keywords = ["openai", "sk-"]
+
+# Allowlist specific rules for test files
+[[rules.allowlist]]
+paths = [
+  '''.*\.test\.(ts|tsx|js|jsx)$''',
+  '''.*\.spec\.(ts|tsx|js|jsx)$''',
+  '''__tests__/.*''',
+]

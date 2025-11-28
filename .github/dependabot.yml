@@ -1,0 +1,163 @@
+version: 2
+updates:
+  # Node.js dependencies (root)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "artpromedia"
+    labels:
+      - "dependencies"
+      - "automated"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "*jest*"
+          - "@playwright/*"
+          - "vitest*"
+          - "typescript*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing:
+        patterns:
+          - "*test*"
+          - "*spec*"
+          - "@testing-library/*"
+        update-types:
+          - "minor"
+          - "patch"
+      next-ecosystem:
+        patterns:
+          - "next*"
+          - "@next/*"
+        update-types:
+          - "minor"
+          - "patch"
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@react/*"
+        update-types:
+          - "minor"
+          - "patch"
+      production:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "*jest*"
+          - "@playwright/*"
+          - "vitest*"
+          - "typescript*"
+          - "*test*"
+          - "*spec*"
+          - "@testing-library/*"
+          - "next*"
+          - "@next/*"
+          - "react*"
+          - "@react/*"
+        update-types:
+          - "patch"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    ignore:
+      # Ignore major version updates that may have breaking changes
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Python dependencies (backend)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "artpromedia"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "python"
+      - "automated"
+    groups:
+      ml-dependencies:
+        patterns:
+          - "torch*"
+          - "tensorflow*"
+          - "transformers*"
+          - "scikit*"
+          - "numpy*"
+          - "pandas*"
+        update-types:
+          - "patch"
+      fastapi-ecosystem:
+        patterns:
+          - "fastapi*"
+          - "uvicorn*"
+          - "starlette*"
+          - "pydantic*"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(deps-py)"
+      include: "scope"
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "artpromedia"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "artpromedia"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "automated"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
