@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:aivo_shared/aivo_shared.dart';
+import '../services/focus_monitor_service.dart';
+import '../widgets/break_suggestion_dialog.dart';
+import '../widgets/calm_corner_fab.dart';
 
 class SessionScreen extends StatefulWidget {
   const SessionScreen({super.key});
@@ -10,6 +13,7 @@ class SessionScreen extends StatefulWidget {
 
 class _SessionScreenState extends State<SessionScreen> {
   final AivoApiClient _client = AivoApiClient();
+  late final FocusMonitorService _focusMonitor;
 
   LearnerSession? _session;
   SessionPlanRun? _sessionPlan;
@@ -28,7 +32,47 @@ class _SessionScreenState extends State<SessionScreen> {
   @override
   void initState() {
     super.initState();
+    _focusMonitor = FocusMonitorService();
+    _focusMonitor.addListener(_onFocusChanged);
     _loadSession();
+  }
+
+  @override
+  void dispose() {
+    _focusMonitor.removeListener(_onFocusChanged);
+    _focusMonitor.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChanged() {
+    // Check if break suggestion should be shown
+    if (_focusMonitor.shouldSuggestBreak) {
+      _showBreakSuggestion();
+    }
+    // Update UI if focus metrics changed
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _showBreakSuggestion() async {
+    final sensory = SensoryProvider.maybeOf(context);
+    
+    final result = await BreakSuggestionDialog.show(
+      context: context,
+      focusMonitor: _focusMonitor,
+      sensoryProfile: sensory?.profile,
+    );
+
+    if (result == BreakSuggestionResult.playGame) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/focus-break');
+      }
+    } else if (result == BreakSuggestionResult.breathing) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/focus-break', arguments: {'game': 'breathing'});
+      }
+    } else {
+      _focusMonitor.dismissBreakSuggestion();
+    }
   }
 
   String get _primarySubject {
@@ -157,6 +201,13 @@ class _SessionScreenState extends State<SessionScreen> {
       _error = null;
     });
 
+    // Log activity interaction for focus monitoring
+    if (status == 'completed') {
+      _focusMonitor.logInteraction(InteractionType.activityCompleted);
+    } else if (status == 'in_progress') {
+      _focusMonitor.logInteraction(InteractionType.activityStarted);
+    }
+
     try {
       final res = await _client.updateActivityStatus(
         sessionId: _session!.id,
@@ -213,6 +264,11 @@ class _SessionScreenState extends State<SessionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: CalmCornerFab(
+        focusMonitor: _focusMonitor,
+        onTakeBreak: () => Navigator.pushNamed(context, '/focus-break'),
+        onRegulation: () => Navigator.pushNamed(context, '/regulation'),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: AivoTheme.backgroundGradient,
@@ -224,16 +280,25 @@ class _SessionScreenState extends State<SessionScreen> {
               _buildAppBar(),
               // Content
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Break message
-                      if (_showBreakMessage) ...[
-                        _buildBreakCard(),
-                        const SizedBox(height: 16),
-                      ],
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollUpdateNotification) {
+                      _focusMonitor.logInteraction(InteractionType.scroll);
+                    }
+                    return false;
+                  },
+                  child: GestureDetector(
+                    onTap: () => _focusMonitor.logInteraction(InteractionType.tap),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Break message
+                          if (_showBreakMessage) ...[
+                            _buildBreakCard(),
+                            const SizedBox(height: 16),
+                          ],
 
                       // Loading state
                       if (_loading)
@@ -262,6 +327,8 @@ class _SessionScreenState extends State<SessionScreen> {
 
                       const SizedBox(height: 100),
                     ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -409,11 +476,15 @@ class _SessionScreenState extends State<SessionScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildBreakOption('🧘', '2 min breathing'),
+              _buildBreakOption('🧘', '2 min breathing', onTap: () {
+                Navigator.pushNamed(context, '/regulation');
+              }),
               const SizedBox(width: 10),
-              _buildBreakOption('💧', 'Get water'),
+              _buildBreakOption('💧', 'Get water', onTap: null),
               const SizedBox(width: 10),
-              _buildBreakOption('🚶', 'Quick stretch'),
+              _buildBreakOption('🚶', 'Quick stretch', onTap: () {
+                Navigator.pushNamed(context, '/regulation');
+              }),
             ],
           ),
         ],
@@ -421,27 +492,30 @@ class _SessionScreenState extends State<SessionScreen> {
     );
   }
 
-  Widget _buildBreakOption(String emoji, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AivoTheme.textPrimary,
+  Widget _buildBreakOption(String emoji, String label, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AivoTheme.textPrimary,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  fl_chart: ^0.66.0
+  intl: ^0.18.1
+  image_picker: ^1.0.7
   
   # AIVO shared package
   aivo_shared:

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'models.dart';
+import 'sensory_profile.dart';
 
 class AivoApiClient {
   final String baseUrl;
@@ -162,6 +163,461 @@ class AivoApiClient {
     await _post('/difficulty-proposals/$proposalId/decide', {
       'approve': approve,
     });
+  }
+
+  // ==================== Regulation/Calm Corner APIs ====================
+
+  /// Get available regulation activities
+  Future<List<RegulationActivity>> getRegulationActivities({
+    String? type,
+    String? gradeTheme,
+  }) async {
+    final params = <String, String>{};
+    if (type != null) params['type'] = type;
+    if (gradeTheme != null) params['gradeTheme'] = gradeTheme;
+    final queryString = params.isNotEmpty
+        ? '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+        : '';
+    final data = await _get('/regulation/activities$queryString');
+    return (data['activities'] as List<dynamic>)
+        .map((e) => RegulationActivity.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Start a regulation session
+  Future<RegulationSession> startRegulationSession({
+    required String learnerId,
+    required String activityId,
+    required String activityType,
+    String? emotionBefore,
+    int? emotionLevelBefore,
+  }) async {
+    final data = await _post('/regulation/sessions', {
+      'learnerId': learnerId,
+      'activityId': activityId,
+      'activityType': activityType,
+      if (emotionBefore != null) 'emotionBefore': emotionBefore,
+      if (emotionLevelBefore != null) 'emotionLevelBefore': emotionLevelBefore,
+    });
+    return RegulationSession.fromJson(data);
+  }
+
+  /// Complete a regulation session
+  Future<RegulationSession> completeRegulationSession({
+    required String sessionId,
+    required int durationSeconds,
+    String? emotionAfter,
+    int? emotionLevelAfter,
+    int? effectiveness,
+  }) async {
+    final data = await _patch('/regulation/sessions/$sessionId', {
+      'durationSeconds': durationSeconds,
+      if (emotionAfter != null) 'emotionAfter': emotionAfter,
+      if (emotionLevelAfter != null) 'emotionLevelAfter': emotionLevelAfter,
+      if (effectiveness != null) 'effectiveness': effectiveness,
+    });
+    return RegulationSession.fromJson(data);
+  }
+
+  /// Get regulation history
+  Future<List<RegulationSession>> getRegulationHistory(String learnerId) async {
+    final data = await _get('/regulation/sessions?learnerId=$learnerId');
+    return (data['sessions'] as List<dynamic>)
+        .map((e) => RegulationSession.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Log emotion check-in
+  Future<void> logEmotionCheckIn({
+    required String learnerId,
+    required String emotion,
+    required int level,
+    String? trigger,
+    String? context,
+  }) async {
+    await _post('/regulation/check-ins', {
+      'learnerId': learnerId,
+      'emotion': emotion,
+      'level': level,
+      if (trigger != null) 'trigger': trigger,
+      if (context != null) 'context': context,
+    });
+  }
+
+  /// Get emotion history
+  Future<List<EmotionCheckIn>> getEmotionHistory(String learnerId) async {
+    final data = await _get('/regulation/check-ins?learnerId=$learnerId');
+    return (data['checkIns'] as List<dynamic>)
+        .map((e) => EmotionCheckIn.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ==================== Sensory Profile APIs ====================
+
+  /// Get learner's sensory profile
+  Future<SensoryProfile> getSensoryProfile(String learnerId) async {
+    final data = await _get('/learners/$learnerId/sensory-profile');
+    return SensoryProfile.fromJson(data);
+  }
+
+  /// Update learner's sensory profile
+  Future<SensoryProfile> updateSensoryProfile({
+    required String learnerId,
+    required SensoryProfile profile,
+  }) async {
+    final data = await _put('/learners/$learnerId/sensory-profile', profile.toJson());
+    return SensoryProfile.fromJson(data);
+  }
+
+  /// Get available sensory presets
+  Future<List<SensoryPresetInfo>> getSensoryPresets() async {
+    final data = await _get('/sensory/presets');
+    return (data['presets'] as List<dynamic>)
+        .map((e) => SensoryPresetInfo.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ==================== Homework Helper APIs ====================
+
+  /// Create a new homework session
+  Future<HomeworkSession> createHomeworkSession({
+    required String learnerId,
+    required String title,
+    String? subject,
+    String? difficultyAdjustment,
+  }) async {
+    final data = await _post('/homework/sessions', {
+      'learnerId': learnerId,
+      'title': title,
+      if (subject != null) 'subject': subject,
+      if (difficultyAdjustment != null) 'difficultyAdjustment': difficultyAdjustment,
+    });
+    return HomeworkSession.fromJson(data);
+  }
+
+  /// Get a homework session by ID
+  Future<HomeworkSession> getHomeworkSession(String sessionId) async {
+    final data = await _get('/homework/sessions/$sessionId');
+    return HomeworkSession.fromJson(data);
+  }
+
+  /// Upload a file to a homework session (with OCR processing)
+  Future<HomeworkFile> uploadHomeworkFile({
+    required String sessionId,
+    required List<int> fileBytes,
+    required String filename,
+    required String mimeType,
+  }) async {
+    final uri = Uri.parse('$baseUrl/homework/sessions/$sessionId/upload');
+    final request = http.MultipartRequest('POST', uri);
+    
+    final headers = await _headers();
+    request.headers.addAll(headers);
+    
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      fileBytes,
+      filename: filename,
+    ));
+    request.fields['mimeType'] = mimeType;
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    if (response.statusCode >= 400) {
+      throw ApiException(response.statusCode, response.body);
+    }
+    
+    return HomeworkFile.fromJson(json.decode(response.body) as Map<String, dynamic>);
+  }
+
+  /// Advance to the next step in a homework session
+  Future<HomeworkSession> advanceHomeworkStep({
+    required String sessionId,
+    required HomeworkStep currentStep,
+    required String inputType,
+    required Map<String, dynamic> inputData,
+  }) async {
+    final data = await _post('/homework/sessions/$sessionId/step', {
+      'currentStep': currentStep.name,
+      'inputType': inputType,
+      'inputData': inputData,
+    });
+    return HomeworkSession.fromJson(data);
+  }
+
+  /// Request a hint for the current problem
+  Future<HomeworkHintResponse> requestHomeworkHint({
+    required String sessionId,
+    required HomeworkStep step,
+  }) async {
+    final data = await _post('/homework/sessions/$sessionId/hint', {
+      'step': step.name,
+    });
+    return HomeworkHintResponse.fromJson(data);
+  }
+
+  /// Get recent homework sessions for a learner
+  Future<List<HomeworkSession>> getHomeworkSessions(String learnerId) async {
+    final data = await _get('/homework/sessions?learnerId=$learnerId');
+    return (data['sessions'] as List<dynamic>)
+        .map((e) => HomeworkSession.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ==================== IEP Goals APIs ====================
+
+  /// Get all IEP goals for a learner
+  Future<List<IEPGoal>> getIEPGoals(String learnerId, {IEPGoalStatus? status}) async {
+    final params = <String, String>{};
+    if (status != null) params['status'] = status.name;
+    final queryString = params.isNotEmpty
+        ? '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+        : '';
+    final data = await _get('/learners/$learnerId/iep/goals$queryString');
+    return (data['goals'] as List<dynamic>)
+        .map((e) => IEPGoal.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Get a specific IEP goal by ID
+  Future<IEPGoal> getIEPGoal(String goalId) async {
+    final data = await _get('/iep/goals/$goalId');
+    return IEPGoal.fromJson(data);
+  }
+
+  /// Create a new IEP goal
+  Future<IEPGoal> createIEPGoal({
+    required String learnerId,
+    required String title,
+    required String description,
+    required IEPGoalArea area,
+    required String targetCriteria,
+    required double targetValue,
+    required double baselineValue,
+    required IEPMeasurementUnit measurementUnit,
+    required DateTime targetDate,
+    List<IEPBenchmark>? benchmarks,
+    List<IEPAccommodation>? accommodations,
+  }) async {
+    final data = await _post('/learners/$learnerId/iep/goals', {
+      'title': title,
+      'description': description,
+      'area': area.name,
+      'targetCriteria': targetCriteria,
+      'targetValue': targetValue,
+      'baselineValue': baselineValue,
+      'measurementUnit': measurementUnit.name,
+      'targetDate': targetDate.toIso8601String(),
+      if (benchmarks != null) 'benchmarks': benchmarks.map((b) => b.toJson()).toList(),
+      if (accommodations != null) 'accommodations': accommodations.map((a) => a.toJson()).toList(),
+    });
+    return IEPGoal.fromJson(data);
+  }
+
+  /// Update an IEP goal
+  Future<IEPGoal> updateIEPGoal({
+    required String goalId,
+    String? title,
+    String? description,
+    IEPGoalStatus? status,
+    double? currentValue,
+    DateTime? targetDate,
+    List<IEPBenchmark>? benchmarks,
+    List<IEPAccommodation>? accommodations,
+  }) async {
+    final data = await _patch('/iep/goals/$goalId', {
+      if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (status != null) 'status': status.name,
+      if (currentValue != null) 'currentValue': currentValue,
+      if (targetDate != null) 'targetDate': targetDate.toIso8601String(),
+      if (benchmarks != null) 'benchmarks': benchmarks.map((b) => b.toJson()).toList(),
+      if (accommodations != null) 'accommodations': accommodations.map((a) => a.toJson()).toList(),
+    });
+    return IEPGoal.fromJson(data);
+  }
+
+  /// Add a data point to an IEP goal
+  Future<IEPDataPoint> addIEPDataPoint({
+    required String goalId,
+    required double value,
+    required DateTime date,
+    String? notes,
+    String? context,
+    List<String>? evidenceUrls,
+  }) async {
+    final data = await _post('/iep/goals/$goalId/data-points', {
+      'value': value,
+      'date': date.toIso8601String(),
+      if (notes != null) 'notes': notes,
+      if (context != null) 'context': context,
+      if (evidenceUrls != null) 'evidenceUrls': evidenceUrls,
+    });
+    return IEPDataPoint.fromJson(data);
+  }
+
+  /// Get notes for an IEP goal
+  Future<List<IEPNote>> getIEPNotes(String goalId) async {
+    final data = await _get('/iep/goals/$goalId/notes');
+    return (data['notes'] as List<dynamic>)
+        .map((e) => IEPNote.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Add a note to an IEP goal
+  Future<IEPNote> addIEPNote({
+    required String goalId,
+    required String content,
+    required IEPNoteType type,
+    String? authorId,
+  }) async {
+    final data = await _post('/iep/goals/$goalId/notes', {
+      'content': content,
+      'type': type.name,
+      if (authorId != null) 'authorId': authorId,
+    });
+    return IEPNote.fromJson(data);
+  }
+
+  /// Get IEP goal summary/analytics
+  Future<IEPGoalSummary> getIEPGoalSummary(String learnerId) async {
+    final data = await _get('/learners/$learnerId/iep/summary');
+    return IEPGoalSummary.fromJson(data);
+  }
+
+  // ==================== Focus Monitor APIs ====================
+
+  /// Log a focus event
+  Future<void> logFocusEvent({
+    required String learnerId,
+    required String sessionId,
+    required FocusEventType eventType,
+    double? focusScore,
+    Map<String, dynamic>? metadata,
+  }) async {
+    await _post('/focus/events', {
+      'learnerId': learnerId,
+      'sessionId': sessionId,
+      'eventType': eventType.name,
+      if (focusScore != null) 'focusScore': focusScore,
+      if (metadata != null) 'metadata': metadata,
+    });
+  }
+
+  /// Generate a break game suggestion
+  Future<FocusBreakGame> generateBreakGame({
+    required String learnerId,
+    String? preferredType,
+    int? durationMinutes,
+  }) async {
+    final data = await _post('/focus/break-game', {
+      'learnerId': learnerId,
+      if (preferredType != null) 'preferredType': preferredType,
+      if (durationMinutes != null) 'durationMinutes': durationMinutes,
+    });
+    return FocusBreakGame.fromJson(data);
+  }
+
+  /// Log game completion
+  Future<void> logGameCompleted({
+    required String learnerId,
+    required String sessionId,
+    required String gameId,
+    required String gameType,
+    required int durationSeconds,
+    int? score,
+    Map<String, dynamic>? metrics,
+  }) async {
+    await _post('/focus/game-completed', {
+      'learnerId': learnerId,
+      'sessionId': sessionId,
+      'gameId': gameId,
+      'gameType': gameType,
+      'durationSeconds': durationSeconds,
+      if (score != null) 'score': score,
+      if (metrics != null) 'metrics': metrics,
+    });
+  }
+
+  /// Get focus metrics for a learner
+  Future<FocusMetrics> getFocusMetrics(String learnerId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final params = <String, String>{};
+    if (startDate != null) params['startDate'] = startDate.toIso8601String();
+    if (endDate != null) params['endDate'] = endDate.toIso8601String();
+    final queryString = params.isNotEmpty
+        ? '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+        : '';
+    final data = await _get('/learners/$learnerId/focus/metrics$queryString');
+    return FocusMetrics.fromJson(data);
+  }
+
+  /// Get break suggestions based on current focus state
+  Future<List<FocusBreakGame>> getBreakSuggestions(String learnerId) async {
+    final data = await _get('/learners/$learnerId/focus/break-suggestions');
+    return (data['suggestions'] as List<dynamic>)
+        .map((e) => FocusBreakGame.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> _put(String path, Map<String, dynamic> body) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl$path'),
+      headers: await _headers(),
+      body: json.encode(body),
+    );
+    if (response.statusCode >= 400) {
+      throw ApiException(response.statusCode, response.body);
+    }
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
+}
+
+/// Response wrapper for regulation activities list
+class RegulationActivitiesResponse {
+  final List<RegulationActivity> activities;
+
+  RegulationActivitiesResponse({required this.activities});
+
+  factory RegulationActivitiesResponse.fromJson(Map<String, dynamic> json) {
+    return RegulationActivitiesResponse(
+      activities: (json['activities'] as List<dynamic>)
+          .map((e) => RegulationActivity.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+/// Response wrapper for emotion check-ins list
+class EmotionCheckInsResponse {
+  final List<EmotionCheckIn> checkIns;
+
+  EmotionCheckInsResponse({required this.checkIns});
+
+  factory EmotionCheckInsResponse.fromJson(Map<String, dynamic> json) {
+    return EmotionCheckInsResponse(
+      checkIns: (json['checkIns'] as List<dynamic>)
+          .map((e) => EmotionCheckIn.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+/// Response wrapper for regulation sessions list
+class RegulationSessionsResponse {
+  final List<RegulationSession> sessions;
+
+  RegulationSessionsResponse({required this.sessions});
+
+  factory RegulationSessionsResponse.fromJson(Map<String, dynamic> json) {
+    return RegulationSessionsResponse(
+      sessions: (json['sessions'] as List<dynamic>)
+          .map((e) => RegulationSession.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 }
 

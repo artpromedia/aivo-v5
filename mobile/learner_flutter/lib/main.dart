@@ -4,7 +4,12 @@ import 'screens/home_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/tutor_screen.dart';
 import 'screens/baseline_screen.dart';
-import 'package:aivo_shared/theme.dart';
+import 'screens/calm_corner/calm_corner.dart';
+import 'screens/regulation_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/homework_screen.dart';
+import 'screens/focus_break_screen.dart';
+import 'package:aivo_shared/aivo_shared.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,17 +27,35 @@ class AivoLearnerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AIVO Learner',
-      debugShowCheckedModeBanner: false,
-      theme: AivoTheme.lightTheme,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/session': (context) => const SessionScreen(),
-        '/tutor': (context) => const TutorScreen(),
-        '/baseline': (context) => const BaselineScreen(),
-      },
+    // TODO: Replace with actual learner ID from auth
+    const learnerId = 'demo-learner';
+    
+    return SensoryProfileWrapper(
+      learnerId: learnerId,
+      child: Builder(
+        builder: (context) {
+          final sensory = SensoryProvider.maybeOf(context);
+          final preferDarkMode = sensory?.profile.visual.preferDarkMode ?? false;
+          
+          return MaterialApp(
+            title: 'AIVO Learner',
+            debugShowCheckedModeBanner: false,
+            theme: preferDarkMode ? AivoTheme.darkTheme : AivoTheme.lightTheme,
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const HomeScreen(),
+              '/session': (context) => const SessionScreen(),
+              '/tutor': (context) => const TutorScreen(),
+              '/baseline': (context) => const BaselineScreen(),
+              '/calm-corner': (context) => const CalmCornerScreen(),
+              '/regulation': (context) => const RegulationScreen(),
+              '/settings': (context) => const SettingsScreen(learnerId: learnerId),
+              '/homework': (context) => const HomeworkScreen(),
+              '/focus-break': (context) => const FocusBreakScreen(),
+            },
+          );
+        },
+      ),
     );
   }
 }

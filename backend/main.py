@@ -18,7 +18,7 @@ from core.exceptions import setup_exception_handlers
 from db.database import init_db, close_db
 from agents.agent_manager import agent_manager
 from api.websockets import socket_manager, router as websocket_router
-from api.routes import agents_router
+from api.routes import agents_router, focus_analytics_router, iep_goals_router
 from api.routes.websocket_metrics import router as websocket_metrics_router
 
 # Setup logging
@@ -148,6 +148,16 @@ app.include_router(
     agents_router,
     prefix=f"{settings.API_PREFIX}/agents",
     tags=["Agents"]
+)
+app.include_router(
+    focus_analytics_router,
+    prefix=f"{settings.API_PREFIX}/focus",
+    tags=["Focus Analytics"]
+)
+app.include_router(
+    iep_goals_router,
+    prefix=f"{settings.API_PREFIX}/iep",
+    tags=["IEP Goals"]
 )
 app.include_router(
     websocket_metrics_router,
