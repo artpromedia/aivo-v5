@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aivo_shared/aivo_shared.dart';
+import 'package:aivo_shared/sentry_config.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/learner_overview_screen.dart';
 import 'screens/difficulty_screen.dart';
 import 'screens/iep_dashboard_screen.dart';
 
-void main() {
-  runApp(const AivoParentTeacherApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Sentry and run the app
+  await initSentry(
+    () => runApp(const AivoParentTeacherApp()),
+    config: AivoSentryConfig.fromEnvironment(),
+  );
 }
 
 class AivoParentTeacherApp extends StatelessWidget {

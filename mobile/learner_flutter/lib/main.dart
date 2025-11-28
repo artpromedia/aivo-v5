@@ -10,16 +10,23 @@ import 'screens/settings_screen.dart';
 import 'screens/homework_screen.dart';
 import 'screens/focus_break_screen.dart';
 import 'package:aivo_shared/aivo_shared.dart';
+import 'package:aivo_shared/sentry_config.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   // Set status bar to dark icons for light theme
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
   ));
-  runApp(const AivoLearnerApp());
+  
+  // Initialize Sentry and run the app
+  await initSentry(
+    () => runApp(const AivoLearnerApp()),
+    config: AivoSentryConfig.fromEnvironment(),
+  );
 }
 
 class AivoLearnerApp extends StatelessWidget {

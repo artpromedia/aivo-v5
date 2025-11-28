@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -67,4 +69,32 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  // Organization and project for source map uploads
+  org: process.env.SENTRY_ORG || 'aivo',
+  project: process.env.SENTRY_PROJECT || 'aivo-web',
+  
+  // Auth token for uploading source maps
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  
+  // Silently ignore if no auth token (for local development)
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  
+  // Upload source maps to Sentry
+  widenClientFileUpload: true,
+  
+  // Hide source maps from production bundles
+  hideSourceMaps: true,
+  
+  // Automatically tree-shake Sentry logger
+  disableLogger: true,
+  
+  // Automatically instrument API routes
+  automaticVercelMonitors: true,
+};
+
+// Export with Sentry wrapper if DSN is configured
+module.exports = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+  : nextConfig;

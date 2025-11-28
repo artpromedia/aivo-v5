@@ -151,10 +151,54 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/aivo-agents:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/aivo-agents:buildcache,mode=max
 
+  # Upload source maps to Sentry
+  sentry-release:
+    name: Create Sentry Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build web app
+        run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
+      
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG || 'aivo' }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT || 'aivo-web' }}
+        with:
+          environment: production
+          version: ${{ github.sha }}
+          sourcemaps: ./apps/web/.next
+          ignore_missing: true
+          ignore_empty: true
+
   # Deploy to production
   deploy:
     name: Deploy to Production
-    needs: build
+    needs: [build, sentry-release]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
