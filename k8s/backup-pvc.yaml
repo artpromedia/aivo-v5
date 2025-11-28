@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: production
+  labels:
+    app: aivo
+    component: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      # Size to hold ~7 days of daily backups
+      # Adjust based on database size
+      storage: 50Gi
+---
+# For multi-AZ backup redundancy, use EFS
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc-efs
+  namespace: production
+  labels:
+    app: aivo
+    component: backup
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 100Gi
+---
+# StorageClass for EFS (if not already exists)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: ${EFS_FILE_SYSTEM_ID}
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/backups"

@@ -98,12 +98,48 @@ services:
       - aivo-network
     restart: unless-stopped
 
+  # Database Backup Service (development)
+  backup:
+    image: postgres:15-alpine
+    volumes:
+      - backup-data:/backups
+      - ./scripts:/scripts:ro
+    environment:
+      - DATABASE_URL=postgresql://aivo:aivopass@db:5432/aivo_v5
+    entrypoint: ["/bin/sh", "/scripts/backup.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aivo-network
+    profiles:
+      - backup
+
+  # Database Restore Service (development)
+  restore:
+    image: postgres:15-alpine
+    volumes:
+      - backup-data:/backups
+      - ./scripts:/scripts:ro
+    environment:
+      - DATABASE_URL=postgresql://aivo:aivopass@db:5432/aivo_v5
+    entrypoint: ["/bin/sh", "-c", "echo 'Specify backup file: docker-compose run restore /scripts/restore-local.sh <backup-file>'"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aivo-network
+    profiles:
+      - restore
+
 volumes:
   postgres-data:
     driver: local
   redis-data:
     driver: local
   uploaded-files:
+    driver: local
+  backup-data:
     driver: local
 
 networks:

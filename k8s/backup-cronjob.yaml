@@ -1,0 +1,177 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: production
+  labels:
+    app: aivo
+    component: backup
+spec:
+  # Daily at 2 AM UTC
+  schedule: "0 2 * * *"
+  # Don't allow concurrent backup jobs
+  concurrencyPolicy: Forbid
+  # Keep last 3 successful and failed jobs for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  # Start job within 1 hour of scheduled time, otherwise skip
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      # Auto-cleanup completed jobs after 1 day
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: aivo
+            component: backup
+        spec:
+          containers:
+          - name: backup
+            image: postgres:15-alpine
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              
+              # Install AWS CLI
+              apk add --no-cache aws-cli
+              
+              # Configuration
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              DAY_OF_WEEK=$(date +%u)  # 1=Monday, 7=Sunday
+              DAY_OF_MONTH=$(date +%d)
+              BACKUP_FILE="aivo_backup_${TIMESTAMP}.sql.gz"
+              
+              echo "Starting backup at $(date)"
+              echo "Backup file: $BACKUP_FILE"
+              
+              # Create backup with custom format for faster restore
+              echo "Creating PostgreSQL backup..."
+              pg_dump "$DATABASE_URL" \
+                --no-owner \
+                --no-acl \
+                --clean \
+                --if-exists \
+                --verbose \
+                2>/tmp/backup.log | gzip -9 > /backups/$BACKUP_FILE
+              
+              BACKUP_SIZE=$(ls -lh /backups/$BACKUP_FILE | awk '{print $5}')
+              echo "Backup created: $BACKUP_FILE (Size: $BACKUP_SIZE)"
+              
+              # Verify backup integrity
+              echo "Verifying backup integrity..."
+              if gunzip -t /backups/$BACKUP_FILE; then
+                echo "✓ Backup integrity verified"
+              else
+                echo "✗ Backup integrity check failed!"
+                exit 1
+              fi
+              
+              # Upload to S3 - Daily
+              echo "Uploading to S3 (daily)..."
+              aws s3 cp /backups/$BACKUP_FILE \
+                s3://${BACKUP_BUCKET}/daily/$BACKUP_FILE \
+                --storage-class STANDARD_IA \
+                --sse AES256
+              
+              # Promote to weekly on Sundays (day 7)
+              if [ "$DAY_OF_WEEK" = "7" ]; then
+                echo "Promoting to weekly backup..."
+                aws s3 cp /backups/$BACKUP_FILE \
+                  s3://${BACKUP_BUCKET}/weekly/$BACKUP_FILE \
+                  --storage-class STANDARD_IA \
+                  --sse AES256
+              fi
+              
+              # Promote to monthly on 1st of month
+              if [ "$DAY_OF_MONTH" = "01" ]; then
+                echo "Promoting to monthly backup..."
+                aws s3 cp /backups/$BACKUP_FILE \
+                  s3://${BACKUP_BUCKET}/monthly/$BACKUP_FILE \
+                  --storage-class GLACIER \
+                  --sse AES256
+              fi
+              
+              # Clean up old local backups (keep last 7)
+              echo "Cleaning up old local backups..."
+              ls -t /backups/*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm -f
+              
+              # Record backup metadata
+              echo "{
+                \"timestamp\": \"$(date -Iseconds)\",
+                \"filename\": \"$BACKUP_FILE\",
+                \"size\": \"$BACKUP_SIZE\",
+                \"status\": \"success\"
+              }" > /backups/latest-backup.json
+              
+              aws s3 cp /backups/latest-backup.json \
+                s3://${BACKUP_BUCKET}/latest-backup.json \
+                --content-type application/json
+              
+              echo "Backup completed successfully at $(date)"
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: aivo-secrets
+                  key: database-url
+            - name: BACKUP_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: backup-config
+                  key: bucket-name
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aivo-secrets
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aivo-secrets
+                  key: aws-secret-access-key
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: backup-config
+                  key: aws-region
+            volumeMounts:
+            - name: backup-volume
+              mountPath: /backups
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: backup-pvc
+          # Run on nodes with backup label for dedicated resources
+          nodeSelector:
+            workload-type: backup
+          tolerations:
+          - key: "workload-type"
+            operator: "Equal"
+            value: "backup"
+            effect: "NoSchedule"
+---
+# ConfigMap for backup configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: production
+data:
+  bucket-name: "aivo-backups"
+  aws-region: "us-east-1"
+  retention-daily: "7"
+  retention-weekly: "4"
+  retention-monthly: "12"

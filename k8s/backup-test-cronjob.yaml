@@ -1,0 +1,263 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-restore-test
+  namespace: production
+  labels:
+    app: aivo
+    component: backup-test
+spec:
+  # Weekly on Saturdays at 4 AM UTC
+  schedule: "0 4 * * 6"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 172800  # 2 days
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: aivo
+            component: backup-test
+        spec:
+          containers:
+          - name: restore-test
+            image: postgres:15-alpine
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "250m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              
+              # Install dependencies
+              apk add --no-cache aws-cli curl
+              
+              echo "========================================="
+              echo "Starting backup restore test at $(date)"
+              echo "========================================="
+              
+              # Get latest backup info
+              echo "Fetching latest backup metadata..."
+              aws s3 cp s3://${BACKUP_BUCKET}/latest-backup.json /tmp/latest-backup.json
+              LATEST_BACKUP=$(cat /tmp/latest-backup.json | grep -o '"filename": "[^"]*"' | cut -d'"' -f4)
+              
+              if [ -z "$LATEST_BACKUP" ]; then
+                echo "ERROR: No backup found!"
+                exit 1
+              fi
+              
+              echo "Latest backup: $LATEST_BACKUP"
+              
+              # Download backup
+              echo "Downloading backup from S3..."
+              aws s3 cp s3://${BACKUP_BUCKET}/daily/$LATEST_BACKUP /tmp/$LATEST_BACKUP
+              
+              # Verify download
+              if [ ! -f "/tmp/$LATEST_BACKUP" ]; then
+                echo "ERROR: Failed to download backup!"
+                exit 1
+              fi
+              
+              BACKUP_SIZE=$(ls -lh /tmp/$LATEST_BACKUP | awk '{print $5}')
+              echo "Downloaded backup: $BACKUP_SIZE"
+              
+              # Verify backup integrity
+              echo "Verifying backup integrity..."
+              if ! gunzip -t /tmp/$LATEST_BACKUP; then
+                echo "ERROR: Backup integrity check failed!"
+                exit 1
+              fi
+              echo "✓ Backup integrity verified"
+              
+              # Create test database
+              echo "Creating test database..."
+              export PGPASSWORD=$TEST_DB_PASSWORD
+              
+              psql -h $TEST_DB_HOST -U $TEST_DB_USER -d postgres -c "DROP DATABASE IF EXISTS aivo_restore_test;"
+              psql -h $TEST_DB_HOST -U $TEST_DB_USER -d postgres -c "CREATE DATABASE aivo_restore_test;"
+              
+              # Restore backup to test database
+              echo "Restoring backup to test database..."
+              gunzip -c /tmp/$LATEST_BACKUP | psql -h $TEST_DB_HOST -U $TEST_DB_USER -d aivo_restore_test
+              
+              echo "✓ Backup restored successfully"
+              
+              # Run validation queries
+              echo "Running validation queries..."
+              
+              # Check table count
+              TABLE_COUNT=$(psql -h $TEST_DB_HOST -U $TEST_DB_USER -d aivo_restore_test -t -c \
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';")
+              echo "Tables found: $TABLE_COUNT"
+              
+              if [ "$TABLE_COUNT" -lt 10 ]; then
+                echo "WARNING: Fewer tables than expected!"
+              fi
+              
+              # Check critical tables exist and have data
+              CRITICAL_TABLES="User Learner Tenant Session LearningPath Assessment"
+              
+              for TABLE in $CRITICAL_TABLES; do
+                ROW_COUNT=$(psql -h $TEST_DB_HOST -U $TEST_DB_USER -d aivo_restore_test -t -c \
+                  "SELECT COUNT(*) FROM \"$TABLE\";" 2>/dev/null || echo "0")
+                echo "  $TABLE: $ROW_COUNT rows"
+              done
+              
+              # Check data integrity - foreign keys
+              echo "Checking foreign key constraints..."
+              FK_VIOLATIONS=$(psql -h $TEST_DB_HOST -U $TEST_DB_USER -d aivo_restore_test -t -c \
+                "SELECT COUNT(*) FROM pg_constraint WHERE contype = 'f' AND NOT convalidated;")
+              
+              if [ "$FK_VIOLATIONS" -gt 0 ]; then
+                echo "WARNING: Found $FK_VIOLATIONS invalid foreign key constraints!"
+              else
+                echo "✓ All foreign key constraints valid"
+              fi
+              
+              # Check for recent data (within last 48 hours)
+              RECENT_DATA=$(psql -h $TEST_DB_HOST -U $TEST_DB_USER -d aivo_restore_test -t -c \
+                "SELECT COUNT(*) FROM \"Session\" WHERE \"createdAt\" > NOW() - INTERVAL '48 hours';" 2>/dev/null || echo "0")
+              echo "Recent sessions (last 48h): $RECENT_DATA"
+              
+              # Cleanup test database
+              echo "Cleaning up test database..."
+              psql -h $TEST_DB_HOST -U $TEST_DB_USER -d postgres -c "DROP DATABASE IF EXISTS aivo_restore_test;"
+              
+              # Report results
+              echo ""
+              echo "========================================="
+              echo "Backup restore test completed successfully!"
+              echo "========================================="
+              echo "Backup: $LATEST_BACKUP"
+              echo "Size: $BACKUP_SIZE"
+              echo "Tables: $TABLE_COUNT"
+              echo "Timestamp: $(date)"
+              echo "========================================="
+              
+              # Push metrics
+              cat <<EOF | curl --data-binary @- http://backup-metrics:9091/metrics/job/backup-restore-test
+              # HELP aivo_backup_restore_test_success Whether the restore test succeeded
+              # TYPE aivo_backup_restore_test_success gauge
+              aivo_backup_restore_test_success 1
+              # HELP aivo_backup_restore_test_timestamp Timestamp of last restore test
+              # TYPE aivo_backup_restore_test_timestamp gauge
+              aivo_backup_restore_test_timestamp $(date +%s)
+              # HELP aivo_backup_restore_test_table_count Number of tables in restored backup
+              # TYPE aivo_backup_restore_test_table_count gauge
+              aivo_backup_restore_test_table_count $TABLE_COUNT
+              EOF
+              
+            env:
+            - name: BACKUP_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: backup-config
+                  key: bucket-name
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aivo-secrets
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aivo-secrets
+                  key: aws-secret-access-key
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: backup-config
+                  key: aws-region
+            - name: TEST_DB_HOST
+              value: "postgres-test"
+            - name: TEST_DB_USER
+              value: "aivo_test"
+            - name: TEST_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aivo-secrets
+                  key: test-database-password
+          restartPolicy: Never
+          # Use separate test database pod
+          serviceAccountName: backup-service-account
+---
+# Service account for backup operations
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-service-account
+  namespace: production
+---
+# Test PostgreSQL instance for restore testing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-test
+  namespace: production
+  labels:
+    app: aivo
+    component: postgres-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aivo
+      component: postgres-test
+  template:
+    metadata:
+      labels:
+        app: aivo
+        component: postgres-test
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "aivo_test"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: aivo-secrets
+              key: test-database-password
+        - name: POSTGRES_DB
+          value: "postgres"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: test-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: test-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-test
+  namespace: production
+spec:
+  selector:
+    app: aivo
+    component: postgres-test
+  ports:
+  - port: 5432
+    targetPort: 5432

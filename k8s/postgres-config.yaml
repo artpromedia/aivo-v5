@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: production
+  labels:
+    app: aivo
+    component: database
+data:
+  postgresql.conf: |
+    # Connection Settings
+    listen_addresses = '*'
+    max_connections = 200
+    
+    # Memory Settings (adjust based on instance size)
+    shared_buffers = 256MB
+    effective_cache_size = 768MB
+    maintenance_work_mem = 128MB
+    work_mem = 4MB
+    
+    # WAL Settings for Point-in-Time Recovery
+    wal_level = replica
+    archive_mode = on
+    archive_command = 'test ! -f /var/lib/postgresql/wal_archive/%f && cp %p /var/lib/postgresql/wal_archive/%f && aws s3 cp %p s3://aivo-backups/wal/%f --sse AES256'
+    archive_timeout = 300
+    
+    # WAL Configuration
+    max_wal_size = 1GB
+    min_wal_size = 80MB
+    wal_keep_size = 512MB
+    
+    # Checkpoint Settings
+    checkpoint_completion_target = 0.9
+    checkpoint_timeout = 10min
+    
+    # Replication (for read replicas if needed)
+    max_wal_senders = 5
+    max_replication_slots = 5
+    hot_standby = on
+    
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = 'pg_log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_min_duration_statement = 1000
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    log_temp_files = 0
+    
+    # Performance
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    default_statistics_target = 100
+    
+    # Autovacuum
+    autovacuum = on
+    autovacuum_max_workers = 3
+    autovacuum_naptime = 1min
+    autovacuum_vacuum_threshold = 50
+    autovacuum_analyze_threshold = 50
+    autovacuum_vacuum_scale_factor = 0.05
+    autovacuum_analyze_scale_factor = 0.05
+    
+  pg_hba.conf: |
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    local   all             all                                     trust
+    host    all             all             127.0.0.1/32            scram-sha-256
+    host    all             all             ::1/128                 scram-sha-256
+    host    all             all             10.0.0.0/8              scram-sha-256
+    host    all             all             172.16.0.0/12           scram-sha-256
+    host    replication     all             10.0.0.0/8              scram-sha-256
+    
+  recovery.conf: |
+    # Point-in-Time Recovery Configuration
+    # Uncomment and modify when performing PITR
+    # restore_command = 'aws s3 cp s3://aivo-backups/wal/%f %p'
+    # recovery_target_time = '2025-01-28 15:30:00 UTC'
+    # recovery_target_action = 'promote'
+---
+# Init script for WAL archive directory
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: production
+data:
+  init-wal-archive.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Create WAL archive directory
+    mkdir -p /var/lib/postgresql/wal_archive
+    chown postgres:postgres /var/lib/postgresql/wal_archive
+    chmod 700 /var/lib/postgresql/wal_archive
+    
+    echo "WAL archive directory initialized"

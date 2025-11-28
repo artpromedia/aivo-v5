@@ -1,0 +1,171 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: backup-alerts
+  namespace: production
+  labels:
+    app: aivo
+    component: backup
+    prometheus: main
+spec:
+  groups:
+  - name: backup.rules
+    interval: 5m
+    rules:
+    # Alert if no backup in 26 hours
+    - alert: BackupMissing
+      expr: |
+        time() - max(kube_job_status_completion_time{job_name=~"postgres-backup.*", namespace="production"}) > 93600
+      for: 30m
+      labels:
+        severity: critical
+        team: platform
+      annotations:
+        summary: "PostgreSQL backup missing"
+        description: "No successful backup in the last 26 hours. Last backup was {{ $value | humanizeDuration }} ago."
+        runbook_url: "https://docs.aivo.app/runbooks/backup-missing"
+    
+    # Alert if backup job fails
+    - alert: BackupJobFailed
+      expr: |
+        kube_job_status_failed{job_name=~"postgres-backup.*", namespace="production"} > 0
+      for: 5m
+      labels:
+        severity: critical
+        team: platform
+      annotations:
+        summary: "PostgreSQL backup job failed"
+        description: "Backup job {{ $labels.job_name }} has failed. Check logs for details."
+        runbook_url: "https://docs.aivo.app/runbooks/backup-failed"
+    
+    # Alert if backup is taking too long
+    - alert: BackupTooSlow
+      expr: |
+        kube_job_status_active{job_name=~"postgres-backup.*", namespace="production"} == 1
+        and time() - kube_job_status_start_time{job_name=~"postgres-backup.*", namespace="production"} > 3600
+      for: 10m
+      labels:
+        severity: warning
+        team: platform
+      annotations:
+        summary: "PostgreSQL backup taking too long"
+        description: "Backup job {{ $labels.job_name }} has been running for over 1 hour."
+        runbook_url: "https://docs.aivo.app/runbooks/backup-slow"
+    
+    # Alert if backup size anomaly (significantly smaller than usual)
+    - alert: BackupSizeAnomaly
+      expr: |
+        (
+          aivo_backup_size_bytes{type="daily"} 
+          < 
+          avg_over_time(aivo_backup_size_bytes{type="daily"}[7d]) * 0.5
+        )
+        and
+        aivo_backup_size_bytes{type="daily"} > 0
+      for: 15m
+      labels:
+        severity: warning
+        team: platform
+      annotations:
+        summary: "Backup size anomaly detected"
+        description: "Current backup size is less than 50% of the 7-day average. This might indicate data loss or corruption."
+        runbook_url: "https://docs.aivo.app/runbooks/backup-size-anomaly"
+    
+    # Alert if S3 upload fails
+    - alert: BackupUploadFailed
+      expr: |
+        increase(aivo_backup_upload_errors_total[1h]) > 0
+      for: 5m
+      labels:
+        severity: critical
+        team: platform
+      annotations:
+        summary: "Backup S3 upload failed"
+        description: "Failed to upload backup to S3. Check AWS credentials and bucket permissions."
+        runbook_url: "https://docs.aivo.app/runbooks/backup-upload-failed"
+    
+    # Alert if WAL archiving is failing
+    - alert: WALArchivingFailed
+      expr: |
+        pg_stat_archiver_failed_count > 0
+      for: 15m
+      labels:
+        severity: critical
+        team: platform
+      annotations:
+        summary: "PostgreSQL WAL archiving failed"
+        description: "WAL archiving is failing. Point-in-time recovery may be compromised."
+        runbook_url: "https://docs.aivo.app/runbooks/wal-archiving-failed"
+
+---
+# ServiceMonitor for backup metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backup-metrics
+  namespace: production
+  labels:
+    app: aivo
+    component: backup
+spec:
+  selector:
+    matchLabels:
+      app: aivo
+      component: backup-metrics
+  endpoints:
+  - port: metrics
+    interval: 60s
+    path: /metrics
+
+---
+# Backup metrics exporter deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-metrics-exporter
+  namespace: production
+  labels:
+    app: aivo
+    component: backup-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aivo
+      component: backup-metrics
+  template:
+    metadata:
+      labels:
+        app: aivo
+        component: backup-metrics
+    spec:
+      containers:
+      - name: exporter
+        image: prom/pushgateway:v1.6.0
+        ports:
+        - name: metrics
+          containerPort: 9091
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-metrics
+  namespace: production
+  labels:
+    app: aivo
+    component: backup-metrics
+spec:
+  selector:
+    app: aivo
+    component: backup-metrics
+  ports:
+  - name: metrics
+    port: 9091
+    targetPort: 9091
