@@ -154,22 +154,22 @@ async function selectProvider(
         if (options?.preferredModel) {
           const foundModel = await getModelByIdentifier(provider.id, options.preferredModel);
           if (foundModel && foundModel.isActive) {
-            model = foundModel as AIModel;
+            model = foundModel as unknown as AIModel;
           }
         }
         
         if (!model) {
           const defaultModel = await getDefaultModelForProvider(provider.id);
           if (defaultModel) {
-            model = defaultModel as AIModel;
+            model = defaultModel as unknown as AIModel;
           } else if (provider.models?.length > 0) {
-            model = provider.models[0] as AIModel;
+            model = provider.models[0] as unknown as AIModel;
           }
         }
         
         if (model) {
           return {
-            provider: provider as AIProvider,
+            provider: provider as unknown as AIProvider,
             model,
             client,
           };
@@ -202,8 +202,8 @@ async function selectProvider(
       
       if (!rateLimitState.isLimited) {
         return {
-          provider: model.provider as AIProvider,
-          model: model as AIModel,
+          provider: model.provider as unknown as AIProvider,
+          model: model as unknown as AIModel,
           client,
         };
       }
@@ -387,13 +387,13 @@ export class MultiProviderAIService {
       if (modelId) {
         const foundModel = await getModelByIdentifier(provider.id, modelId);
         if (foundModel) {
-          model = foundModel as AIModel;
+          model = foundModel as unknown as AIModel;
         }
       }
       
       if (!model) {
         const defaultModel = await getDefaultModelForProvider(provider.id);
-        model = defaultModel as AIModel | null;
+        model = defaultModel as unknown as AIModel | null;
       }
       
       if (!model) {
