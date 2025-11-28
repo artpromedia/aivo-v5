@@ -9,7 +9,7 @@ on:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '8'
+  PNPM_VERSION: '10'
 
 jobs:
   # Run tests and type checks
@@ -38,7 +38,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
       
       - name: Setup pnpm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -52,15 +52,51 @@ jobs:
         run: pnpm prisma generate
       
       - name: Run type check
-        run: pnpm type-check
+        run: pnpm typecheck
       
       - name: Run linter
         run: pnpm lint
       
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test:ci
         env:
+          CI: true
           DATABASE_URL: postgresql://test:test@localhost:5432/test
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            coverage/
+            **/coverage/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            junit.xml
+            **/junit.xml
+            test-results/
+          retention-days: 30
+
+      - name: Generate coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ secrets.COVERAGE_GIST_ID }}
+          filename: aivo-coverage.json
+          label: coverage
+          message: ${{ env.COVERAGE_PERCENT }}%
+          valColorRange: ${{ env.COVERAGE_PERCENT }}
+          maxColorRange: 100
+          minColorRange: 0
+        continue-on-error: true
 
   # Build and push Docker images
   build:

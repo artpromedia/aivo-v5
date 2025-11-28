@@ -10,8 +10,13 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "lint:fix": "turbo lint -- --fix",
+    "lint:staged": "lint-staged",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:ci": "jest --ci --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=json-summary",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:changed": "jest --onlyChanged",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx}\"",
     "prisma:generate": "prisma generate",
@@ -21,6 +26,7 @@
     "seed:dev-users": "ts-node --transpile-only scripts/seed-dev-users.ts",
     "clean:bom": "node scripts/strip-bom.js",
     "postinstall": "pnpm run clean:bom",
+    "prepare": "husky",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },
@@ -38,7 +44,10 @@
     "eslint-plugin-react": "^7.37.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "expo-secure-store": "~13.0.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "lint-staged": "^15.2.10",
     "postcss": "^8.4.38",
     "prettier": "^3.3.0",
     "prisma": "^6.0.0",
@@ -46,6 +55,15 @@
     "ts-jest": "^29.1.1",
     "turbo": "^2.6.1",
     "typescript": "6.0.0-dev.20251120"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md,mdx,css,scss}": [
+      "prettier --write"
+    ]
   },
   "engines": {
     "node": ">=20.0.0"

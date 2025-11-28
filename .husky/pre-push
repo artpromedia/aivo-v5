@@ -1,0 +1,10 @@
+echo "🧪 Running tests before push..."
+
+# Run tests using turbo which handles the monorepo properly
+pnpm test || {
+  echo "❌ Tests failed. Push aborted."
+  echo "Run 'pnpm test' locally to see detailed errors."
+  exit 1
+}
+
+echo "✅ All tests passed! Proceeding with push..."
