@@ -10,21 +10,20 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "baseUrl": ".",
     "types": ["node", "react", "jest"],
     "paths": {
-      "@aivo/types": ["packages/types/src"],
-      "@aivo/brain-model": ["packages/brain-model/src/index.ts"],
-      "@aivo/brain-model/*": ["packages/brain-model/src/*"],
-      "@aivo/ui": ["packages/ui/src"],
-      "@aivo/ui/native": ["packages/ui/src/native.ts"],
-      "@aivo/observability": ["packages/observability/src"],
-      "@aivo/guardrails": ["packages/guardrails/src"],
-      "@aivo/agents": ["packages/agents/src"],
-      "@aivo/agents/*": ["packages/agents/src/*"],
-      "@aivo/persistence": ["packages/persistence/src"],
-      "@aivo/api-client": ["packages/api-client/src"],
-      "@aivo/auth": ["packages/auth/src"]
+      "@aivo/types": ["./packages/types/src"],
+      "@aivo/brain-model": ["./packages/brain-model/src/index.ts"],
+      "@aivo/brain-model/*": ["./packages/brain-model/src/*"],
+      "@aivo/ui": ["./packages/ui/src"],
+      "@aivo/ui/native": ["./packages/ui/src/native.ts"],
+      "@aivo/observability": ["./packages/observability/src"],
+      "@aivo/guardrails": ["./packages/guardrails/src"],
+      "@aivo/agents": ["./packages/agents/src"],
+      "@aivo/agents/*": ["./packages/agents/src/*"],
+      "@aivo/persistence": ["./packages/persistence/src"],
+      "@aivo/api-client": ["./packages/api-client/src"],
+      "@aivo/auth": ["./packages/auth/src"]
     }
   },
   "include": ["apps", "mobile", "packages", "services"]

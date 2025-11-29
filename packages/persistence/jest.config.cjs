@@ -9,5 +9,9 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }]
+  },
+  moduleNameMapper: {
+    '^@aivo/types$': '<rootDir>/../types/src',
+    '^@aivo/types/(.*)$': '<rootDir>/../types/src/$1'
   }
 };
