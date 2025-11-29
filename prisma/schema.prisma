@@ -127,6 +127,7 @@ model Learner {
   emotionHistory        EmotionHistory[]
   sensoryProfile        SensoryProfile?
   aacSystem             AACSystem?
+  transitionPlan        TransitionPlan?
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
 }
@@ -2558,4 +2559,923 @@ enum AACMasteryLevel {
   MASTERED            // Consistent independent use
   GENERALIZED         // Using across contexts
 }
+
+// ==========================================
+// TRANSITION SERVICES ENUMS
+// ==========================================
+
+enum TransitionPlanStatus {
+  DRAFT
+  ACTIVE
+  UNDER_REVIEW
+  COMPLETED
+  ARCHIVED
+}
+
+enum PostSecondaryGoalCategory {
+  EDUCATION           // Post-secondary education (college, university, trade school)
+  EMPLOYMENT          // Competitive integrated employment
+  INDEPENDENT_LIVING  // Independent living skills
+}
+
+enum CollegeApplicationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  WAITLISTED
+  ACCEPTED
+  REJECTED
+  ENROLLED
+  DEFERRED
+}
+
+enum AccommodationRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  DENIED
+  NEEDS_INFO
+}
+
+enum WorkExperienceType {
+  JOB_SHADOWING
+  INTERNSHIP
+  PAID_EMPLOYMENT
+  VOLUNTEER
+  APPRENTICESHIP
+  WORK_STUDY
+}
+
+enum TradeType {
+  CNA                 // Certified Nursing Assistant
+  HVAC                // Heating, Ventilation, Air Conditioning
+  AUTOMOTIVE          // Auto Mechanic
+  WELDING             // Welding & Fabrication
+  COSMETOLOGY         // Beauty & Hair
+  ELECTRICAL          // Electrician
+  CULINARY            // Culinary Arts
+  CDL                 // Commercial Driver's License
+  PLUMBING            // Plumbing
+  IT_SUPPORT          // IT Support/Help Desk
+  MEDICAL_ASSISTANT   // Medical Assistant
+  PHLEBOTOMY          // Phlebotomy Technician
+  PHARMACY_TECH       // Pharmacy Technician
+  DENTAL_ASSISTANT    // Dental Assistant
+  EMT                 // Emergency Medical Technician
+  FIREFIGHTER         // Firefighter/First Responder
+  CARPENTRY           // Carpentry/Construction
+  MACHINIST           // CNC Machinist
+  DIESEL_TECH         // Diesel Technology
+  REAL_ESTATE         // Real Estate
+  GRAPHIC_DESIGN      // Graphic Design
+  WEB_DEVELOPMENT     // Web Development
+  CYBERSECURITY       // Cybersecurity
+  PARALEGAL           // Paralegal Studies
+  EARLY_CHILDHOOD     // Early Childhood Education
+  VETERINARY_TECH     // Veterinary Technician
+  MASSAGE_THERAPY     // Massage Therapy
+  PERSONAL_TRAINING   // Personal Trainer/Fitness
+  SOLAR_TECH          // Solar Panel Installation
+  WIND_TECH           // Wind Turbine Technician
+}
+
+enum ProgramApplicationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  ENROLLED
+  WITHDRAWN
+}
+
+enum SelfDeterminationDomain {
+  SELF_AWARENESS
+  SELF_KNOWLEDGE
+  CHOICE_MAKING
+  DECISION_MAKING
+  GOAL_SETTING
+  PLANNING
+  PROBLEM_SOLVING
+  SELF_ADVOCACY
+  SELF_REGULATION
+  SELF_EVALUATION
+  SELF_REINFORCEMENT
+}
+
+enum TransitionGoalCategory {
+  POST_SECONDARY_EDUCATION
+  EMPLOYMENT
+  INDEPENDENT_LIVING
+  COMMUNITY_PARTICIPATION
+  SELF_ADVOCACY
+  HEALTH_WELLNESS
+  FINANCIAL_LITERACY
+  TRANSPORTATION
+  SOCIAL_RELATIONSHIPS
+  RECREATION_LEISURE
+}
+
+enum IDEARequirementCategory {
+  AGE_APPROPRIATE_ASSESSMENTS
+  MEASURABLE_GOALS
+  COURSE_OF_STUDY
+  AGENCY_INVOLVEMENT
+  STUDENT_PARTICIPATION
+  ANNUAL_UPDATE
+  TRANSFER_OF_RIGHTS
+}
+
+// ==========================================
+// TRANSITION SERVICES MODELS
+// ==========================================
+
+// Master Transition Plan - one per learner
+model TransitionPlan {
+  id                      String                   @id @default(cuid())
+  learnerId               String                   @unique
+  learner                 Learner                  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  status                  TransitionPlanStatus     @default(DRAFT)
+  startDate               DateTime                 @default(now())
+  projectedGraduationDate DateTime
+  ageOfMajority           DateTime?                // When student turns 18
+  transferOfRightsDate    DateTime?                // When rights transfer to student
+  
+  // Primary post-secondary goals
+  primaryEducationGoal    String?
+  primaryEmploymentGoal   String?
+  primaryLivingGoal       String?
+  
+  // IDEA Compliance
+  ideaRequirementsChecklist Json?                  // Track IDEA requirements
+  lastAnnualReviewDate    DateTime?
+  nextAnnualReviewDate    DateTime?
+  
+  // Related records
+  postSecondaryGoals      PostSecondaryGoal[]
+  collegeApplications     CollegeApplication[]
+  workExperiences         WorkExperience[]
+  jobShadowings           JobShadowing[]
+  internships             Internship[]
+  programApplications     TradeProgramApplication[]
+  apprenticeships         Apprenticeship[]
+  certifications          IndustryCertification[]
+  selfDeterminationAssessments SelfDeterminationAssessment[]
+  personCenteredPlan      PersonCenteredPlan?
+  transitionGoals         TransitionGoal[]
+  readinessReports        TransitionReadinessReport[]
+  agencyInvolvements      AgencyInvolvement[]
+  savedColleges           SavedCollege[]
+  accommodationRequests   CollegeAccommodationRequest[]
+  
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  
+  @@index([learnerId])
+  @@index([status])
+}
+
+// Post-Secondary Goals linked to IEP
+model PostSecondaryGoal {
+  id                String                    @id @default(cuid())
+  transitionPlanId  String
+  transitionPlan    TransitionPlan            @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  category          PostSecondaryGoalCategory
+  goalStatement     String                    // Measurable annual goal
+  currentLevel      String?                   // Present level of performance
+  assessmentBasis   String?                   // Age-appropriate transition assessment used
+  
+  targetDate        DateTime
+  progress          Int                       @default(0) // 0-100%
+  progressNotes     Json?                     // Array of progress notes
+  
+  // Link to IEP goals
+  alignedIEPGoalIds String[]                  // Links to IEPGoal records
+  
+  isActive          Boolean                   @default(true)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  
+  @@index([transitionPlanId])
+  @@index([category])
+}
+
+// ==========================================
+// COLLEGE PREP MODELS
+// ==========================================
+
+// Colleges the student has saved/is researching
+model SavedCollege {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  collegeName           String
+  collegeType           String             // 2-year, 4-year, trade school
+  state                 String
+  city                  String
+  website               String?
+  
+  // Disability Services Rating
+  disabilityServicesRating Int?            // 1-5 stars
+  disabilityServicesNotes  String?
+  hasDisabilityServices    Boolean         @default(true)
+  
+  // Key Stats
+  acceptanceRate        Float?
+  tuitionInState        Float?
+  tuitionOutOfState     Float?
+  averageFinancialAid   Float?
+  graduationRate        Float?
+  
+  // Program Interest
+  interestedPrograms    String[]
+  
+  // Student Notes
+  notes                 String?
+  pros                  String[]
+  cons                  String[]
+  
+  isFavorite            Boolean            @default(false)
+  savedAt               DateTime           @default(now())
+  
+  @@index([transitionPlanId])
+}
+
+model CollegeApplication {
+  id                    String                     @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan             @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  collegeName           String
+  collegeType           String
+  applicationUrl        String?
+  
+  status                CollegeApplicationStatus   @default(NOT_STARTED)
+  applicationType       String?                    // Early Action, Early Decision, Regular, Rolling
+  
+  // Key Dates
+  applicationDeadline   DateTime?
+  financialAidDeadline  DateTime?
+  submittedDate         DateTime?
+  decisionDate          DateTime?
+  commitmentDeadline    DateTime?
+  
+  // Application Components
+  commonAppComplete     Boolean                    @default(false)
+  essaysComplete        Boolean                    @default(false)
+  recommendationsRequested Int                     @default(0)
+  recommendationsReceived  Int                     @default(0)
+  transcriptSent        Boolean                    @default(false)
+  testScoresSent        Boolean                    @default(false)
+  
+  // Essays
+  essays                Json?                      // Array of {prompt, content, status}
+  
+  // Financial Aid
+  fafsaSubmitted        Boolean                    @default(false)
+  financialAidOffered   Float?
+  scholarshipsApplied   Json?                      // Array of scholarship applications
+  
+  // Notes
+  notes                 String?
+  
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  
+  @@index([transitionPlanId])
+  @@index([status])
+}
+
+model CollegeAccommodationRequest {
+  id                    String                      @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan              @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  collegeName           String
+  disabilityOfficeContact String?
+  disabilityOfficeEmail String?
+  disabilityOfficePhone String?
+  
+  status                AccommodationRequestStatus  @default(DRAFT)
+  submittedDate         DateTime?
+  responseDate          DateTime?
+  
+  // Requested Accommodations
+  accommodationsRequested Json                      // Array of accommodation types
+  accommodationsApproved  Json?                     // Array of approved accommodations
+  
+  // Documentation
+  documentationSubmitted  Json?                     // Array of {docType, submitted, notes}
+  iepProvided            Boolean                    @default(false)
+  medicalDocsProvided    Boolean                    @default(false)
+  psychEdReportProvided  Boolean                    @default(false)
+  
+  // Meeting
+  meetingScheduled       DateTime?
+  meetingNotes           String?
+  
+  notes                  String?
+  
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
+// ==========================================
+// WORK-BASED LEARNING MODELS
+// ==========================================
+
+model EmployerPartner {
+  id                    String             @id @default(cuid())
+  name                  String
+  industry              String
+  
+  // Contact Info
+  contactName           String?
+  contactEmail          String?
+  contactPhone          String?
+  address               String?
+  city                  String?
+  state                 String?
+  
+  // Partnership Details
+  opportunityTypes      WorkExperienceType[]
+  disabilityFriendly    Boolean            @default(true)
+  accommodationsOffered String[]
+  
+  // Track Record
+  totalStudentsHosted   Int                @default(0)
+  averageRating         Float?             // Student ratings
+  
+  isActive              Boolean            @default(true)
+  partnerSince          DateTime           @default(now())
+  
+  // Relations
+  jobShadowings         JobShadowing[]
+  internships           Internship[]
+  workExperiences       WorkExperience[]
+  apprenticeships       Apprenticeship[]
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([industry])
+  @@index([isActive])
+}
+
+model JobShadowing {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  employerId            String?
+  employer              EmployerPartner?   @relation(fields: [employerId], references: [id])
+  employerName          String             // In case no employer partner record
+  
+  date                  DateTime
+  duration              Int                // Hours
+  industry              String
+  jobTitle              String
+  
+  // Experience Details
+  tasksObserved         String[]
+  skillsObserved        String[]
+  questionsAsked        String[]
+  
+  // Reflection
+  reflection            String?
+  whatLiked             String?
+  whatDisliked          String?
+  careerInterestLevel   Int?               // 1-5
+  wouldPursue           Boolean?
+  
+  // Supervisor Feedback
+  supervisorName        String?
+  supervisorFeedback    String?
+  
+  completed             Boolean            @default(false)
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
+model Internship {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  employerId            String?
+  employer              EmployerPartner?   @relation(fields: [employerId], references: [id])
+  employerName          String
+  
+  position              String
+  department            String?
+  industry              String
+  
+  startDate             DateTime
+  endDate               DateTime?
+  hoursPerWeek          Int
+  totalHoursCompleted   Int                @default(0)
+  isPaid                Boolean            @default(false)
+  hourlyRate            Float?
+  
+  // Supervisor
+  supervisorName        String
+  supervisorEmail       String?
+  supervisorPhone       String?
+  
+  // Skills & Learning
+  learningObjectives    String[]
+  skillsTargeted        String[]
+  skillsGained          String[]
+  tasksPerformed        String[]
+  
+  // Evaluations
+  evaluations           Json?              // Array of {date, rating, comments, evaluator}
+  midtermEvaluation     Json?
+  finalEvaluation       Json?
+  
+  // Accommodations
+  accommodationsProvided String[]
+  
+  // Status
+  status                String             @default("ACTIVE") // ACTIVE, COMPLETED, WITHDRAWN
+  completionCertificate Boolean            @default(false)
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
+model WorkExperience {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  employerId            String?
+  employer              EmployerPartner?   @relation(fields: [employerId], references: [id])
+  employerName          String
+  
+  experienceType        WorkExperienceType
+  position              String
+  industry              String
+  
+  startDate             DateTime
+  endDate               DateTime?
+  isCurrent             Boolean            @default(false)
+  
+  // Hours & Wages
+  hoursPerWeek          Int?
+  totalHoursWorked      Int                @default(0)
+  hourlyWage            Float?
+  
+  // Responsibilities & Skills
+  responsibilities      String[]
+  skillsGained          String[]
+  accomplishments       String[]
+  
+  // References
+  supervisorName        String?
+  supervisorContact     String?
+  canUseAsReference     Boolean            @default(true)
+  
+  // Reflection
+  reflection            String?
+  careerRelevance       String?
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+  @@index([experienceType])
+}
+
+// ==========================================
+// VOCATIONAL PATHWAY MODELS
+// ==========================================
+
+model TradeProgram {
+  id                    String             @id @default(cuid())
+  name                  String
+  trade                 TradeType
+  provider              String             // School/Organization name
+  providerType          String             // Community College, Trade School, Union
+  
+  // Location
+  city                  String?
+  state                 String?
+  isOnline              Boolean            @default(false)
+  isHybrid              Boolean            @default(false)
+  
+  // Program Details
+  description           String?
+  duration              Int                // Weeks
+  totalHours            Int?
+  creditsEarned         Int?
+  
+  // Cost
+  tuition               Float
+  booksAndSupplies      Float?
+  toolsRequired         Float?
+  financialAidAvailable Boolean            @default(true)
+  scholarshipsAvailable Boolean            @default(false)
+  
+  // Outcomes
+  jobPlacementRate      Float?             // Percentage
+  averageStartingSalary Float?
+  medianSalary          Float?
+  salaryRange           Json?              // {min, max}
+  employmentGrowth      Float?             // Projected % growth
+  
+  // Certifications
+  certificationsEarned  String[]
+  industryRecognized    Boolean            @default(true)
+  
+  // Requirements
+  prerequisites         String[]
+  minimumAge            Int?
+  physicalRequirements  String[]
+  
+  // Disability Support
+  disabilityServicesAvailable Boolean      @default(true)
+  accommodationsOffered String[]
+  accessibilityNotes    String?
+  
+  // Contact
+  contactEmail          String?
+  contactPhone          String?
+  website               String?
+  
+  // Applications
+  applications          TradeProgramApplication[]
+  
+  isActive              Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([trade])
+  @@index([state])
+  @@index([isActive])
+}
+
+model TradeProgramApplication {
+  id                    String                    @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan            @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  programId             String
+  program               TradeProgram              @relation(fields: [programId], references: [id])
+  
+  status                ProgramApplicationStatus  @default(NOT_STARTED)
+  applicationUrl        String?
+  
+  // Key Dates
+  applicationDeadline   DateTime?
+  submittedDate         DateTime?
+  decisionDate          DateTime?
+  startDate             DateTime?
+  
+  // Application Components
+  applicationComplete   Boolean                   @default(false)
+  transcriptSent        Boolean                   @default(false)
+  recommendationsComplete Boolean                 @default(false)
+  entranceExamComplete  Boolean                   @default(false)
+  entranceExamScore     Float?
+  interviewComplete     Boolean                   @default(false)
+  
+  // Documents
+  documentsRequired     Json?                     // Array of required docs
+  documentsSubmitted    Json?                     // Array of submitted docs
+  
+  // Financial Aid
+  financialAidApplied   Boolean                   @default(false)
+  financialAidAwarded   Float?
+  
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([transitionPlanId])
+  @@index([programId])
+  @@index([status])
+}
+
+model Apprenticeship {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  trade                 TradeType
+  programName           String
+  sponsorOrganization   String             // Union, employer, etc.
+  
+  employerId            String?
+  employer              EmployerPartner?   @relation(fields: [employerId], references: [id])
+  
+  // Dates
+  startDate             DateTime
+  expectedEndDate       DateTime?
+  actualEndDate         DateTime?
+  
+  // Hours & Training
+  totalHoursRequired    Int
+  hoursCompleted        Int                @default(0)
+  classroomHoursRequired Int?
+  classroomHoursCompleted Int              @default(0)
+  
+  // Wage Progression
+  startingWage          Float
+  currentWage           Float
+  journeymanWage        Float?             // Target wage after completion
+  wageProgressions      Json?              // Array of {date, wage, percentage}
+  
+  // Mentor
+  mentorName            String?
+  mentorContact         String?
+  
+  // Progress
+  currentLevel          Int                @default(1) // Year/level in program
+  totalLevels           Int
+  competenciesCompleted String[]
+  competenciesRemaining String[]
+  
+  // Certifications earned during
+  certificationsEarned  Json?              // Array of {name, date}
+  
+  status                String             @default("ACTIVE") // ACTIVE, COMPLETED, WITHDRAWN
+  completionDate        DateTime?
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+  @@index([trade])
+}
+
+model IndustryCertification {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  name                  String
+  issuingOrganization   String
+  industry              String?
+  
+  earnedDate            DateTime
+  expirationDate        DateTime?
+  isLifetime            Boolean            @default(false)
+  
+  credentialId          String?            // Certificate number
+  verificationUrl       String?
+  
+  // Renewal
+  renewalRequired       Boolean            @default(false)
+  renewalRequirements   String?
+  ceuRequired           Int?               // Continuing education units
+  ceuCompleted          Int                @default(0)
+  
+  // Value
+  salaryImpact          Float?             // Expected salary increase
+  jobsRequiring         String[]           // Job titles requiring this cert
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
+// ==========================================
+// SELF-DETERMINATION MODELS
+// ==========================================
+
+model SelfDeterminationAssessment {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  assessmentDate        DateTime           @default(now())
+  assessmentType        String             @default("ARC_SDS") // Assessment tool used
+  assessor              String?            // Who administered
+  
+  // 11 Domains (1-5 scale)
+  selfAwareness         Int                // Understanding own strengths/weaknesses
+  selfKnowledge         Int                // Understanding disability & needs
+  choiceMaking          Int                // Making choices based on preferences
+  decisionMaking        Int                // Weighing options, considering consequences
+  goalSetting           Int                // Setting meaningful goals
+  planning              Int                // Creating action plans
+  problemSolving        Int                // Identifying and resolving problems
+  selfAdvocacy          Int                // Speaking up for oneself
+  selfRegulation        Int                // Managing behavior and emotions
+  selfEvaluation        Int                // Reflecting on performance
+  selfReinforcement     Int                // Celebrating accomplishments
+  
+  // Composite Scores
+  totalScore            Int?               // Sum of all domains
+  autonomyScore         Int?               // Choice, decision, goal
+  selfRegulationScore   Int?               // Self-regulation, evaluation, reinforcement
+  empowermentScore      Int?               // Self-awareness, knowledge, advocacy
+  selfRealizationScore  Int?               // Problem solving, planning
+  
+  // Qualitative Data
+  strengths             String[]
+  areasForGrowth        String[]
+  recommendations       String[]
+  studentReflection     String?
+  
+  // Comparison to Previous
+  previousAssessmentId  String?
+  improvementAreas      String[]
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
+model PersonCenteredPlan {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String             @unique
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  // Core Person-Centered Elements
+  dreams                String[]           // What the student dreams of
+  nightmares            String[]           // What the student fears/wants to avoid
+  
+  // Important To vs Important For
+  importantTo           String[]           // What matters TO the student (preferences)
+  importantFor          String[]           // What matters FOR the student (health, safety)
+  
+  // Strengths & Gifts
+  strengths             String[]
+  gifts                 String[]           // What student contributes
+  talents               String[]
+  interests             String[]
+  
+  // Support Needs
+  supportNeeds          Json?              // {area: description, intensity}
+  
+  // People & Relationships
+  importantPeople       Json?              // Array of {name, relationship, role}
+  supportCircle         Json?              // Array of {name, supportType}
+  
+  // Preferences
+  communicationPreferences String[]
+  learningPreferences   String[]
+  environmentPreferences String[]
+  
+  // History
+  positiveExperiences   String[]           // What's worked well
+  negativeExperiences   String[]           // What hasn't worked
+  
+  // Action Items
+  actionItems           Json?              // Array of {action, responsible, deadline, status}
+  
+  // Meeting Notes
+  meetingDate           DateTime?
+  facilitator           String?
+  participants          String[]
+  meetingNotes          String?
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+model TransitionGoal {
+  id                    String                   @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan           @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  category              TransitionGoalCategory
+  goalText              String
+  
+  // SMART Goal Components
+  specific              String?
+  measurable            String?
+  achievable            String?
+  relevant              String?
+  timeBound             DateTime?
+  
+  // Progress
+  targetDate            DateTime
+  progress              Int                      @default(0) // 0-100%
+  status                String                   @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED, DISCONTINUED
+  
+  // IEP Alignment
+  alignedIEPGoalIds     String[]
+  
+  // Activities
+  activities            Json?                    // Array of {activity, frequency, responsible}
+  milestones            Json?                    // Array of {milestone, targetDate, completed}
+  
+  // Progress Notes
+  progressNotes         Json?                    // Array of {date, note, progress}
+  
+  isActive              Boolean                  @default(true)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  
+  @@index([transitionPlanId])
+  @@index([category])
+}
+
+// ==========================================
+// AGENCY INVOLVEMENT & REPORTS
+// ==========================================
+
+model AgencyInvolvement {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  agencyName            String
+  agencyType            String             // VR, DD Services, Independent Living, etc.
+  
+  // Contact
+  contactName           String?
+  contactEmail          String?
+  contactPhone          String?
+  
+  // Services
+  servicesProvided      String[]
+  servicesNeeded        String[]
+  
+  // Referral
+  referralDate          DateTime?
+  referralStatus        String?            // PENDING, ACCEPTED, WAITLIST, ACTIVE, CLOSED
+  eligibilityStatus     String?            // ELIGIBLE, INELIGIBLE, PENDING
+  
+  // Case Management
+  caseNumber            String?
+  caseManagerName       String?
+  
+  // Funding
+  fundingProvided       String[]
+  fundingAmount         Float?
+  
+  notes                 String?
+  
+  isActive              Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
+model TransitionReadinessReport {
+  id                    String             @id @default(cuid())
+  transitionPlanId      String
+  transitionPlan        TransitionPlan     @relation(fields: [transitionPlanId], references: [id], onDelete: Cascade)
+  
+  reportDate            DateTime           @default(now())
+  reportType            String             @default("ANNUAL") // ANNUAL, QUARTERLY, EXIT
+  
+  // Overall Readiness Score
+  overallScore          Int                // 0-100
+  
+  // Category Scores
+  educationReadiness    Int                // 0-100
+  employmentReadiness   Int                // 0-100
+  independentLivingReadiness Int           // 0-100
+  selfDeterminationReadiness Int           // 0-100
+  
+  // Detailed Assessments
+  academicSkills        Json?              // {reading, writing, math, etc.}
+  employabilitySkills   Json?              // {resume, interview, workplace, etc.}
+  dailyLivingSkills     Json?              // {money, cooking, transportation, etc.}
+  socialSkills          Json?              // {communication, relationships, etc.}
+  
+  // IDEA Compliance
+  ideaRequirementsMet   Json?              // Track each requirement
+  complianceNotes       String?
+  
+  // Recommendations
+  recommendations       String[]
+  priorityAreas         String[]
+  strengthAreas         String[]
+  
+  // Next Steps
+  nextSteps             Json?              // Array of {action, responsible, deadline}
+  
+  // Signatures/Approval
+  preparedBy            String?
+  reviewedBy            String?
+  approvedDate          DateTime?
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([transitionPlanId])
+}
+
 
