@@ -6,6 +6,8 @@ import 'screens/dashboard_screen.dart';
 import 'screens/learner_overview_screen.dart';
 import 'screens/difficulty_screen.dart';
 import 'screens/iep_dashboard_screen.dart';
+import 'screens/learner_analytics_screen.dart';
+import 'screens/sensory_settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +41,8 @@ class AivoParentTeacherApp extends StatelessWidget {
         '/learner': (context) => const LearnerOverviewScreen(),
         '/difficulty': (context) => const DifficultyScreen(),
         '/iep': (context) => const IEPDashboardScreen(),
+        '/analytics': (context) => const LearnerAnalyticsScreen(),
+        '/sensory': (context) => const SensorySettingsScreen(),
       },
     );
   }

@@ -5,7 +5,9 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, jest } from "@jest/globals";
-import { PersonalizedLearningAgent, AITutorAgent, AgentOrchestrator } from "@aivo/agents";
+import { PersonalizedLearningAgent } from "../../PersonalizedLearningAgent";
+import { AITutorAgent } from "../../AITutorAgent";
+import { AgentOrchestrator } from "../../lib/agents/base/AgentOrchestrator";
 
 // Mock Prisma
 const mockLearner = {

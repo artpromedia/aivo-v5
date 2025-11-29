@@ -277,6 +277,14 @@ class AivoApiClient {
         .toList();
   }
 
+  // ==================== Analytics APIs ====================
+
+  /// Get comprehensive analytics overview for a learner
+  Future<LearnerAnalyticsOverview> getLearnerAnalytics(String learnerId) async {
+    final data = await _get('/analytics/learners/$learnerId');
+    return LearnerAnalyticsOverview.fromJson(data['analytics'] as Map<String, dynamic>);
+  }
+
   // ==================== Homework Helper APIs ====================
 
   /// Create a new homework session

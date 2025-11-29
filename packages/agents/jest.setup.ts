@@ -1,5 +1,8 @@
 import { EventEmitter } from 'events';
 
+// Set required environment variables for tests
+process.env.OPENAI_API_KEY = 'test-openai-api-key';
+
 // Create a smart mock that returns context-appropriate responses
 const createSmartMockOpenAI = () => {
   const mockCreate = jest.fn().mockImplementation(async (options: any) => {

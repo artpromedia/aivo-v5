@@ -2304,3 +2304,174 @@ class IEPGoalSummary {
     };
   }
 }
+
+// ==================== Analytics Types ====================
+
+/// A single point in a learner's progress timeseries
+class LearnerProgressTimeseriesPoint {
+  final DateTime date;
+  final double masteryScore;
+  final int minutesPracticed;
+  final double difficultyLevel;
+
+  LearnerProgressTimeseriesPoint({
+    required this.date,
+    required this.masteryScore,
+    required this.minutesPracticed,
+    required this.difficultyLevel,
+  });
+
+  factory LearnerProgressTimeseriesPoint.fromJson(Map<String, dynamic> json) {
+    return LearnerProgressTimeseriesPoint(
+      date: DateTime.parse(json['date'] as String),
+      masteryScore: (json['masteryScore'] as num).toDouble(),
+      minutesPracticed: json['minutesPracticed'] as int,
+      difficultyLevel: (json['difficultyLevel'] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date.toIso8601String(),
+      'masteryScore': masteryScore,
+      'minutesPracticed': minutesPracticed,
+      'difficultyLevel': difficultyLevel,
+    };
+  }
+}
+
+/// Progress overview for a single subject
+class LearnerSubjectProgressOverview {
+  final String subject;
+  final int enrolledGrade;
+  final double currentAssessedGradeLevel;
+  final List<LearnerProgressTimeseriesPoint> timeseries;
+
+  LearnerSubjectProgressOverview({
+    required this.subject,
+    required this.enrolledGrade,
+    required this.currentAssessedGradeLevel,
+    required this.timeseries,
+  });
+
+  factory LearnerSubjectProgressOverview.fromJson(Map<String, dynamic> json) {
+    return LearnerSubjectProgressOverview(
+      subject: json['subject'] as String,
+      enrolledGrade: json['enrolledGrade'] as int,
+      currentAssessedGradeLevel: (json['currentAssessedGradeLevel'] as num).toDouble(),
+      timeseries: (json['timeseries'] as List<dynamic>)
+          .map((e) => LearnerProgressTimeseriesPoint.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'subject': subject,
+      'enrolledGrade': enrolledGrade,
+      'currentAssessedGradeLevel': currentAssessedGradeLevel,
+      'timeseries': timeseries.map((e) => e.toJson()).toList(),
+    };
+  }
+}
+
+/// A factor that influences difficulty recommendations
+class ExplainableRecommendationFactor {
+  final String label;
+  final String description;
+  final double weight;
+
+  ExplainableRecommendationFactor({
+    required this.label,
+    required this.description,
+    required this.weight,
+  });
+
+  factory ExplainableRecommendationFactor.fromJson(Map<String, dynamic> json) {
+    return ExplainableRecommendationFactor(
+      label: json['label'] as String,
+      description: json['description'] as String,
+      weight: (json['weight'] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'label': label,
+      'description': description,
+      'weight': weight,
+    };
+  }
+}
+
+/// Explainable difficulty summary for a subject
+class ExplainableDifficultySummary {
+  final String subject;
+  final double currentDifficultyLevel;
+  final double targetDifficultyLevel;
+  final String rationale;
+  final List<ExplainableRecommendationFactor> factors;
+
+  ExplainableDifficultySummary({
+    required this.subject,
+    required this.currentDifficultyLevel,
+    required this.targetDifficultyLevel,
+    required this.rationale,
+    required this.factors,
+  });
+
+  factory ExplainableDifficultySummary.fromJson(Map<String, dynamic> json) {
+    return ExplainableDifficultySummary(
+      subject: json['subject'] as String,
+      currentDifficultyLevel: (json['currentDifficultyLevel'] as num).toDouble(),
+      targetDifficultyLevel: (json['targetDifficultyLevel'] as num).toDouble(),
+      rationale: json['rationale'] as String,
+      factors: (json['factors'] as List<dynamic>)
+          .map((e) => ExplainableRecommendationFactor.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'subject': subject,
+      'currentDifficultyLevel': currentDifficultyLevel,
+      'targetDifficultyLevel': targetDifficultyLevel,
+      'rationale': rationale,
+      'factors': factors.map((e) => e.toJson()).toList(),
+    };
+  }
+}
+
+/// Complete analytics overview for a learner
+class LearnerAnalyticsOverview {
+  final String learnerId;
+  final List<LearnerSubjectProgressOverview> subjects;
+  final List<ExplainableDifficultySummary> difficultySummaries;
+
+  LearnerAnalyticsOverview({
+    required this.learnerId,
+    required this.subjects,
+    required this.difficultySummaries,
+  });
+
+  factory LearnerAnalyticsOverview.fromJson(Map<String, dynamic> json) {
+    return LearnerAnalyticsOverview(
+      learnerId: json['learnerId'] as String,
+      subjects: (json['subjects'] as List<dynamic>)
+          .map((e) => LearnerSubjectProgressOverview.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      difficultySummaries: (json['difficultySummaries'] as List<dynamic>?)
+          ?.map((e) => ExplainableDifficultySummary.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'learnerId': learnerId,
+      'subjects': subjects.map((e) => e.toJson()).toList(),
+      'difficultySummaries': difficultySummaries.map((e) => e.toJson()).toList(),
+    };
+  }
+}
