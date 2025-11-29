@@ -120,21 +120,29 @@ export function ErrorBoundary({
   onError,
   showDialog = false,
 }: ErrorBoundaryProps) {
-  const handleError = (error: Error, componentStack: string) => {
+  const handleError = (error: unknown, componentStack: string | undefined, eventId: string) => {
     // Log to console in development
     console.error('Error caught by boundary:', error);
     console.error('Component stack:', componentStack);
+    console.error('Sentry event ID:', eventId);
     
     // Call custom error handler if provided
-    onError?.(error, componentStack);
+    if (error instanceof Error) {
+      onError?.(error, componentStack ?? '');
+    }
   };
 
   // Render fallback based on type
-  const renderFallback = typeof fallback === 'function' 
-    ? fallback 
-    : fallback 
-      ? () => fallback 
-      : (props: ErrorFallbackProps) => <DefaultErrorFallback {...props} />;
+  const renderFallback = ({ error, resetError }: { error: unknown; resetError: () => void }): React.ReactElement => {
+    const errorInstance = error instanceof Error ? error : new Error(String(error));
+    if (typeof fallback === 'function') {
+      return <>{fallback({ error: errorInstance, resetError })}</>;
+    }
+    if (fallback) {
+      return <>{fallback}</>;
+    }
+    return <DefaultErrorFallback error={errorInstance} resetError={resetError} />;
+  };
 
   return (
     <Sentry.ErrorBoundary
@@ -149,7 +157,7 @@ export function ErrorBoundary({
         labelClose: "Close",
       }}
     >
-      {children}
+      <>{children}</>
     </Sentry.ErrorBoundary>
   );
 }

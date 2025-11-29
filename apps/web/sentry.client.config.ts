@@ -37,7 +37,7 @@ Sentry.init({
   beforeSend(event, hint) {
     // Scrub sensitive data from requests
     if (event.request?.cookies) {
-      event.request.cookies = '[Filtered]';
+      event.request.cookies = { filtered: '[Filtered]' };
     }
     
     // Scrub sensitive headers

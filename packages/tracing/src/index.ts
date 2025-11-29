@@ -76,7 +76,7 @@ export function initTracing(config?: TracingConfig): void {
 
   sdk = new NodeSDK({
     resource,
-    spanProcessor: new BatchSpanProcessor(traceExporter),
+    spanProcessor: new BatchSpanProcessor(traceExporter) as any,
     instrumentations: [
       getNodeAutoInstrumentations({
         // Disable fs instrumentation to reduce noise

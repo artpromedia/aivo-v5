@@ -53,7 +53,7 @@ Sentry.init({
     if (event.request) {
       // Remove cookies
       if (event.request.cookies) {
-        event.request.cookies = '[Filtered]';
+        event.request.cookies = { filtered: '[Filtered]' };
       }
       
       // Scrub authorization headers
@@ -73,7 +73,7 @@ Sentry.init({
       }
       
       // Scrub sensitive query params
-      if (event.request.query_string) {
+      if (event.request.query_string && typeof event.request.query_string === 'string') {
         const sensitiveParams = ['token', 'key', 'secret', 'password', 'auth'];
         for (const param of sensitiveParams) {
           const regex = new RegExp(`(${param}=)[^&]+`, 'gi');

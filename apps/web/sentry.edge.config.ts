@@ -29,7 +29,7 @@ Sentry.init({
     
     // Scrub sensitive request data
     if (event.request?.cookies) {
-      event.request.cookies = '[Filtered]';
+      event.request.cookies = { filtered: '[Filtered]' };
     }
     
     // Scrub sensitive headers
