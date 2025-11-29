@@ -126,6 +126,7 @@ model Learner {
   regulationSessions    RegulationSession[]
   emotionHistory        EmotionHistory[]
   sensoryProfile        SensoryProfile?
+  aacSystem             AACSystem?
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
 }
@@ -2157,3 +2158,404 @@ enum AIExperimentStatus {
   COMPLETED
   CANCELLED
 }
+
+// ============================================================================
+// AAC (Augmentative & Alternative Communication) MODELS
+// Support for non-verbal learners with symbol-based communication
+// ============================================================================
+
+model AACSystem {
+  id               String            @id @default(cuid())
+  learnerId        String            @unique
+  learner          Learner           @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Device/App Configuration
+  type             AACSystemType     @default(HIGH_TECH_APP)
+  accessMethod     AACAccessMethod   @default(DIRECT_SELECT)
+  
+  // Grid Configuration
+  gridRows         Int               @default(4)
+  gridCols         Int               @default(6)
+  vocabularySize   Int               @default(100)
+  
+  // Visual Settings
+  symbolSize       AACSymbolSize     @default(MEDIUM)
+  showLabels       Boolean           @default(true)
+  labelPosition    AACLabelPosition  @default(BELOW)
+  highContrastMode Boolean           @default(false)
+  colorScheme      String?           @default("default")
+  
+  // Switch Scanning Settings
+  scanningSpeed    Int?              @default(1500) // milliseconds per item
+  scanningPattern  AACScanningPattern? @default(ROW_COLUMN)
+  autoScan         Boolean           @default(false)
+  
+  // Voice Settings
+  voiceId          String?           // Web Speech API voice identifier
+  speechRate       Float             @default(1.0)
+  speechPitch      Float             @default(1.0)
+  
+  // Active board
+  activeBoardId    String?
+  
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  
+  boards           AACBoard[]
+  usageLogs        AACUsageLog[]
+  vocabularyGoals  AACVocabularyGoal[]
+  progressReports  AACProgressReport[]
+  
+  @@index([learnerId])
+}
+
+model AACSymbol {
+  id              String            @id @default(cuid())
+  
+  // Symbol Information
+  label           String
+  alternateLabels String[]          @default([])
+  category        AACSymbolCategory
+  
+  // Visual Asset
+  imageUrl        String
+  imageAlt        String?
+  
+  // Symbol Set (PCS, ARASAAC, SymbolStix, etc.)
+  symbolSet       AACSymbolSet      @default(ARASAAC)
+  externalId      String?           // ID from external symbol library
+  
+  // Vocabulary Classification
+  isCore          Boolean           @default(false) // Core vocabulary (high-frequency words)
+  isFringe        Boolean           @default(false) // Topic-specific vocabulary
+  
+  // Metadata
+  grammarType     AACGrammarType?   // noun, verb, adjective, etc.
+  complexity      Int               @default(1) // 1-5 complexity level
+  ageAppropriate  Int[]             @default([]) // Age ranges in years
+  
+  // Usage tracking
+  globalUsageCount Int              @default(0)
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  boardSymbols    AACBoardSymbol[]
+  
+  @@unique([symbolSet, label])
+  @@index([category])
+  @@index([isCore])
+  @@index([isFringe])
+  @@index([symbolSet])
+}
+
+model AACBoard {
+  id              String            @id @default(cuid())
+  systemId        String
+  system          AACSystem         @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  
+  // Board Information
+  name            String
+  description     String?
+  type            AACBoardType      @default(CORE_VOCABULARY)
+  
+  // Grid Configuration
+  gridRows        Int               @default(4)
+  gridCols        Int               @default(6)
+  
+  // Visual Settings
+  backgroundColor String            @default("#FFFFFF")
+  borderColor     String            @default("#E5E7EB")
+  showLabels      Boolean           @default(true)
+  
+  // Hierarchy (for nested boards)
+  parentBoardId   String?
+  parentBoard     AACBoard?         @relation("BoardHierarchy", fields: [parentBoardId], references: [id])
+  childBoards     AACBoard[]        @relation("BoardHierarchy")
+  
+  // Ordering
+  sortOrder       Int               @default(0)
+  isDefault       Boolean           @default(false)
+  
+  // Activity/Context
+  activityContext String?           // e.g., "math_class", "lunch", "recess"
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  symbols         AACBoardSymbol[]
+  
+  @@index([systemId])
+  @@index([type])
+  @@index([parentBoardId])
+}
+
+model AACBoardSymbol {
+  id              String            @id @default(cuid())
+  boardId         String
+  board           AACBoard          @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  symbolId        String
+  symbol          AACSymbol         @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+  
+  // Position on Grid
+  row             Int
+  col             Int
+  rowSpan         Int               @default(1)
+  colSpan         Int               @default(1)
+  
+  // Action Configuration
+  action          AACSymbolAction   @default(SPEAK)
+  navigateToBoardId String?         // If action is NAVIGATE
+  
+  // Custom Visual Override
+  customLabel     String?
+  customImageUrl  String?
+  backgroundColor String?
+  borderColor     String?
+  
+  // Message Modification
+  messagePrefix   String?           // Text to add before symbol when spoken
+  messageSuffix   String?           // Text to add after symbol when spoken
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@unique([boardId, row, col])
+  @@index([boardId])
+  @@index([symbolId])
+}
+
+model AACUsageLog {
+  id                    String                @id @default(cuid())
+  systemId              String
+  system                AACSystem             @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  
+  // Symbol Usage
+  symbolId              String?
+  symbolLabel           String
+  boardId               String?
+  
+  // Action Details
+  action                AACSymbolAction
+  communicativeFunction AACCommunicativeFunction?
+  
+  // Context
+  activityContext       String?
+  sessionId             String?               // Link to learning session if applicable
+  
+  // Message Strip Context
+  messagePosition       Int?                  // Position in sentence strip
+  fullMessage           String?               // Complete message if part of multi-symbol utterance
+  
+  // Timing
+  dwellTimeMs           Int?                  // How long user focused on symbol (for eye gaze)
+  selectionTimeMs       Int?                  // Time to select after scan highlight
+  
+  timestamp             DateTime              @default(now())
+  
+  @@index([systemId])
+  @@index([symbolId])
+  @@index([timestamp])
+  @@index([communicativeFunction])
+}
+
+model AACVocabularyGoal {
+  id              String            @id @default(cuid())
+  systemId        String
+  system          AACSystem         @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  
+  // Goal Details
+  title           String
+  description     String?
+  targetSymbols   String[]          // Symbol IDs or labels
+  
+  // Mastery Tracking
+  currentLevel    AACMasteryLevel   @default(EMERGING)
+  targetLevel     AACMasteryLevel   @default(MASTERED)
+  
+  // Progress
+  targetDate      DateTime?
+  completedDate   DateTime?
+  progressNotes   String?
+  
+  // IEP Link
+  iepGoalId       String?
+  
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([systemId])
+  @@index([isActive])
+}
+
+model AACProgressReport {
+  id                    String            @id @default(cuid())
+  systemId              String
+  system                AACSystem         @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  
+  // Report Period
+  periodStart           DateTime
+  periodEnd             DateTime
+  
+  // Usage Statistics
+  totalSymbolsUsed      Int               @default(0)
+  uniqueSymbolsUsed     Int               @default(0)
+  totalUtterances       Int               @default(0)
+  
+  // Message Complexity
+  averageMessageLength  Float             @default(0)
+  maxMessageLength      Int               @default(0)
+  
+  // Vocabulary Analysis
+  coreVocabularyUsed    Int               @default(0)
+  fringeVocabularyUsed  Int               @default(0)
+  newSymbolsIntroduced  Int               @default(0)
+  
+  // Growth Metrics
+  vocabularyGrowthRate  Float             @default(0) // Percentage growth from previous period
+  communicativeGrowth   Float             @default(0)
+  
+  // Communicative Functions Breakdown
+  requestCount          Int               @default(0)
+  commentCount          Int               @default(0)
+  questionCount         Int               @default(0)
+  socialCount           Int               @default(0)
+  
+  // Top Symbols (stored as JSON array of {symbolId, label, count})
+  topSymbols            Json?
+  
+  // AI Insights
+  aiSummary             String?
+  aiRecommendations     Json?
+  
+  generatedAt           DateTime          @default(now())
+  
+  @@unique([systemId, periodStart, periodEnd])
+  @@index([systemId])
+  @@index([periodStart])
+}
+
+// AAC Enums
+enum AACSystemType {
+  HIGH_TECH_APP       // Tablet/computer-based AAC app
+  HIGH_TECH_DEDICATED // Dedicated AAC device
+  LOW_TECH_BOARD      // Paper-based communication board
+  LOW_TECH_BOOK       // Communication book
+  HYBRID              // Combination of methods
+}
+
+enum AACAccessMethod {
+  DIRECT_SELECT       // Touch, mouse click
+  SWITCH_SCANNING     // One or two switch scanning
+  EYE_GAZE           // Eye tracking
+  HEAD_TRACKING      // Head pointer
+  PARTNER_ASSISTED   // Communication partner points
+}
+
+enum AACSymbolSize {
+  SMALL   // 40x40px
+  MEDIUM  // 60x60px
+  LARGE   // 80x80px
+  XLARGE  // 100x100px
+}
+
+enum AACLabelPosition {
+  ABOVE
+  BELOW
+  LEFT
+  RIGHT
+  NONE
+}
+
+enum AACScanningPattern {
+  ROW_COLUMN          // Highlight rows, then columns
+  LINEAR              // Item by item
+  QUADRANT            // Quadrant selection
+  COLUMN_ROW          // Highlight columns, then rows
+}
+
+enum AACSymbolCategory {
+  PEOPLE              // I, you, he, she, they, mom, dad, teacher
+  ACTIONS             // go, want, like, eat, drink, play, help
+  DESCRIPTORS         // big, small, happy, sad, hot, cold
+  THINGS              // ball, book, water, food, toy
+  PLACES              // home, school, bathroom, outside
+  TIME                // now, later, yesterday, tomorrow
+  SOCIAL              // hello, goodbye, please, thank you, sorry
+  QUESTIONS           // what, where, when, why, who, how
+  FEELINGS            // happy, sad, angry, scared, tired
+  CORE_WORDS          // more, stop, go, help, want, like, not
+  FOOD_DRINK          // apple, cookie, milk, juice, lunch
+  ACTIVITIES          // read, write, play, work, rest
+  BODY                // head, hands, feet, tummy
+  CLOTHING            // shirt, pants, shoes, coat
+  NATURE              // sun, rain, tree, flower, animal
+  NUMBERS             // one, two, three, many, few
+  COLORS              // red, blue, green, yellow
+  ACADEMICS           // math, reading, writing, science
+  OTHER
+}
+
+enum AACSymbolSet {
+  PCS                 // Picture Communication Symbols
+  ARASAAC            // ARASAAC open symbol library
+  SYMBOLSTIX         // SymbolStix
+  WIDGIT             // Widgit symbols
+  MULBERRY           // Mulberry Symbols
+  CUSTOM             // Custom/uploaded symbols
+}
+
+enum AACGrammarType {
+  NOUN
+  VERB
+  ADJECTIVE
+  ADVERB
+  PRONOUN
+  PREPOSITION
+  CONJUNCTION
+  INTERJECTION
+  DETERMINER
+  QUESTION_WORD
+  NEGATION
+}
+
+enum AACBoardType {
+  CORE_VOCABULARY     // Frequently used words
+  TOPIC_BASED         // Specific topic (e.g., animals, food)
+  ACTIVITY_BASED      // Specific activity (e.g., math class, lunch)
+  QUICK_PHRASES       // Pre-made phrases
+  KEYBOARD            // Letter/word spelling
+  NAVIGATION          // Home/navigation board
+}
+
+enum AACSymbolAction {
+  SPEAK               // Add to message strip and/or speak
+  NAVIGATE            // Go to another board
+  ADD_TO_STRIP        // Add to message strip without speaking
+  SPEAK_IMMEDIATELY   // Speak immediately without adding to strip
+  CLEAR_STRIP         // Clear the message strip
+  BACKSPACE           // Remove last symbol from strip
+}
+
+enum AACCommunicativeFunction {
+  REQUEST             // Asking for something
+  COMMENT             // Making an observation
+  QUESTION            // Asking a question
+  SOCIAL              // Greetings, social niceties
+  PROTEST             // Refusing, rejecting
+  LABEL               // Naming/identifying
+  ANSWER              // Responding to a question
+  SHARE_INFO          // Sharing information
+  EXPRESS_FEELING     // Expressing emotions
+}
+
+enum AACMasteryLevel {
+  NOT_INTRODUCED      // Symbol not yet introduced
+  EMERGING            // Beginning to recognize/use
+  DEVELOPING          // Using with support
+  INDEPENDENT         // Using independently but inconsistently  
+  MASTERED            // Consistent independent use
+  GENERALIZED         // Using across contexts
+}
+
