@@ -4,6 +4,9 @@ export * from "./ai-providers";
 export * from "./roles";
 export * from "./onboarding";
 
+// Import Role type for use in this file
+import type { Role } from "./roles";
+
 export type Region =
   | "north_america"
   | "africa"
