@@ -7,6 +7,7 @@ from api.routes.focus_analytics import router as focus_analytics_router
 from api.routes.iep_goals import router as iep_goals_router
 from api.routes.aac import router as aac_router
 from api.routes.iep_upload import router as iep_upload_router
+from api.routes.adhd import router as adhd_router
 
 # SLP Routes
 from api.routes.slp import (
@@ -27,6 +28,7 @@ __all__ = [
     "iep_goals_router",
     "iep_upload_router",
     "aac_router",
+    "adhd_router",
     # SLP
     "slp_profiles_router",
     "slp_articulation_router",

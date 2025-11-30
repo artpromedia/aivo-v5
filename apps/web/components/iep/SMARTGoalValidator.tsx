@@ -9,10 +9,10 @@ import {
   RefreshCw,
   Info,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
 import { cn } from "@/lib/utils";
 
 interface SMARTAnalysis {

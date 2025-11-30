@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { FileText, CheckCircle2, AlertTriangle, Clock, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 

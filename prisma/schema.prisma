@@ -158,6 +158,16 @@ model Learner {
   iepExtractedServices       IEPExtractedService[]
   iepExtractedAccommodations IEPExtractedAccommodation[]
   iepExtractedPresentLevels  IEPExtractedPresentLevel[]
+  // ADHD/Executive Function Support
+  efProfile                  ExecutiveFunctionProfile?
+  adhdAssignments            ADHDAssignment[]
+  projectBreakdowns          ProjectBreakdown[]
+  dailyPlans                 DailyPlan[]
+  binderOrganization         BinderOrganization?
+  studySessions              StudySession[]
+  adhdReminders              ADHDReminder[]
+  efInterventions            EFIntervention[]
+  selfMonitoringLogs         SelfMonitoringLog[]
   createdAt                  DateTime                       @default(now())
   updatedAt                  DateTime                       @updatedAt
 }
@@ -404,19 +414,20 @@ model ApprovalRequest {
 }
 
 model Class {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  gradeLevel  Int
-  teacherId   String
-  teacher     User         @relation("TeacherClasses", fields: [teacherId], references: [id])
-  enrollments Enrollment[]
-  assignments Assignment[]
-  startDate   DateTime
-  endDate     DateTime?
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  gradeLevel      Int
+  teacherId       String
+  teacher         User             @relation("TeacherClasses", fields: [teacherId], references: [id])
+  enrollments     Enrollment[]
+  assignments     Assignment[]
+  adhdAssignments ADHDAssignment[]
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model Enrollment {
@@ -4850,4 +4861,543 @@ model IEPGoalTemplate {
   @@index([category])
   @@index([isActive])
   @@index([usageCount])
+}
+
+// ==========================================
+// ADHD / EXECUTIVE FUNCTION SUPPORT MODELS
+// ==========================================
+
+// Executive Function Domains
+enum EFDomain {
+  ORGANIZATION
+  TIME_MANAGEMENT
+  PLANNING
+  TASK_INITIATION
+  WORKING_MEMORY
+  METACOGNITION
+  EMOTIONAL_CONTROL
+  FLEXIBILITY
+}
+
+// Assignment Urgency Level (auto-calculated from due date)
+enum UrgencyLevel {
+  CRITICAL // Due within 24 hours
+  HIGH // Due within 3 days
+  MEDIUM // Due within 7 days
+  LOW // Due beyond 7 days
+}
+
+// Assignment Status
+enum AssignmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  LATE
+  EXCUSED
+}
+
+// Time Block Category
+enum TimeBlockCategory {
+  CLASS
+  HOMEWORK
+  BREAK
+  MEAL
+  ACTIVITY
+  FREE_TIME
+  ROUTINE
+  THERAPY
+  STUDY
+}
+
+// Binder Check-in Schedule
+enum CheckInSchedule {
+  DAILY
+  TWICE_WEEKLY
+  WEEKLY
+}
+
+// Study Session Technique
+enum StudyTechnique {
+  POMODORO
+  BLOCKED
+  FREE_FORM
+  TIME_BOXING
+  SPACED_PRACTICE
+}
+
+// Pomodoro Interval Type
+enum IntervalType {
+  WORK
+  SHORT_BREAK
+  LONG_BREAK
+}
+
+// Reminder Type
+enum ReminderType {
+  THREE_DAY
+  ONE_DAY
+  MORNING_OF
+  CUSTOM
+  RECURRING
+}
+
+// Reminder Channel
+enum ReminderChannel {
+  EMAIL
+  PUSH
+  SMS
+  PARENT_EMAIL
+  IN_APP
+}
+
+// Self-Monitoring Check Type
+enum SelfCheckType {
+  ATTENTION
+  MATERIALS
+  PROGRESS
+  UNDERSTANDING
+  ON_TASK
+  EMOTIONS
+}
+
+// Prompt Type for Self-Monitoring
+enum PromptType {
+  SELF_INITIATED
+  TIMER
+  TEACHER
+  PARENT
+  SYSTEM
+}
+
+// Who implements the intervention
+enum ImplementedBy {
+  SELF
+  TEACHER
+  PARENT
+  THERAPIST
+  AIDE
+}
+
+// Check-in Status
+enum CheckInStatus {
+  COMPLETED
+  PARTIAL
+  SKIPPED
+  NEEDS_HELP
+}
+
+// Executive Function Profile - Assessment of 8 EF domains
+model ExecutiveFunctionProfile {
+  id        String  @id @default(cuid())
+  learnerId String  @unique
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Assessment metadata
+  assessmentDate DateTime @default(now())
+  assessedBy     String? // Teacher/clinician who administered
+  assessmentTool String? // e.g., "BRIEF-2", "Informal", "CEFI"
+
+  // 8 EF Domain Ratings (1-5 scale, 1=significant challenge, 5=strength)
+  organizationRating     Int // Physical and mental organization
+  timeManagementRating   Int // Time awareness and estimation
+  planningRating         Int // Breaking down tasks, sequencing
+  taskInitiationRating   Int // Getting started on tasks
+  workingMemoryRating    Int // Holding info in mind
+  metacognitionRating    Int // Self-awareness, self-monitoring
+  emotionalControlRating Int // Emotional regulation
+  flexibilityRating      Int // Adapting to changes
+
+  // Detailed notes for each domain
+  domainNotes Json? // { domain: notes }
+
+  // Summary arrays
+  strengths             String[] // EF strengths identified
+  challenges            String[] // EF challenges identified
+  recommendedStrategies String[] // Suggested interventions
+  accommodations        String[] // Recommended accommodations
+  parentObservations    String? // Parent input
+  teacherObservations   String? // Teacher observations
+  learnerSelfAssessment Json? // If age-appropriate
+
+  // History tracking
+  previousAssessments Json? // Array of past assessments for comparison
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([assessmentDate])
+}
+
+// Assignments with urgency tracking
+model ADHDAssignment {
+  id        String  @id @default(cuid())
+  learnerId String
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  classId   String? // Optional link to class
+  class     Class?  @relation(fields: [classId], references: [id])
+
+  // Assignment details
+  title          String
+  description    String?
+  subject        String?
+  instructions   String?
+  attachmentUrls String[]
+  externalUrl    String? // Link to assignment in LMS
+
+  // Timing
+  dueDate          DateTime
+  assignedDate     DateTime @default(now())
+  estimatedMinutes Int? // Estimated time to complete
+  actualMinutes    Int? // Actual time spent
+
+  // Urgency (auto-calculated but stored for querying)
+  urgencyLevel UrgencyLevel @default(MEDIUM)
+
+  // Status tracking
+  status          AssignmentStatus @default(NOT_STARTED)
+  completedAt     DateTime?
+  submittedAt     DateTime?
+  percentComplete Int              @default(0) // For partial completion tracking
+
+  // Visibility and sharing
+  parentVisible Boolean @default(true)
+  teacherNotes  String?
+  learnerNotes  String?
+
+  // Reminder tracking
+  remindersSent DateTime[] // Timestamps of sent reminders
+
+  // Recurrence
+  isRecurring       Boolean @default(false)
+  recurrencePattern Json? // { frequency: 'weekly', days: [1,3,5], until: date }
+
+  // Grading (optional)
+  pointsPossible Float?
+  pointsEarned   Float?
+  grade          String?
+  feedback       String?
+
+  // Relations
+  projectBreakdown ProjectBreakdown?
+  reminders        ADHDReminder[]
+  studySessions    StudySession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([classId])
+  @@index([dueDate])
+  @@index([status])
+  @@index([urgencyLevel])
+}
+
+// Project Breakdown - AI-generated or manual step breakdown
+model ProjectBreakdown {
+  id           String         @id @default(cuid())
+  assignmentId String         @unique
+  assignment   ADHDAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  learnerId    String
+  learner      Learner        @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Project metadata
+  projectTitle String
+  finalDueDate DateTime
+  projectNotes String?
+
+  // Steps (stored as JSON for flexibility)
+  // Each step: { stepNumber, title, description, estimatedMinutes, dueDate, status, completedAt, notes }
+  steps Json // Array of step objects
+
+  // Generation metadata
+  generatedByAI Boolean @default(false)
+  aiPrompt      String? // Prompt used for generation
+  wasModified   Boolean @default(false) // User edited after AI generation
+
+  // Time tracking
+  totalEstimatedMinutes Int?
+  actualTimeSpent       Int? // Total minutes across all steps
+
+  // Progress
+  completedSteps Int @default(0)
+  totalSteps     Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([finalDueDate])
+}
+
+// Daily Plan with time blocks
+model DailyPlan {
+  id        String   @id @default(cuid())
+  learnerId String
+  learner   Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+
+  // Schedule boundaries
+  wakeTime        String? // "07:00"
+  schoolStartTime String? // "08:00"
+  schoolEndTime   String? // "15:00"
+  bedTime         String? // "21:00"
+
+  // Time blocks (stored as JSON for flexibility)
+  // Each block: { id, startTime, endTime, duration, activity, category, linkedAssignmentId, isFlexible, isCompleted, notes }
+  timeBlocks Json // Array of time block objects
+
+  // Generation metadata
+  generatedByAI Boolean @default(false)
+  aiPrompt      String?
+  wasModified   Boolean @default(false)
+
+  // Completion tracking
+  completionRate  Float @default(0) // Percentage of blocks completed
+  totalBlocks     Int   @default(0)
+  completedBlocks Int   @default(0)
+
+  // Notes
+  morningRoutineNotes String?
+  eveningRoutineNotes String?
+  parentNotes         String?
+  learnerReflection   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([learnerId, date])
+  @@index([learnerId])
+  @@index([date])
+}
+
+// Binder/Material Organization
+model BinderOrganization {
+  id        String  @id @default(cuid())
+  learnerId String  @unique
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Binder sections
+  // Each section: { id, name, color, subjects, order, description }
+  sections Json // Array of section objects
+
+  // Check-in schedule
+  checkInSchedule CheckInSchedule @default(WEEKLY)
+  checkInDay      Int? // Day of week (0-6, Sunday=0)
+  checkInTime     String? // "14:30"
+
+  // Check-in tracking
+  lastCheckIn DateTime?
+  nextCheckIn DateTime?
+  streakCount Int       @default(0) // Consecutive successful check-ins
+
+  // Check-in history
+  // Each entry: { date, status, duration, sectionsChecked, issuesFound, notes, completedBy }
+  checkInHistory Json? // Array of check-in records
+
+  // Organization tips
+  customTips     String[]
+  reminderPhrase String? // Personalized reminder ("Did you check your binder?")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([nextCheckIn])
+}
+
+// Study Session with timer support
+model StudySession {
+  id           String          @id @default(cuid())
+  learnerId    String
+  learner      Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  assignmentId String?
+  assignment   ADHDAssignment? @relation(fields: [assignmentId], references: [id])
+
+  // Session timing
+  startTime       DateTime
+  endTime         DateTime?
+  plannedDuration Int // Minutes planned
+  actualDuration  Int? // Actual minutes
+
+  // Technique
+  technique StudyTechnique @default(POMODORO)
+
+  // Pomodoro settings (if applicable)
+  // { workMinutes, shortBreakMinutes, longBreakMinutes, longBreakAfter, totalCycles }
+  pomodoroSettings Json?
+
+  // Intervals (for Pomodoro or blocked sessions)
+  // Each: { id, startTime, endTime, type: WORK/SHORT_BREAK/LONG_BREAK, completed, duration }
+  intervals Json? // Array of interval objects
+
+  // Focus tracking
+  distractionCount Int? // Number of self-reported distractions
+  focusRating      Int? // 1-5 self-rating after session
+  energyBefore     Int? // 1-5 energy level before
+  energyAfter      Int? // 1-5 energy level after
+
+  // Environment
+  location     String? // "desk", "library", "kitchen"
+  musicPlaying Boolean?
+  noiseLevel   String? // "quiet", "moderate", "noisy"
+  peopleNearby Boolean?
+
+  // Outcomes
+  notes           String?
+  accomplishments String[]
+  blockers        String[]
+  nextSteps       String?
+
+  // Completion
+  wasCompleted   Boolean @default(false)
+  endedEarly     Boolean @default(false)
+  earlyEndReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([assignmentId])
+  @@index([startTime])
+}
+
+// Assignment Reminders
+model ADHDReminder {
+  id           String          @id @default(cuid())
+  learnerId    String
+  learner      Learner         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  assignmentId String?
+  assignment   ADHDAssignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  // Reminder type and timing
+  reminderType ReminderType
+  scheduledFor DateTime
+  sentAt       DateTime?
+
+  // Delivery
+  channel        ReminderChannel
+  recipientEmail String? // For email reminders
+  recipientPhone String? // For SMS
+  pushToken      String? // For push notifications
+
+  // Content
+  title     String
+  message   String
+  actionUrl String? // Deep link to assignment
+
+  // Status
+  wasSent         Boolean   @default(false)
+  wasAcknowledged Boolean   @default(false)
+  acknowledgedAt  DateTime?
+  wasDelivered    Boolean?
+  deliveryError   String?
+
+  // For recurring reminders
+  isRecurring    Boolean   @default(false)
+  nextOccurrence DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([assignmentId])
+  @@index([scheduledFor])
+  @@index([wasSent])
+}
+
+// Executive Function Interventions/Strategies
+model EFIntervention {
+  id        String  @id @default(cuid())
+  learnerId String
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Target domain
+  domain EFDomain
+
+  // Strategy details
+  strategyName   String
+  description    String
+  howToImplement String?
+  materials      String[]
+  frequency      String? // "daily", "as needed", "every class"
+
+  // Implementation
+  startDate     DateTime      @default(now())
+  endDate       DateTime?
+  isActive      Boolean       @default(true)
+  implementedBy ImplementedBy @default(TEACHER)
+
+  // Effectiveness tracking
+  // Each: { date, rating (1-5), notes, ratedBy }
+  effectivenessRatings Json? // Array of rating objects
+  averageEffectiveness Float?
+  totalRatings         Int    @default(0)
+
+  // Goals
+  targetBehavior   String?
+  successCriteria  String?
+  baselineBehavior String?
+
+  // Notes
+  teacherNotes String?
+  parentNotes  String?
+  learnerNotes String?
+
+  // Evidence/research basis
+  evidenceBasis String?
+  sourceUrl     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([domain])
+  @@index([isActive])
+}
+
+// Self-Monitoring Logs
+model SelfMonitoringLog {
+  id        String  @id @default(cuid())
+  learnerId String
+  learner   Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Timing
+  date      DateTime @db.Date
+  time      DateTime @db.Time
+  timestamp DateTime @default(now())
+
+  // Check details
+  checkType  SelfCheckType
+  promptType PromptType    @default(TIMER)
+
+  // Response
+  wasOnTask     Boolean?
+  onTaskPercent Int? // For partial on-task (0-100)
+
+  // Context
+  activity       String? // What they were supposed to be doing
+  actualActivity String? // What they were actually doing
+  location       String?
+  subject        String?
+
+  // Additional checks
+  hadMaterials   Boolean?
+  understoodTask Boolean?
+  needsHelp      Boolean?
+  emotionRating  Int? // 1-5
+
+  // Notes
+  notes       String?
+  teacherNote String?
+
+  // Follow-up
+  actionTaken String?
+  wasReviewed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([learnerId])
+  @@index([date])
+  @@index([checkType])
 }

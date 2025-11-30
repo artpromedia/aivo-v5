@@ -11,9 +11,9 @@ import {
   ChevronUp,
   Sparkles,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/utils";
 
 interface SMARTCriteria {
