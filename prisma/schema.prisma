@@ -134,6 +134,17 @@ model Learner {
   ilsGeneralizations    GeneralizationRecord[]
   ilsCBISessions        CommunityBasedInstruction[]
   ilsGoals              ILSGoal[]
+  // Speech-Language Pathology
+  slpProfile            SLPProfile?
+  articulationTargets   ArticulationTarget[]
+  fluencyProfile        FluencyProfile?
+  receptiveAssessments  ReceptiveLanguageAssessment[]
+  expressiveAssessments ExpressiveLanguageAssessment[]
+  pragmaticSkills       PragmaticLanguageSkill[]
+  voiceAssessments      VoiceAssessment[]
+  slpSessions           SLPSession[]
+  slpGoals              SLPGoal[]
+  speechHomework        ParentSpeechHomework[]
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
 }
@@ -3568,6 +3579,164 @@ enum ILSGoalStatus {
 }
 
 // ==========================================
+// SPEECH-LANGUAGE PATHOLOGY (SLP) ENUMS
+// ==========================================
+
+enum SLPDiagnosis {
+  ARTICULATION
+  FLUENCY
+  RECEPTIVE_LANGUAGE
+  EXPRESSIVE_LANGUAGE
+  PRAGMATIC_LANGUAGE
+  VOICE
+  APRAXIA
+  DYSARTHRIA
+}
+
+enum SLPSeverity {
+  MILD
+  MODERATE
+  SEVERE
+  PROFOUND
+}
+
+enum PhonemePosition {
+  INITIAL
+  MEDIAL
+  FINAL
+  BLENDS
+  ALL_POSITIONS
+}
+
+enum ArticulationLevel {
+  ISOLATION
+  SYLLABLE
+  WORD
+  PHRASE
+  SENTENCE
+  CONVERSATION
+  GENERALIZATION
+}
+
+enum ArticulationErrorType {
+  SUBSTITUTION
+  OMISSION
+  DISTORTION
+  ADDITION
+}
+
+enum PromptLevelSLP {
+  NONE
+  VISUAL
+  VERBAL
+  MODEL
+  TACTILE
+}
+
+enum StutteringType {
+  REPETITION
+  PROLONGATION
+  BLOCK
+  INTERJECTION
+}
+
+enum SecondaryBehavior {
+  EYE_BLINK
+  HEAD_NOD
+  FILLER_WORDS
+  JAW_TENSION
+  FACIAL_GRIMACE
+  BODY_MOVEMENT
+}
+
+enum FluencyTaskType {
+  READING
+  MONOLOGUE
+  CONVERSATION
+  STRUCTURED
+  SPONTANEOUS
+}
+
+enum PragmaticSkillType {
+  TURN_TAKING
+  TOPIC_MAINTENANCE
+  INITIATING
+  RESPONDING
+  CLARIFYING
+  NONVERBAL
+  PERSPECTIVE_TAKING
+  HUMOR
+  SARCASM
+  PERSONAL_SPACE
+  EYE_CONTACT
+}
+
+enum PragmaticSettingType {
+  STRUCTURED
+  UNSTRUCTURED
+  PEER
+  ADULT
+  GROUP
+  ONE_ON_ONE
+}
+
+enum SkillRating {
+  NOT_OBSERVED
+  EMERGING
+  DEVELOPING
+  PROFICIENT
+  MASTERED
+}
+
+enum VoicePitch {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum VoiceLoudness {
+  SOFT
+  NORMAL
+  LOUD
+}
+
+enum VoiceQuality {
+  CLEAR
+  HOARSE
+  BREATHY
+  STRAINED
+  NASAL
+  HARSH
+}
+
+enum VoiceResonance {
+  NORMAL
+  HYPONASAL
+  HYPERNASAL
+  MIXED
+}
+
+enum SLPSessionType {
+  ARTICULATION
+  FLUENCY
+  LANGUAGE
+  PRAGMATIC
+  VOICE
+  MIXED
+  EVALUATION
+}
+
+enum SLPGoalDomain {
+  ARTICULATION
+  FLUENCY
+  RECEPTIVE_LANGUAGE
+  EXPRESSIVE_LANGUAGE
+  PRAGMATICS
+  VOICE
+  ORAL_MOTOR
+}
+
+// ==========================================
 // INDEPENDENT LIVING SKILLS MODELS
 // ==========================================
 
@@ -3935,11 +4104,424 @@ model ILSGoalObjective {
   
   notes                 String?
   
+  
   createdAt             DateTime                  @default(now())
   updatedAt             DateTime                  @updatedAt
   
   @@index([goalId])
   @@index([skillId])
 }
+
+// ==========================================
+// SPEECH-LANGUAGE PATHOLOGY (SLP) MODELS
+// ==========================================
+
+// Learner's speech-language profile
+model SLPProfile {
+  id                    String                    @id @default(cuid())
+  learnerId             String                    @unique
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Diagnosis
+  primaryDiagnosis      SLPDiagnosis
+  secondaryDiagnoses    SLPDiagnosis[]
+  severity              SLPSeverity
+  
+  // Service Details
+  therapyFrequency      String                    // e.g., "2x weekly"
+  sessionDuration       Int                       // minutes
+  serviceSetting        String                    // e.g., "Pull-out", "Push-in", "Consultation"
+  
+  // Additional Info
+  medicalHistory        String?
+  hearingStatus         String?
+  oralMotorNotes        String?
+  
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([primaryDiagnosis])
+}
+
+// Articulation sound targets
+model ArticulationTarget {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Target Sound
+  phoneme               String                    // e.g., "/r/", "/s/", "/th/"
+  position              PhonemePosition
+  targetLevel           ArticulationLevel         @default(ISOLATION)
+  
+  // Progress
+  currentAccuracy       Float                     @default(0)  // 0-100
+  targetAccuracy        Float                     @default(80) // 0-100
+  
+  // Practice Materials
+  practiceWords         String[]
+  
+  // Status
+  isActive              Boolean                   @default(true)
+  masteredAt            DateTime?
+  
+  // Trials
+  trials                ArticulationTrial[]
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([phoneme])
+  @@index([isActive])
+}
+
+// Individual articulation trial data
+model ArticulationTrial {
+  id                    String                    @id @default(cuid())
+  targetId              String
+  target                ArticulationTarget        @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  sessionId             String?
+  session               SLPSession?               @relation(fields: [sessionId], references: [id])
+  
+  // Trial Data
+  timestamp             DateTime                  @default(now())
+  word                  String
+  position              PhonemePosition
+  
+  // Result
+  wasCorrect            Boolean
+  errorType             ArticulationErrorType?
+  substitutedSound      String?                   // If substitution, what sound was produced
+  
+  // Support
+  promptLevel           PromptLevelSLP            @default(NONE)
+  
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  
+  @@index([targetId])
+  @@index([sessionId])
+  @@index([timestamp])
+}
+
+// Fluency (stuttering) profile
+model FluencyProfile {
+  id                    String                    @id @default(cuid())
+  learnerId             String                    @unique
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Stuttering Characteristics
+  stutteringTypes       StutteringType[]
+  secondaryBehaviors    SecondaryBehavior[]
+  
+  // Baseline Metrics
+  averageSyllablesPerMinute Float?
+  percentageDisfluency  Float?                    // 0-100
+  
+  // Context
+  situationalTriggers   String[]                  // e.g., ["Phone calls", "Authority figures"]
+  copingStrategies      String[]                  // Current strategies used
+  
+  // Sessions
+  fluencySessions       FluencySession[]
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+}
+
+// Fluency session data
+model FluencySession {
+  id                    String                    @id @default(cuid())
+  profileId             String
+  profile               FluencyProfile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  sessionId             String?
+  slpSession            SLPSession?               @relation(fields: [sessionId], references: [id])
+  
+  // Session Info
+  date                  DateTime                  @default(now())
+  taskType              FluencyTaskType
+  
+  // Counts
+  totalSyllables        Int
+  disfluencies          Int
+  percentDisfluent      Float                     // Calculated: (disfluencies/totalSyllables) * 100
+  
+  // Breakdown
+  stutteringCounts      Json                      // {REPETITION: 5, BLOCK: 2, ...}
+  secondaryBehaviors    SecondaryBehavior[]
+  
+  // Strategies
+  strategiesUsed        String[]
+  strategyEffectiveness Json?                     // {strategy: rating}
+  
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  
+  @@index([profileId])
+  @@index([sessionId])
+  @@index([date])
+}
+
+// Receptive language assessment
+model ReceptiveLanguageAssessment {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  assessmentDate        DateTime                  @default(now())
+  
+  // Following Directions (scores 0-100)
+  oneStepDirections     Float?
+  twoStepDirections     Float?
+  threeStepDirections   Float?
+  
+  // Comprehension
+  vocabularyComprehension Float?                  // Age equivalent or standard score
+  grammarComprehension  Float?
+  inferencing           Float?
+  listeningComprehension Float?
+  
+  // Summary
+  strengthAreas         String[]
+  targetAreas           String[]
+  recommendations       String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([assessmentDate])
+}
+
+// Expressive language assessment
+model ExpressiveLanguageAssessment {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  assessmentDate        DateTime                  @default(now())
+  
+  // Expressive Measures
+  meanLengthUtterance   Float?                    // MLU
+  vocabularyDiversity   Float?                    // Type-Token Ratio or similar
+  grammarAccuracy       Float?                    // 0-100
+  narrativeSkills       Float?                    // Rating scale
+  wordFinding           Float?                    // Rating or accuracy
+  
+  // Summary
+  strengthAreas         String[]
+  targetAreas           String[]
+  recommendations       String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([assessmentDate])
+}
+
+// Pragmatic (social communication) skills
+model PragmaticLanguageSkill {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Skill
+  skill                 PragmaticSkillType
+  setting               PragmaticSettingType
+  
+  // Rating
+  rating                SkillRating               @default(NOT_OBSERVED)
+  
+  // Documentation
+  observations          String[]
+  interventions         String[]
+  
+  lastAssessed          DateTime                  @default(now())
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@unique([learnerId, skill, setting])
+  @@index([learnerId])
+  @@index([skill])
+}
+
+// Voice assessment
+model VoiceAssessment {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  assessmentDate        DateTime                  @default(now())
+  
+  // Pitch
+  pitch                 VoicePitch                @default(NORMAL)
+  pitchVariability      String?                   // Description of pitch range
+  
+  // Loudness
+  loudness              VoiceLoudness             @default(NORMAL)
+  loudnessControl       String?                   // Ability to modulate
+  
+  // Quality
+  quality               VoiceQuality              @default(CLEAR)
+  qualityNotes          String?
+  
+  // Resonance
+  resonance             VoiceResonance            @default(NORMAL)
+  
+  // Vocal Behaviors
+  vocalAbuse            String[]                  // e.g., ["Yelling", "Throat clearing"]
+  
+  // Recommendations
+  recommendations       String[]
+  referrals             String?                   // ENT, etc.
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([assessmentDate])
+}
+
+// SLP therapy session record
+model SLPSession {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  therapistId           String
+  
+  // Session Info
+  date                  DateTime                  @default(now())
+  duration              Int                       // minutes
+  sessionType           SLPSessionType
+  
+  // Content
+  activities            String[]
+  materialsUsed         String[]
+  
+  // Progress Notes
+  progress              String?
+  challenges            String?
+  nextSteps             String?
+  
+  // Parent Communication
+  parentHomework        String[]
+  parentNotes           String?
+  
+  // Related Data
+  articulationTrials    ArticulationTrial[]
+  fluencySessions       FluencySession[]
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([therapistId])
+  @@index([date])
+}
+
+// SLP IEP Goals
+model SLPGoal {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Goal Definition
+  domain                SLPGoalDomain
+  goalText              String
+  
+  // Measurement
+  baseline              Float                     // Starting point (e.g., 20% accuracy)
+  target                Float                     // Target (e.g., 80% accuracy)
+  measurementMethod     String                    // How progress is measured
+  
+  // Progress
+  dataPoints            Json?                     // Array of {date, value, notes}
+  currentProgress       Float?                    // Most recent measurement
+  
+  // Short-term Objectives
+  shortTermObjectives   SLPObjective[]
+  
+  // Status
+  status                ILSGoalStatus             @default(ACTIVE)
+  startDate             DateTime                  @default(now())
+  targetDate            DateTime?
+  achievedDate          DateTime?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([domain])
+  @@index([status])
+}
+
+// Short-term objectives within SLP goals
+model SLPObjective {
+  id                    String                    @id @default(cuid())
+  goalId                String
+  goal                  SLPGoal                   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  
+  // Objective
+  objectiveNumber       Int
+  objectiveText         String
+  targetCriteria        String                    // e.g., "80% accuracy over 3 sessions"
+  
+  // Progress
+  currentProgress       Float?
+  isAchieved            Boolean                   @default(false)
+  achievedDate          DateTime?
+  
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([goalId])
+}
+
+// Parent speech homework assignments
+model ParentSpeechHomework {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Assignment
+  assignedDate          DateTime                  @default(now())
+  dueDate               DateTime?
+  
+  // Content
+  activity              String
+  targetSkill           String
+  instructions          String
+  practiceWords         String[]
+  practiceMinutes       Int                       @default(10)
+  
+  // Parent Response
+  parentCompleted       Boolean                   @default(false)
+  completedDate         DateTime?
+  parentNotes           String?
+  difficultyRating      Int?                      // 1-5
+  
+  // Therapist Follow-up
+  therapistReviewed     Boolean                   @default(false)
+  therapistFeedback     String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([assignedDate])
+  @@index([parentCompleted])
+}
+
 
 

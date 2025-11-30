@@ -39,3 +39,27 @@ export function CardHeader({ title, subtitle, action, children, className }: Car
 export function CardContent({ className, children }: CardContentProps) {
   return <div className={`px-5 py-4 ${className ?? ""}`.trim()}>{children}</div>;
 }
+
+type CardTitleProps = PropsWithChildren<{
+  className?: string;
+}>;
+
+export function CardTitle({ className, children }: CardTitleProps) {
+  return <h3 className={`text-lg font-semibold text-slate-900 ${className ?? ""}`.trim()}>{children}</h3>;
+}
+
+type CardDescriptionProps = PropsWithChildren<{
+  className?: string;
+}>;
+
+export function CardDescription({ className, children }: CardDescriptionProps) {
+  return <p className={`text-sm text-slate-500 ${className ?? ""}`.trim()}>{children}</p>;
+}
+
+type CardFooterProps = PropsWithChildren<{
+  className?: string;
+}>;
+
+export function CardFooter({ className, children }: CardFooterProps) {
+  return <div className={`flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4 ${className ?? ""}`.trim()}>{children}</div>;
+}
