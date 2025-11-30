@@ -128,6 +128,12 @@ model Learner {
   sensoryProfile        SensoryProfile?
   aacSystem             AACSystem?
   transitionPlan        TransitionPlan?
+  // Independent Living Skills
+  ilsSkillProgress      LearnerSkillProgress[]
+  ilsDataPoints         SkillDataPoint[]
+  ilsGeneralizations    GeneralizationRecord[]
+  ilsCBISessions        CommunityBasedInstruction[]
+  ilsGoals              ILSGoal[]
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
 }
@@ -3476,6 +3482,464 @@ model TransitionReadinessReport {
   updatedAt             DateTime           @updatedAt
   
   @@index([transitionPlanId])
+}
+
+// ==========================================
+// INDEPENDENT LIVING SKILLS ENUMS
+// ==========================================
+
+enum IndependentLivingDomain {
+  MONEY_MANAGEMENT      // Financial literacy & money skills
+  COOKING_NUTRITION     // Food preparation & meal planning
+  TRANSPORTATION        // Community navigation & travel
+  HOUSING_HOME_CARE     // Home maintenance & apartment living
+  HEALTH_SAFETY         // Personal health & safety awareness
+  COMMUNITY_RESOURCES   // Using community services & resources
+}
+
+enum SkillMasteryLevel {
+  NOT_INTRODUCED        // Skill not yet introduced
+  AWARENESS             // Recognizes the skill concept
+  EMERGING              // Beginning attempts with max support
+  DEVELOPING            // Performing with moderate support
+  PRACTICING            // Performing with minimal support
+  INDEPENDENT           // Performing independently (80%+)
+  MASTERED              // Consistent independent performance (90%+)
+  GENERALIZED           // Performing across multiple settings
+}
+
+enum PromptLevel {
+  FULL_PHYSICAL         // Hand-over-hand assistance
+  PARTIAL_PHYSICAL      // Light touch or guidance
+  MODELING              // Demonstrating the skill
+  GESTURAL              // Pointing or gesturing
+  VERBAL_DIRECT         // Direct verbal instruction
+  VERBAL_INDIRECT       // Hints or questions
+  VISUAL                // Picture or written cue
+  INDEPENDENT           // No prompt needed
+}
+
+enum DataCollectionMethod {
+  TASK_ANALYSIS         // Step-by-step data collection
+  FREQUENCY             // Count of occurrences
+  DURATION              // Time-based measurement
+  LATENCY               // Response time measurement
+  INTERVAL              // Time-sampling method
+  WHOLE_INTERVAL        // Behavior throughout interval
+  PARTIAL_INTERVAL      // Behavior at any point in interval
+  MOMENTARY_TIME        // Behavior at moment observed
+  PERMANENT_PRODUCT     // Outcome-based measurement
+}
+
+enum SettingType {
+  CLASSROOM             // School classroom setting
+  HOME                  // Student's home
+  SCHOOL_CAFETERIA      // School cafeteria/lunch
+  SCHOOL_COMMON         // School common areas
+  COMMUNITY_STORE       // Retail stores
+  COMMUNITY_RESTAURANT  // Restaurants/food service
+  COMMUNITY_TRANSPORT   // Public transportation
+  COMMUNITY_MEDICAL     // Medical facilities
+  COMMUNITY_RECREATION  // Parks, recreation centers
+  COMMUNITY_WORKPLACE   // Work settings
+  COMMUNITY_GOVERNMENT  // Government offices
+  COMMUNITY_LIBRARY     // Libraries
+  COMMUNITY_BANK        // Banks/financial institutions
+  COMMUNITY_OTHER       // Other community settings
+  SIMULATION            // Simulated/practice setting
+  VIRTUAL               // Virtual/online environment
+}
+
+enum CBIStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum ILSGoalStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  ACHIEVED
+  NOT_ACHIEVED
+  DISCONTINUED
+}
+
+// ==========================================
+// INDEPENDENT LIVING SKILLS MODELS
+// ==========================================
+
+// Master catalog of functional life skills
+model FunctionalSkill {
+  id                    String                    @id @default(cuid())
+  domain                IndependentLivingDomain
+  name                  String
+  description           String
+  
+  // Task Analysis
+  taskSteps             Json                      // Array of {stepNumber, description, promptHierarchy}
+  totalSteps            Int
+  
+  // Prerequisites & Scaffolding
+  prerequisiteSkillIds  String[]                  // Other FunctionalSkill IDs needed first
+  scaffoldingNotes      String?                   // Tips for teaching this skill
+  
+  // Age/Grade Appropriateness
+  minAge                Int?
+  maxAge                Int?
+  minGradeLevel         Int?
+  maxGradeLevel         Int?
+  
+  // Teaching Resources
+  materialsNeeded       String[]
+  visualSupports        Json?                     // Array of {name, url, type}
+  videoModelingUrls     String[]
+  socialStoryUrl        String?
+  
+  // Generalization Settings
+  targetSettings        SettingType[]             // Settings where skill should generalize
+  
+  // Assessment Criteria
+  masteryThreshold      Float                     @default(0.9) // 90% default
+  dataCollectionMethod  DataCollectionMethod      @default(TASK_ANALYSIS)
+  minTrialsForMastery   Int                       @default(3)   // Consecutive successful trials
+  
+  // Categorization
+  isCriticalSafety      Boolean                   @default(false) // Safety-critical skill
+  communityRelevance    Int                       @default(3)     // 1-5 scale
+  employmentRelevance   Int                       @default(3)     // 1-5 scale
+  
+  // Related records
+  learnerProgress       LearnerSkillProgress[]
+  dataPoints            SkillDataPoint[]
+  generalizationRecords GeneralizationRecord[]
+  cbiActivities         CBIActivity[]
+  goalObjectives        ILSGoalObjective[]
+  
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@unique([domain, name])
+  @@index([domain])
+  @@index([isCriticalSafety])
+}
+
+// Learner's progress on a specific skill
+model LearnerSkillProgress {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  skillId               String
+  skill                 FunctionalSkill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  // Current Status
+  masteryLevel          SkillMasteryLevel         @default(NOT_INTRODUCED)
+  percentMastered       Float                     @default(0)   // 0-100
+  
+  // Step-by-Step Progress
+  stepProgress          Json?                     // Array of {stepNumber, masteryLevel, lastPromptLevel}
+  
+  // Baseline & Goals
+  baselineDate          DateTime?
+  baselineScore         Float?
+  targetMasteryDate     DateTime?
+  currentStreak         Int                       @default(0)   // Consecutive successful sessions
+  
+  // Time Tracking
+  totalPracticeMinutes  Int                       @default(0)
+  lastPracticeDate      DateTime?
+  
+  // Prompt Fading Progress
+  currentPromptLevel    PromptLevel               @default(FULL_PHYSICAL)
+  promptFadingHistory   Json?                     // Array of {date, fromLevel, toLevel}
+  
+  // Generalization Tracking
+  settingsMastered      SettingType[]             // Settings where skill is generalized
+  generalizationScore   Float?                    // Overall generalization percentage
+  
+  // Notes
+  teacherNotes          String?
+  parentNotes           String?
+  
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@unique([learnerId, skillId])
+  @@index([learnerId])
+  @@index([skillId])
+  @@index([masteryLevel])
+}
+
+// Individual data collection points
+model SkillDataPoint {
+  id                    String                    @id @default(cuid())
+  skillId               String
+  skill                 FunctionalSkill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Session Info
+  sessionDate           DateTime                  @default(now())
+  setting               SettingType
+  duration              Int?                      // Duration in minutes
+  instructor            String?
+  
+  // Data Collection
+  collectionMethod      DataCollectionMethod
+  
+  // Task Analysis Data
+  stepsAttempted        Int?
+  stepsCompleted        Int?
+  stepByStepData        Json?                     // Array of {stepNumber, completed, promptLevel, notes}
+  
+  // Frequency/Duration Data
+  frequency             Int?                      // Number of occurrences
+  durationSeconds       Int?                      // Total duration in seconds
+  latencySeconds        Int?                      // Response latency
+  
+  // Prompt Levels Used
+  highestPromptUsed     PromptLevel?
+  lowestPromptUsed      PromptLevel?
+  promptsProvided       Json?                     // Array of {stepNumber, promptLevel}
+  
+  // Scores
+  accuracyPercent       Float?                    // Overall accuracy
+  independencePercent   Float?                    // Steps completed independently
+  
+  // Behavior Notes
+  behaviorNotes         String?
+  antecedents           String?
+  consequences          String?
+  
+  // Environmental Factors
+  environmentalFactors  Json?                     // {noise, distractions, support, etc.}
+  
+  // Verification
+  verifiedBy            String?
+  parentSignoff         Boolean                   @default(false)
+  
+  createdAt             DateTime                  @default(now())
+  
+  @@index([learnerId])
+  @@index([skillId])
+  @@index([sessionDate])
+  @@index([setting])
+}
+
+// Generalization tracking across settings
+model GeneralizationRecord {
+  id                    String                    @id @default(cuid())
+  skillId               String
+  skill                 FunctionalSkill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  setting               SettingType
+  locationName          String?                   // Specific location (e.g., "Target on Main St")
+  
+  // Generalization Status
+  isIntroduced          Boolean                   @default(false)
+  introducedDate        DateTime?
+  isMastered            Boolean                   @default(false)
+  masteredDate          DateTime?
+  
+  // Performance Tracking
+  trialsAttempted       Int                       @default(0)
+  trialsSuccessful      Int                       @default(0)
+  successRate           Float?
+  lastAttemptDate       DateTime?
+  
+  // Support Needed
+  currentPromptLevel    PromptLevel?
+  supportsNeeded        String[]                  // Additional supports in this setting
+  
+  // Barriers & Solutions
+  barriers              String[]                  // Challenges in this setting
+  accommodations        String[]                  // Accommodations that help
+  
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@unique([learnerId, skillId, setting])
+  @@index([learnerId])
+  @@index([skillId])
+  @@index([setting])
+}
+
+// Community-Based Instruction Planning
+model CommunityBasedInstruction {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Schedule
+  scheduledDate         DateTime
+  startTime             DateTime?
+  endTime               DateTime?
+  status                CBIStatus                 @default(PLANNED)
+  
+  // Location
+  locationName          String
+  locationAddress       String?
+  settingType           SettingType
+  
+  // Staffing
+  instructorName        String
+  staffRatio            String?                   // e.g., "1:2"
+  additionalStaff       String[]
+  
+  // Skills Being Practiced
+  activities            CBIActivity[]
+  
+  // Transportation
+  transportationType    String?                   // School bus, public transit, walking, etc.
+  transportationNotes   String?
+  
+  // Safety & Permissions
+  parentPermission      Boolean                   @default(false)
+  permissionFormDate    DateTime?
+  emergencyContact      String?
+  emergencyPhone        String?
+  medicalNotes          String?
+  
+  // Pre-Teaching
+  preTeachingCompleted  Boolean                   @default(false)
+  preTeachingNotes      String?
+  visualScheduleUrl     String?
+  socialStoryUrl        String?
+  
+  // Outcomes
+  actualStartTime       DateTime?
+  actualEndTime         DateTime?
+  overallSuccessRating  Int?                      // 1-5
+  behaviorNotes         String?
+  generalNotes          String?
+  
+  // Follow-Up
+  followUpNeeded        Boolean                   @default(false)
+  followUpNotes         String?
+  nextCBIDate           DateTime?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+// Activities within a CBI session
+model CBIActivity {
+  id                    String                    @id @default(cuid())
+  cbiId                 String
+  cbi                   CommunityBasedInstruction @relation(fields: [cbiId], references: [id], onDelete: Cascade)
+  skillId               String
+  skill                 FunctionalSkill           @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  // Activity Details
+  activityName          String
+  activityDescription   String?
+  orderInSession        Int                       @default(1)
+  
+  // Goals for This Activity
+  targetSteps           Int[]                     // Specific task analysis steps to practice
+  targetPromptLevel     PromptLevel
+  
+  // Outcomes
+  wasCompleted          Boolean                   @default(false)
+  stepsCompleted        Int?
+  actualPromptLevel     PromptLevel?
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  
+  @@index([cbiId])
+  @@index([skillId])
+}
+
+// ILS Goals (linked to IEP)
+model ILSGoal {
+  id                    String                    @id @default(cuid())
+  learnerId             String
+  learner               Learner                   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Goal Definition
+  domain                IndependentLivingDomain
+  goalStatement         String                    // Measurable goal statement
+  rationale             String?                   // Why this goal is important
+  
+  // Timeline
+  startDate             DateTime                  @default(now())
+  targetDate            DateTime
+  status                ILSGoalStatus             @default(DRAFT)
+  
+  // Baseline
+  baselineDescription   String?
+  baselineDate          DateTime?
+  baselinePerformance   Float?                    // 0-100
+  
+  // Progress
+  currentPerformance    Float?                    // 0-100
+  lastProgressDate      DateTime?
+  progressNotes         Json?                     // Array of {date, note, performance}
+  
+  // Objectives
+  objectives            ILSGoalObjective[]
+  
+  // IEP Integration
+  linkedIEPGoalId       String?                   // Link to IEPGoal if applicable
+  
+  // Review
+  reviewSchedule        String?                   // Weekly, Biweekly, Monthly
+  lastReviewDate        DateTime?
+  nextReviewDate        DateTime?
+  
+  // Completion
+  completedDate         DateTime?
+  completionNotes       String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([learnerId])
+  @@index([domain])
+  @@index([status])
+}
+
+// Objectives within an ILS Goal
+model ILSGoalObjective {
+  id                    String                    @id @default(cuid())
+  goalId                String
+  goal                  ILSGoal                   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  skillId               String?
+  skill                 FunctionalSkill?          @relation(fields: [skillId], references: [id])
+  
+  // Objective Definition
+  objectiveNumber       Int
+  objectiveStatement    String
+  targetCriteria        String                    // e.g., "80% accuracy over 3 consecutive sessions"
+  
+  // Status
+  isCompleted           Boolean                   @default(false)
+  completedDate         DateTime?
+  
+  // Progress
+  currentPerformance    Float?
+  dataPoints            Int                       @default(0)
+  
+  notes                 String?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([goalId])
+  @@index([skillId])
 }
 
 
