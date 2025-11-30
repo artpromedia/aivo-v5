@@ -26,35 +26,42 @@ model User {
   onboardingSteps       Json? // Track individual step completion
   onboardingStartedAt   DateTime?
 
-  createdAt               DateTime                @default(now())
-  updatedAt               DateTime                @updatedAt
-  profile                 Profile?
-  roles                   RoleAssignment[]        @relation("UserRoles")
-  learners                Learner[]               @relation("GuardianLearners")
-  ownedLearners           Learner[]               @relation("LearnerOwner")
-  learnerProfile          Learner?
-  teacherClasses          Class[]                 @relation("TeacherClasses")
-  approvals               ApprovalRequest[]       @relation("ApproverRequests")
-  notifications           Notification[]
-  sessions                Session[]
-  createdUnits            CurriculumUnit[]        @relation("UnitCreators")
-  createdModules          CurriculumModule[]      @relation("ModuleCreators")
-  authoredCurriculum      CurriculumContent[]     @relation("ContentCreators")
-  updatedCurriculum       CurriculumContent[]     @relation("ContentUpdaters")
-  createdContentVersions  ContentVersion[]        @relation("VersionCreators")
-  reviewedContentVersions ContentVersion[]        @relation("VersionReviewers")
-  contentInteractions     ContentInteraction[]    @relation("UserContentInteractions")
-  sentMessages            Message[]               @relation("MessageSender")
-  receivedMessages        Message[]               @relation("MessageRecipient")
-  requestedInsights       AIInsight[]             @relation("InsightRequester")
-  receivedInsights        AIInsight[]             @relation("InsightRecipient")
-  createdMeetings         Meeting[]               @relation("MeetingCreator")
-  meetingParticipations   MeetingParticipant[]
-  announcementsCreated    Announcement[]          @relation("AnnouncementCreator")
-  notificationPreference  NotificationPreference?
-  communicationLogs       CommunicationLog[]
-  accounts                Account[]
-  onboardingAnalytics     OnboardingAnalytics[]
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+  profile                   Profile?
+  roles                     RoleAssignment[]            @relation("UserRoles")
+  learners                  Learner[]                   @relation("GuardianLearners")
+  ownedLearners             Learner[]                   @relation("LearnerOwner")
+  learnerProfile            Learner?
+  teacherClasses            Class[]                     @relation("TeacherClasses")
+  approvals                 ApprovalRequest[]           @relation("ApproverRequests")
+  notifications             Notification[]
+  sessions                  Session[]
+  createdUnits              CurriculumUnit[]            @relation("UnitCreators")
+  createdModules            CurriculumModule[]          @relation("ModuleCreators")
+  authoredCurriculum        CurriculumContent[]         @relation("ContentCreators")
+  updatedCurriculum         CurriculumContent[]         @relation("ContentUpdaters")
+  createdContentVersions    ContentVersion[]            @relation("VersionCreators")
+  reviewedContentVersions   ContentVersion[]            @relation("VersionReviewers")
+  contentInteractions       ContentInteraction[]        @relation("UserContentInteractions")
+  sentMessages              Message[]                   @relation("MessageSender")
+  receivedMessages          Message[]                   @relation("MessageRecipient")
+  requestedInsights         AIInsight[]                 @relation("InsightRequester")
+  receivedInsights          AIInsight[]                 @relation("InsightRecipient")
+  createdMeetings           Meeting[]                   @relation("MeetingCreator")
+  meetingParticipations     MeetingParticipant[]
+  announcementsCreated      Announcement[]              @relation("AnnouncementCreator")
+  notificationPreference    NotificationPreference?
+  communicationLogs         CommunicationLog[]
+  accounts                  Account[]
+  onboardingAnalytics       OnboardingAnalytics[]
+  // IEP Upload & Extraction
+  uploadedIEPDocuments      IEPDocument[]               @relation("IEPDocumentUploader")
+  reviewedIEPDocuments      IEPDocument[]               @relation("IEPDocumentReviewer")
+  verifiedIEPGoals          IEPExtractedGoal[]          @relation("IEPGoalVerifier")
+  verifiedIEPServices       IEPExtractedService[]       @relation("IEPServiceVerifier")
+  verifiedIEPAccommodations IEPExtractedAccommodation[] @relation("IEPAccommodationVerifier")
+  verifiedIEPPresentLevels  IEPExtractedPresentLevel[]  @relation("IEPPresentLevelVerifier")
 }
 
 model Profile {
@@ -71,82 +78,88 @@ model Profile {
 }
 
 model Learner {
-  id                    String                         @id @default(cuid())
-  userId                String                         @unique
-  user                  User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guardianId            String
-  guardian              User                           @relation("GuardianLearners", fields: [guardianId], references: [id])
-  ownerId               String?
-  owner                 User?                          @relation("LearnerOwner", fields: [ownerId], references: [id])
-  tenantId              String?
-  tenant                Tenant?                        @relation(fields: [tenantId], references: [id])
-  districtId            String?
-  district              District?                      @relation(fields: [districtId], references: [id])
-  schoolId              String?
-  school                School?                        @relation(fields: [schoolId], references: [id])
-  firstName             String
-  lastName              String
-  region                String?                        @default("north_america")
-  dateOfBirth           DateTime
-  gradeLevel            Int
-  currentGrade          Int?
-  actualLevel           Float?
-  brainProfile          BrainProfile?
-  difficultyProposals   DifficultyProposal[]
-  plannedSessions       PlannedSession[]
-  progressSnapshots     SubjectProgressSnapshot[]
-  telemetryEvents       TelemetryEvent[]
-  safetyIncidents       SafetyIncident[]
-  diagnoses             Diagnosis[]
-  accommodations        Json?
-  iepGoals              IEPGoal[]
-  assessments           Assessment[]
-  approvalRequests      ApprovalRequest[]
-  adjustmentLogs        LearningAdjustmentLog[]
-  learningModel         PersonalizedModel?
-  sessions              LearningSession[]
-  progress              Progress[]
-  focusData             FocusData[]
-  gameHistory           GameSession[]
-  enrollments           Enrollment[]
-  experimentAssignments ExperimentAssignment[]
-  feedbackEntries       Feedback[]
-  contentInteractions   ContentInteraction[]           @relation("LearnerContentInteractions")
-  baselineSessions      BaselineAssessmentSession[]
-  speechSamples         SpeechAssessmentSample[]
-  notifications         Notification[]
-  messages              Message[]
-  aiInsights            AIInsight[]
-  communicationLogs     CommunicationLog[]
-  accommodationPlan     LearnerAccommodation?          @relation("LearnerAccommodationPlan")
-  accommodationMetrics  AccommodationEffectiveness[]   @relation("LearnerAccommodationMetrics")
-  agentStates           AgentState[]
-  agentInteractions     AgentInteraction[]
-  homeworkSessions      HomeworkSession[]
-  regulationSessions    RegulationSession[]
-  emotionHistory        EmotionHistory[]
-  sensoryProfile        SensoryProfile?
-  aacSystem             AACSystem?
-  transitionPlan        TransitionPlan?
+  id                         String                         @id @default(cuid())
+  userId                     String                         @unique
+  user                       User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guardianId                 String
+  guardian                   User                           @relation("GuardianLearners", fields: [guardianId], references: [id])
+  ownerId                    String?
+  owner                      User?                          @relation("LearnerOwner", fields: [ownerId], references: [id])
+  tenantId                   String?
+  tenant                     Tenant?                        @relation(fields: [tenantId], references: [id])
+  districtId                 String?
+  district                   District?                      @relation(fields: [districtId], references: [id])
+  schoolId                   String?
+  school                     School?                        @relation(fields: [schoolId], references: [id])
+  firstName                  String
+  lastName                   String
+  region                     String?                        @default("north_america")
+  dateOfBirth                DateTime
+  gradeLevel                 Int
+  currentGrade               Int?
+  actualLevel                Float?
+  brainProfile               BrainProfile?
+  difficultyProposals        DifficultyProposal[]
+  plannedSessions            PlannedSession[]
+  progressSnapshots          SubjectProgressSnapshot[]
+  telemetryEvents            TelemetryEvent[]
+  safetyIncidents            SafetyIncident[]
+  diagnoses                  Diagnosis[]
+  accommodations             Json?
+  iepGoals                   IEPGoal[]
+  assessments                Assessment[]
+  approvalRequests           ApprovalRequest[]
+  adjustmentLogs             LearningAdjustmentLog[]
+  learningModel              PersonalizedModel?
+  sessions                   LearningSession[]
+  progress                   Progress[]
+  focusData                  FocusData[]
+  gameHistory                GameSession[]
+  enrollments                Enrollment[]
+  experimentAssignments      ExperimentAssignment[]
+  feedbackEntries            Feedback[]
+  contentInteractions        ContentInteraction[]           @relation("LearnerContentInteractions")
+  baselineSessions           BaselineAssessmentSession[]
+  speechSamples              SpeechAssessmentSample[]
+  notifications              Notification[]
+  messages                   Message[]
+  aiInsights                 AIInsight[]
+  communicationLogs          CommunicationLog[]
+  accommodationPlan          LearnerAccommodation?          @relation("LearnerAccommodationPlan")
+  accommodationMetrics       AccommodationEffectiveness[]   @relation("LearnerAccommodationMetrics")
+  agentStates                AgentState[]
+  agentInteractions          AgentInteraction[]
+  homeworkSessions           HomeworkSession[]
+  regulationSessions         RegulationSession[]
+  emotionHistory             EmotionHistory[]
+  sensoryProfile             SensoryProfile?
+  aacSystem                  AACSystem?
+  transitionPlan             TransitionPlan?
   // Independent Living Skills
-  ilsSkillProgress      LearnerSkillProgress[]
-  ilsDataPoints         SkillDataPoint[]
-  ilsGeneralizations    GeneralizationRecord[]
-  ilsCBISessions        CommunityBasedInstruction[]
-  ilsGoals              ILSGoal[]
+  ilsSkillProgress           LearnerSkillProgress[]
+  ilsDataPoints              SkillDataPoint[]
+  ilsGeneralizations         GeneralizationRecord[]
+  ilsCBISessions             CommunityBasedInstruction[]
+  ilsGoals                   ILSGoal[]
   // Speech-Language Pathology
-  slpProfile            SLPProfile?
-  articulationTargets   ArticulationTarget[]
-  fluencyProfile        FluencyProfile?
-  receptiveAssessments  ReceptiveLanguageAssessment[]
-  expressiveAssessments ExpressiveLanguageAssessment[]
-  pragmaticSkills       PragmaticLanguageSkill[]
-  voiceAssessments      VoiceAssessment[]
-  slpSessions           SLPSession[]
-  slpGoals              SLPGoal[]
-  speechHomework        ParentSpeechHomework[]
-  createdAt             DateTime                       @default(now())
-  updatedAt             DateTime                       @updatedAt
+  slpProfile                 SLPProfile?
+  articulationTargets        ArticulationTarget[]
+  fluencyProfile             FluencyProfile?
+  receptiveAssessments       ReceptiveLanguageAssessment[]
+  expressiveAssessments      ExpressiveLanguageAssessment[]
+  pragmaticSkills            PragmaticLanguageSkill[]
+  voiceAssessments           VoiceAssessment[]
+  slpSessions                SLPSession[]
+  slpGoals                   SLPGoal[]
+  speechHomework             ParentSpeechHomework[]
+  // IEP Upload & Extraction
+  iepDocuments               IEPDocument[]
+  iepExtractedGoals          IEPExtractedGoal[]
+  iepExtractedServices       IEPExtractedService[]
+  iepExtractedAccommodations IEPExtractedAccommodation[]
+  iepExtractedPresentLevels  IEPExtractedPresentLevel[]
+  createdAt                  DateTime                       @default(now())
+  updatedAt                  DateTime                       @updatedAt
 }
 
 model BaselineAssessmentSession {
@@ -779,6 +792,9 @@ model IEPGoal {
   notes      String?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+
+  // Link from extracted goals
+  linkedExtractedGoals IEPExtractedGoal[] @relation("LinkedExtractedGoal")
 }
 
 model Message {
@@ -4520,4 +4536,318 @@ model ParentSpeechHomework {
   @@index([learnerId])
   @@index([assignedDate])
   @@index([parentCompleted])
+}
+
+// ==========================================
+// IEP UPLOAD & EXTRACTION SYSTEM
+// ==========================================
+
+// Enums for IEP Upload System
+enum IEPDocumentStatus {
+  PENDING
+  PROCESSING
+  EXTRACTED
+  FAILED
+  REVIEWED
+  APPROVED
+}
+
+enum VirusScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  ERROR
+}
+
+enum IEPGoalDomain {
+  READING
+  MATH
+  WRITING
+  BEHAVIOR
+  SOCIAL
+  COMMUNICATION
+  MOTOR
+  ADAPTIVE
+  TRANSITION
+  EXECUTIVE_FUNCTION
+  SELF_ADVOCACY
+  OTHER
+}
+
+enum IEPServiceType {
+  SPEECH
+  OT
+  PT
+  COUNSELING
+  RESOURCE
+  SPECIALIZED_INSTRUCTION
+  BEHAVIOR_SUPPORT
+  VISION
+  HEARING
+  ASSISTIVE_TECH
+  SOCIAL_WORK
+  NURSING
+  TRANSPORTATION
+  ESY
+  OTHER
+}
+
+enum AccommodationCategory {
+  PRESENTATION
+  RESPONSE
+  SETTING
+  TIMING
+  BEHAVIORAL
+  ASSISTIVE_TECH
+  ORGANIZATIONAL
+  SOCIAL_EMOTIONAL
+}
+
+enum AccommodationScope {
+  CLASSROOM
+  TESTING
+  HOMEWORK
+  ALL
+}
+
+// IEP Document Upload Model
+model IEPDocument {
+  id           String  @id @default(cuid())
+  learnerId    String
+  learner      Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User    @relation("IEPDocumentUploader", fields: [uploadedById], references: [id])
+
+  // File Information
+  fileName  String
+  fileUrl   String // S3 or cloud storage URL
+  fileSize  Int // bytes
+  mimeType  String @default("application/pdf")
+  pageCount Int?
+
+  // Processing Status
+  status          IEPDocumentStatus @default(PENDING)
+  virusScanStatus VirusScanStatus   @default(PENDING)
+  processingError String?
+
+  // OCR & Extraction
+  ocrConfidence Float? // 0-100
+  extractedData Json? // Raw extraction JSON
+  extractionLog Json? // Processing logs
+
+  // Review
+  reviewedById String?
+  reviewedBy   User?     @relation("IEPDocumentReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  reviewNotes  String?
+
+  // IEP Metadata
+  iepStartDate DateTime?
+  iepEndDate   DateTime?
+  schoolYear   String?
+
+  // Timestamps
+  uploadedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  extractedGoals          IEPExtractedGoal[]
+  extractedServices       IEPExtractedService[]
+  extractedAccommodations IEPExtractedAccommodation[]
+  extractedPresentLevels  IEPExtractedPresentLevel[]
+
+  @@index([learnerId])
+  @@index([status])
+  @@index([uploadedById])
+  @@index([uploadedAt])
+}
+
+// Extracted Goals from IEP Document
+model IEPExtractedGoal {
+  id         String      @id @default(cuid())
+  documentId String
+  document   IEPDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  learnerId  String
+  learner    Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Goal Content
+  domain            IEPGoalDomain
+  goalNumber        String? // Original goal number from IEP
+  goalText          String
+  baseline          String?
+  targetCriteria    String?
+  measurementMethod String?
+  frequency         String? // e.g., "weekly", "quarterly"
+
+  // AI Extraction Metadata
+  confidence  Float // 0-100 AI confidence score
+  pageNumber  Int?
+  boundingBox Json? // {x, y, width, height} location in PDF
+
+  // SMART Criteria Analysis
+  smartAnalysis Json? // {specific, measurable, achievable, relevant, timeBound}
+
+  // Verification
+  isVerified   Boolean   @default(false)
+  verifiedById String?
+  verifiedBy   User?     @relation("IEPGoalVerifier", fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+
+  // Link to actual IEP Goal after approval
+  linkedIEPGoalId String?
+  linkedIEPGoal   IEPGoal? @relation("LinkedExtractedGoal", fields: [linkedIEPGoalId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([learnerId])
+  @@index([domain])
+  @@index([isVerified])
+}
+
+// Extracted Services from IEP Document
+model IEPExtractedService {
+  id         String      @id @default(cuid())
+  documentId String
+  document   IEPDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  learnerId  String
+  learner    Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Service Content
+  serviceType IEPServiceType
+  description String
+  frequency   String? // e.g., "2x per week"
+  duration    String? // e.g., "30 minutes"
+  location    String? // e.g., "Resource Room"
+  provider    String?
+  startDate   DateTime?
+  endDate     DateTime?
+
+  // AI Extraction Metadata
+  confidence  Float // 0-100
+  pageNumber  Int?
+  boundingBox Json?
+
+  // Verification
+  isVerified   Boolean   @default(false)
+  verifiedById String?
+  verifiedBy   User?     @relation("IEPServiceVerifier", fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([learnerId])
+  @@index([serviceType])
+}
+
+// Extracted Accommodations from IEP Document
+model IEPExtractedAccommodation {
+  id         String      @id @default(cuid())
+  documentId String
+  document   IEPDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  learnerId  String
+  learner    Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // Accommodation Content
+  category    AccommodationCategory
+  description String
+  details     String?
+  appliesTo   AccommodationScope[]  @default([ALL])
+
+  // AI Extraction Metadata
+  confidence  Float // 0-100
+  pageNumber  Int?
+  boundingBox Json?
+
+  // Verification
+  isVerified   Boolean   @default(false)
+  verifiedById String?
+  verifiedBy   User?     @relation("IEPAccommodationVerifier", fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([learnerId])
+  @@index([category])
+}
+
+// Extracted Present Levels (PLAAFP) from IEP Document
+model IEPExtractedPresentLevel {
+  id         String      @id @default(cuid())
+  documentId String
+  document   IEPDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  learnerId  String
+  learner    Learner     @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  // PLAAFP Content
+  domain                  IEPGoalDomain
+  currentPerformance      String
+  strengths               String[]
+  needs                   String[]
+  parentInput             String?
+  howDisabilityAffects    String?
+  educationalImplications String?
+
+  // AI Extraction Metadata
+  confidence  Float // 0-100
+  pageNumber  Int?
+  boundingBox Json?
+
+  // Verification
+  isVerified   Boolean   @default(false)
+  verifiedById String?
+  verifiedBy   User?     @relation("IEPPresentLevelVerifier", fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([learnerId])
+  @@index([domain])
+}
+
+// IEP Goal Templates for quick goal creation
+model IEPGoalTemplate {
+  id String @id @default(cuid())
+
+  // Template Metadata
+  domain      IEPGoalDomain
+  category    String // Sub-category within domain
+  gradeLevel  Int? // Target grade level (null = all)
+  gradeLevels Int[] // Multiple grade levels
+
+  // Template Content
+  templateText       String // With {{placeholders}}
+  measurementOptions String[] // Available measurement methods
+  frequencyOptions   String[] // Available frequencies
+  baselinePrompts    String[] // Prompts for baseline data
+  criteriaExamples   String[] // Example target criteria
+
+  // SMART Guidance
+  smartGuidance Json? // Tips for each SMART criterion
+
+  // Usage
+  isActive   Boolean @default(true)
+  usageCount Int     @default(0)
+  rating     Float? // Average user rating
+
+  // Metadata
+  createdById String?
+  source      String? // e.g., "state standards", "evidence-based"
+  tags        String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([domain])
+  @@index([category])
+  @@index([isActive])
+  @@index([usageCount])
 }
