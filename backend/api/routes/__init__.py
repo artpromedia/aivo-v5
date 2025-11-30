@@ -8,6 +8,8 @@ from api.routes.iep_goals import router as iep_goals_router
 from api.routes.aac import router as aac_router
 from api.routes.iep_upload import router as iep_upload_router
 from api.routes.adhd import router as adhd_router
+from api.routes.autism import router as autism_router
+from api.routes.dyslexia import router as dyslexia_router
 
 # SLP Routes
 from api.routes.slp import (
@@ -29,6 +31,8 @@ __all__ = [
     "iep_upload_router",
     "aac_router",
     "adhd_router",
+    "autism_router",
+    "dyslexia_router",
     # SLP
     "slp_profiles_router",
     "slp_articulation_router",
