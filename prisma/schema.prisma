@@ -170,6 +170,17 @@ model Learner {
   selfMonitoringLogs         SelfMonitoringLog[]
   // Autism Support System
   autismProfile              AutismProfile?
+  // Dyslexia Intervention System
+  dyslexiaProfile            DyslexiaProfile?
+  phonologicalSkills         PhonologicalAwarenessSkill[]
+  phonicsSkills              PhonicsSkill[]
+  decodingSessions           DecodingSession[]
+  sightWordProgress          SightWordProgress?
+  fluencyAssessments         FluencyAssessment[]
+  comprehensionSkills        ComprehensionSkill[]
+  spellingPatterns           SpellingPattern[]
+  dyslexiaLessons            DyslexiaLesson[]
+  parentDyslexiaSupport      ParentDyslexiaSupport[]
   createdAt                  DateTime                       @default(now())
   updatedAt                  DateTime                       @updatedAt
 }
@@ -5977,4 +5988,561 @@ model TransitionSupport {
   @@index([autismProfileId])
   @@index([difficulty])
   @@index([isActive])
+}
+
+// ==========================================
+// DYSLEXIA INTERVENTION SYSTEM ENUMS
+// ==========================================
+
+enum DyslexiaSeverity {
+  MILD
+  MODERATE
+  SEVERE
+  PROFOUND
+}
+
+enum DyslexiaSubtype {
+  PHONOLOGICAL
+  SURFACE
+  MIXED
+  RAPID_NAMING
+  DOUBLE_DEFICIT
+}
+
+enum PhonologicalSkillType {
+  RHYME_RECOGNITION
+  RHYME_PRODUCTION
+  SYLLABLE_SEGMENTATION
+  SYLLABLE_BLENDING
+  ONSET_RIME
+  PHONEME_ISOLATION
+  PHONEME_BLENDING
+  PHONEME_SEGMENTATION
+  PHONEME_MANIPULATION
+  PHONEME_DELETION
+}
+
+enum PhonicsMasteryLevel {
+  NOT_INTRODUCED
+  EMERGING
+  DEVELOPING
+  PROFICIENT
+  MASTERED
+  AUTOMATICITY
+}
+
+enum PhonicsCategory {
+  SINGLE_CONSONANTS
+  SHORT_VOWELS
+  CONSONANT_DIGRAPHS
+  CONSONANT_BLENDS
+  LONG_VOWELS_CVCe
+  VOWEL_TEAMS
+  R_CONTROLLED_VOWELS
+  DIPHTHONGS
+  COMPLEX_CONSONANTS
+  ADVANCED_VOWELS
+  MULTISYLLABIC
+  MORPHOLOGY
+}
+
+enum DecodingErrorType {
+  SUBSTITUTION
+  OMISSION
+  INSERTION
+  REVERSAL
+  MISPRONUNCIATION
+  SELF_CORRECTION
+  HESITATION
+  REPETITION
+}
+
+enum SightWordListType {
+  DOLCH_PRE_PRIMER
+  DOLCH_PRIMER
+  DOLCH_FIRST
+  DOLCH_SECOND
+  DOLCH_THIRD
+  FRY_FIRST_100
+  FRY_SECOND_100
+  FRY_THIRD_100
+  FRY_FOURTH_100
+  FRY_FIFTH_100
+  HIGH_FREQUENCY_CUSTOM
+}
+
+enum SightWordStatus {
+  NOT_INTRODUCED
+  LEARNING
+  RECOGNIZED
+  AUTOMATIC
+}
+
+enum ComprehensionSkillType {
+  MAIN_IDEA
+  SUPPORTING_DETAILS
+  SEQUENCING
+  CAUSE_EFFECT
+  COMPARE_CONTRAST
+  INFERENCE
+  PREDICTION
+  SUMMARIZATION
+  VOCABULARY_CONTEXT
+  AUTHORS_PURPOSE
+}
+
+enum DyslexiaLessonType {
+  PHONOLOGICAL_AWARENESS
+  PHONICS_DECODING
+  FLUENCY
+  VOCABULARY
+  COMPREHENSION
+  SPELLING
+  WRITING
+  MULTISENSORY_REVIEW
+}
+
+enum SensoryModality {
+  VISUAL
+  AUDITORY
+  KINESTHETIC
+  TACTILE
+  VISUAL_AUDITORY
+  VISUAL_KINESTHETIC
+  AUDITORY_KINESTHETIC
+  MULTISENSORY_VAKT
+}
+
+// ==========================================
+// DYSLEXIA INTERVENTION SYSTEM MODELS
+// ==========================================
+
+model DyslexiaProfile {
+  id                     String            @id @default(cuid())
+  learnerId              String            @unique
+  learner                Learner           @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Diagnosis Information
+  severity               DyslexiaSeverity  @default(MODERATE)
+  subtypes               DyslexiaSubtype[]
+  diagnosisDate          DateTime?
+  diagnosingProfessional String?
+  diagnosisNotes         String?           @db.Text
+  
+  // Reading Levels
+  currentReadingLevel    String?
+  gradeEquivalent        Float?
+  lexileLevel            Int?
+  targetReadingLevel     String?
+  
+  // Intervention Program
+  interventionProgram    String            @default("Orton-Gillingham")
+  currentPhonicsLevel    Int               @default(1)
+  sessionsPerWeek        Int               @default(3)
+  sessionDurationMinutes Int               @default(45)
+  
+  // Preferences & Accommodations
+  preferredModalities    SensoryModality[]
+  accommodations         Json?
+  assistiveTechnology    String[]
+  
+  // Progress Tracking
+  lastAssessmentDate     DateTime?
+  nextAssessmentDate     DateTime?
+  overallProgress        Float             @default(0)
+  
+  isActive               Boolean           @default(true)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@index([learnerId])
+  @@index([severity])
+  @@index([currentPhonicsLevel])
+}
+
+model PhonologicalAwarenessSkill {
+  id              String                  @id @default(cuid())
+  learnerId       String
+  learner         Learner                 @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  skillType       PhonologicalSkillType
+  masteryLevel    PhonicsMasteryLevel     @default(NOT_INTRODUCED)
+  accuracyPercent Float                   @default(0)
+  
+  // Assessment Data
+  lastAssessedAt  DateTime?
+  assessmentNotes String?                 @db.Text
+  
+  // Practice Tracking
+  totalAttempts   Int                     @default(0)
+  correctAttempts Int                     @default(0)
+  practiceMinutes Int                     @default(0)
+  
+  // Goal Setting
+  targetMastery   PhonicsMasteryLevel     @default(MASTERED)
+  targetDate      DateTime?
+  
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@unique([learnerId, skillType])
+  @@index([learnerId])
+  @@index([skillType])
+  @@index([masteryLevel])
+}
+
+model PhonicsSkill {
+  id                String              @id @default(cuid())
+  learnerId         String
+  learner           Learner             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Phonics Pattern Info
+  category          PhonicsCategory
+  level             Int                 @default(1)
+  pattern           String              // e.g., "sh", "oa", "-tion"
+  patternName       String              // e.g., "Consonant Digraph SH"
+  exampleWords      String[]
+  
+  // Mastery Tracking
+  masteryLevel      PhonicsMasteryLevel @default(NOT_INTRODUCED)
+  introducedAt      DateTime?
+  masteredAt        DateTime?
+  
+  // Practice Data
+  readingAccuracy   Float               @default(0)
+  spellingAccuracy  Float               @default(0)
+  totalExposures    Int                 @default(0)
+  correctReadings   Int                 @default(0)
+  correctSpellings  Int                 @default(0)
+  
+  // Orton-Gillingham Scope & Sequence Position
+  ogSequenceNumber  Int?
+  prerequisiteIds   String[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([learnerId, pattern])
+  @@index([learnerId])
+  @@index([category])
+  @@index([masteryLevel])
+  @@index([level])
+}
+
+model DecodingSession {
+  id               String             @id @default(cuid())
+  learnerId        String
+  learner          Learner            @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Session Info
+  sessionDate      DateTime           @default(now())
+  durationMinutes  Int
+  wordListType     String             // "CVC", "CVCE", "Custom", etc.
+  
+  // Words Attempted
+  wordsAttempted   Json               // Array of { word, correct, errors[], timeMs }
+  totalWords       Int
+  correctWords     Int
+  accuracy         Float
+  
+  // Error Analysis
+  errorTypes       Json?              // { substitution: 3, omission: 2, ... }
+  commonPatterns   String[]           // Patterns the learner struggled with
+  
+  // Performance Metrics
+  wordsPerMinute   Float?
+  selfCorrections  Int                @default(0)
+  
+  // Teacher Notes
+  teacherNotes     String?            @db.Text
+  focusForNext     String[]
+  
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([learnerId])
+  @@index([sessionDate])
+  @@index([accuracy])
+}
+
+model SightWordProgress {
+  id                  String            @id @default(cuid())
+  learnerId           String            @unique
+  learner             Learner           @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Overall Progress
+  totalWordsLearned   Int               @default(0)
+  totalWordsAutomatic Int               @default(0)
+  
+  // List Progress (JSON for each list type)
+  dolchProgress       Json?             // { prePrimer: { learned: [], automatic: [] }, ... }
+  fryProgress         Json?             // { first100: { learned: [], automatic: [] }, ... }
+  customWords         Json?             // { word: status, introducedAt, masteredAt }
+  
+  // Current Focus
+  currentList         SightWordListType @default(DOLCH_PRE_PRIMER)
+  currentFocusWords   String[]          // 5-10 words currently working on
+  
+  // Practice Stats
+  totalPracticeMinutes Int              @default(0)
+  lastPracticeDate    DateTime?
+  streak              Int               @default(0)
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([learnerId])
+  @@index([currentList])
+}
+
+model FluencyAssessment {
+  id                   String   @id @default(cuid())
+  learnerId            String
+  learner              Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Assessment Info
+  assessmentDate       DateTime @default(now())
+  passageTitle         String
+  passageLevel         String
+  passageWordCount     Int
+  
+  // Fluency Metrics
+  wordsCorrectPerMinute Float   // WCPM
+  totalWordsRead       Int
+  errorsCount          Int
+  accuracy             Float    // (totalWords - errors) / totalWords
+  readingTimeSeconds   Int
+  
+  // Prosody Scores (1-4 scale)
+  expressionScore      Int?     // Voice expression and volume
+  phrasingScore        Int?     // Phrasing and intonation
+  smoothnessScore      Int?     // Smoothness
+  paceScore            Int?     // Pace/rate
+  prosodyTotal         Int?     // Sum of prosody scores
+  
+  // Comprehension Check
+  comprehensionQuestions Int?
+  comprehensionCorrect  Int?
+  comprehensionPercent  Float?
+  
+  // Error Analysis
+  substitutions        Int      @default(0)
+  omissions            Int      @default(0)
+  insertions           Int      @default(0)
+  selfCorrections      Int      @default(0)
+  
+  // Notes
+  teacherNotes         String?  @db.Text
+  areasForImprovement  String[]
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([assessmentDate])
+  @@index([wordsCorrectPerMinute])
+}
+
+model ComprehensionSkill {
+  id               String                @id @default(cuid())
+  learnerId        String
+  learner          Learner               @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  skillType        ComprehensionSkillType
+  masteryLevel     PhonicsMasteryLevel   @default(NOT_INTRODUCED)
+  accuracyPercent  Float                 @default(0)
+  
+  // Assessment History
+  totalAssessments Int                   @default(0)
+  correctResponses Int                   @default(0)
+  lastAssessedAt   DateTime?
+  
+  // Strategies Used
+  strategiesIntroduced String[]          // Graphic organizers, think-alouds, etc.
+  preferredStrategies  String[]
+  
+  // Goal Tracking
+  targetMastery    PhonicsMasteryLevel   @default(MASTERED)
+  targetDate       DateTime?
+  notes            String?               @db.Text
+  
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@unique([learnerId, skillType])
+  @@index([learnerId])
+  @@index([skillType])
+  @@index([masteryLevel])
+}
+
+model SpellingPattern {
+  id                String              @id @default(cuid())
+  learnerId         String
+  learner           Learner             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Pattern Info
+  pattern           String              // e.g., "silent e", "doubling rule"
+  category          PhonicsCategory
+  rule              String?             @db.Text  // Explanation of the rule
+  exampleWords      String[]
+  exceptionWords    String[]
+  
+  // Mastery Tracking
+  masteryLevel      PhonicsMasteryLevel @default(NOT_INTRODUCED)
+  introducedAt      DateTime?
+  masteredAt        DateTime?
+  
+  // Practice Data
+  totalAttempts     Int                 @default(0)
+  correctAttempts   Int                 @default(0)
+  accuracy          Float               @default(0)
+  
+  // Common Errors
+  frequentErrors    Json?               // { "misspelling": count }
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([learnerId, pattern])
+  @@index([learnerId])
+  @@index([category])
+  @@index([masteryLevel])
+}
+
+model DyslexiaLesson {
+  id                  String             @id @default(cuid())
+  learnerId           String
+  learner             Learner            @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Lesson Info
+  lessonType          DyslexiaLessonType
+  lessonDate          DateTime           @default(now())
+  durationMinutes     Int
+  
+  // Lesson Content
+  title               String
+  objectives          String[]
+  materialsUsed       String[]
+  
+  // Orton-Gillingham Structure
+  reviewComponent     Json?              // What was reviewed
+  newTeachingComponent Json?             // New concept taught
+  practiceComponent   Json?              // Practice activities
+  
+  // Phonics Focus
+  phonicsFocus        String[]           // Patterns focused on
+  sightWordsFocus     String[]
+  
+  // Assessment
+  studentResponse     String?            @db.Text
+  masteryDemonstrated Boolean            @default(false)
+  accuracyPercent     Float?
+  
+  // Planning
+  nextSteps           String[]
+  homePractice        String[]
+  
+  // Teacher Notes
+  teacherNotes        String?            @db.Text
+  parentCommunication String?            @db.Text
+  
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([learnerId])
+  @@index([lessonType])
+  @@index([lessonDate])
+}
+
+model MultisensoryActivity {
+  id                String           @id @default(cuid())
+  
+  // Activity Info
+  name              String
+  description       String           @db.Text
+  category          PhonicsCategory?
+  targetSkills      String[]
+  
+  // Modality
+  primaryModality   SensoryModality
+  modalities        SensoryModality[]
+  
+  // Activity Details
+  instructions      String           @db.Text
+  materials         String[]
+  setupTimeMinutes  Int              @default(5)
+  activityMinutes   Int              @default(10)
+  
+  // Difficulty & Level
+  difficultyLevel   Int              @default(1)  // 1-5
+  gradeRange        String[]         // ["K", "1", "2"]
+  phonicsLevels     Int[]            // OG levels this applies to
+  
+  // Media
+  imageUrl          String?
+  videoUrl          String?
+  printableUrl      String?
+  
+  // Variations
+  variations        Json?            // Array of variation descriptions
+  adaptations       Json?            // For different needs
+  
+  // Tracking
+  usageCount        Int              @default(0)
+  avgRating         Float?
+  
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Learner association for tracking usage
+  learnerId         String?
+  learner           Learner?         @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([primaryModality])
+  @@index([difficultyLevel])
+  @@index([learnerId])
+}
+
+model ParentDyslexiaSupport {
+  id                    String   @id @default(cuid())
+  learnerId             String
+  learner               Learner  @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  
+  // Practice Session Info
+  practiceDate          DateTime @default(now())
+  practiceType          String   // "reading", "spelling", "sight_words", "phonics"
+  durationMinutes       Int
+  
+  // What Was Practiced
+  activitiesCompleted   String[]
+  wordsReviewed         String[]
+  patternsFocused       String[]
+  
+  // Observations
+  engagementLevel       Int?     // 1-5 scale
+  frustrationLevel      Int?     // 1-5 scale
+  successLevel          Int?     // 1-5 scale
+  
+  // Parent Notes
+  whatWorkedWell        String?  @db.Text
+  challenges            String?  @db.Text
+  questionsForTeacher   String?  @db.Text
+  
+  // Resources Used
+  materialsUsed         String[]
+  gamesPlayed           String[]
+  
+  // Home Environment
+  bestTimeOfDay         String?
+  bestLocation          String?
+  distractionsNoted     String[]
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([learnerId])
+  @@index([practiceDate])
+  @@index([practiceType])
 }
