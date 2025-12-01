@@ -974,9 +974,12 @@ enum Role {
 
 enum SubscriptionStatus {
   NONE // No subscription or trial started
-  TRIAL_ACTIVE // Currently in trial period
+  TRIAL_ACTIVE // Currently in trial period (30 days for individuals)
   TRIAL_EXPIRED // Trial ended without subscription
   TRIAL_CANCELLED // User cancelled during trial
+  PILOT_ACTIVE // Currently in pilot period (90 days for districts)
+  PILOT_EXPIRED // Pilot ended without subscription
+  PILOT_CANCELLED // District cancelled during pilot
   ACTIVE // Paid subscription active
   PAST_DUE // Payment failed, grace period
   CANCELLED // Subscription cancelled
@@ -1000,6 +1003,18 @@ model TrialUsedEmail {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// Track districts that have used pilots to prevent abuse
+model PilotUsedDistrict {
+  id         String   @id @default(cuid())
+  districtId String   @unique
+  usedAt     DateTime @default(now())
+  initiatedBy String? // User ID who initiated the pilot
+  reason     String? // COMPLETED, CANCELLED, EXPIRED
+  createdAt  DateTime @default(now())
+
+  @@index([districtId])
 }
 
 // ============================================================================
@@ -1380,11 +1395,26 @@ model District {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Pilot & Subscription tracking for districts (90-day pilot period)
+  subscriptionStatus    SubscriptionStatus @default(NONE)
+  subscriptionTier      SubscriptionTier   @default(FREE)
+  pilotStartedAt        DateTime?
+  pilotEndsAt           DateTime?
+  pilotCancelledAt      DateTime?
+  pilotInitiatedById    String? // User who started the pilot
+  subscriptionStartedAt DateTime?
+  subscriptionEndsAt    DateTime?
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  maxLearners           Int? // Maximum learners allowed during pilot
+  maxSchools            Int? // Maximum schools allowed during pilot
+
   schools         School[]
   learners        Learner[]
   roleAssignments RoleAssignment[]
 
   @@index([tenantId])
+  @@index([subscriptionStatus])
 }
 
 model School {
