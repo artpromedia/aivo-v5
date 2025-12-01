@@ -3,6 +3,7 @@ export * from "./governance";
 export * from "./ai-providers";
 export * from "./roles";
 export * from "./onboarding";
+export * from "./subscription";
 
 // Import Role type for use in this file
 import type { Role } from "./roles";

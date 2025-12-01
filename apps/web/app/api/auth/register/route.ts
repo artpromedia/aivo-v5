@@ -8,6 +8,8 @@ import { applyRateLimit, addRateLimitHeaders, getClientIp } from "@/lib/middlewa
 
 export const runtime = "nodejs";
 
+const TRIAL_DURATION_DAYS = 30;
+
 const registerSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
   password: z
@@ -58,6 +60,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Account already exists" }, { status: 409 });
     }
 
+    // Check if email has been used for a trial before
+    const usedTrialEmail = await prisma.trialUsedEmail.findUnique({
+      where: { email },
+    });
+
     const usernameBase = buildBaseUsername(firstName, lastName);
     const username = await resolveUniqueUsername(usernameBase, async (candidate) => {
       const found = await prisma.user.findUnique({ where: { username: candidate } });
@@ -66,12 +73,25 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hashPassword(password);
 
+    // Calculate trial dates (only if email hasn't been used for trial before)
+    const canStartTrial = !usedTrialEmail;
+    const trialStartedAt = canStartTrial ? new Date() : null;
+    const trialEndsAt = canStartTrial ? new Date() : null;
+    if (trialEndsAt) {
+      trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DURATION_DAYS);
+    }
+
     const created = await prisma.user.create({
       data: {
         email,
         username,
         password: hashedPassword,
         role,
+        // Automatically start trial for new users (if eligible)
+        subscriptionStatus: canStartTrial ? "TRIAL_ACTIVE" : "NONE",
+        subscriptionTier: canStartTrial ? "PRO" : "FREE", // Full access during trial
+        trialStartedAt,
+        trialEndsAt,
         profile: {
           create: {
             firstName,
@@ -88,7 +108,16 @@ export async function POST(request: NextRequest) {
       username: created.username,
       email: created.email,
       role: created.role,
-      profile: created.profile
+      profile: created.profile,
+      // Include trial info in response
+      trial: {
+        started: canStartTrial,
+        trialEndsAt: canStartTrial ? trialEndsAt : null,
+        daysRemaining: canStartTrial ? TRIAL_DURATION_DAYS : 0,
+        cannotStartTrialReason: !canStartTrial 
+          ? "This email has already been used for a trial"
+          : null,
+      },
     });
     
     return addRateLimitHeaders(response, rateLimitResult);

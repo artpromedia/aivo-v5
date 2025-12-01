@@ -5,6 +5,9 @@ type AuthUser = {
   name: string | null;
   username: string;
   onboardingStatus: string;
+  subscriptionStatus: string;
+  subscriptionTier: string;
+  trialEndsAt: Date | null;
 };
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -57,13 +60,31 @@ export const {
           return null;
         }
 
+        // Check if trial has expired and update status
+        let subscriptionStatus = (user as any).subscriptionStatus || "NONE";
+        if (
+          subscriptionStatus === "TRIAL_ACTIVE" &&
+          (user as any).trialEndsAt &&
+          new Date((user as any).trialEndsAt) < new Date()
+        ) {
+          subscriptionStatus = "TRIAL_EXPIRED";
+          // Update the database
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { subscriptionStatus: "TRIAL_EXPIRED" },
+          });
+        }
+
         const authUser: AuthUser = {
           id: user.id,
           role: user.role,
           email: user.email,
           name: user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user.username,
           username: user.username,
-          onboardingStatus: (user as any).onboardingStatus || "PENDING"
+          onboardingStatus: (user as any).onboardingStatus || "PENDING",
+          subscriptionStatus,
+          subscriptionTier: (user as any).subscriptionTier || "FREE",
+          trialEndsAt: (user as any).trialEndsAt || null,
         };
 
         return authUser;
@@ -78,6 +99,9 @@ export const {
         token.role = authUser.role;
         token.username = authUser.username;
         token.onboardingStatus = authUser.onboardingStatus;
+        token.subscriptionStatus = authUser.subscriptionStatus;
+        token.subscriptionTier = authUser.subscriptionTier;
+        token.trialEndsAt = authUser.trialEndsAt;
       }
       return token;
     },
@@ -86,12 +110,18 @@ export const {
   const role = typeof token.role === "string" ? (token.role as Role) : undefined;
   const username = typeof token.username === "string" ? token.username : undefined;
   const onboardingStatus = typeof token.onboardingStatus === "string" ? token.onboardingStatus : "PENDING";
+  const subscriptionStatus = typeof token.subscriptionStatus === "string" ? token.subscriptionStatus : "NONE";
+  const subscriptionTier = typeof token.subscriptionTier === "string" ? token.subscriptionTier : "FREE";
+  const trialEndsAt = token.trialEndsAt as Date | null;
 
       if (session.user && userId && role && username) {
         session.user.id = userId;
         session.user.role = role;
         session.user.username = username;
         (session.user as any).onboardingStatus = onboardingStatus;
+        (session.user as any).subscriptionStatus = subscriptionStatus;
+        (session.user as any).subscriptionTier = subscriptionTier;
+        (session.user as any).trialEndsAt = trialEndsAt;
       }
       return session;
     }
