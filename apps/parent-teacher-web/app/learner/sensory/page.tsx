@@ -1,21 +1,31 @@
 /**
  * Parent/Teacher Sensory Settings Page
  * Allows parents and teachers to manage learner sensory profiles
+ * 
+ * Theme: Unified violet/lavender enterprise design
  */
 
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import {
+  BarChart3,
+  Eye,
+  Ear,
+  Mouse,
+  Brain,
+  Leaf,
+  AlertTriangle,
+  Lightbulb,
+  Check,
+  Settings,
+  Loader2,
+} from "lucide-react";
+import { showToast } from "../../../components/providers/ToastProvider";
 import type {
   SensoryProfile,
-  SensoryPreset,
   PresetId,
-  VisualSettings,
-  AuditorySettings,
-  MotorSettings,
-  CognitiveSettings,
-  EnvironmentSettings,
 } from "@aivo/api-client/src/sensory-contracts";
 import { SENSORY_PRESETS } from "@aivo/api-client/src/sensory-contracts";
 
@@ -28,12 +38,22 @@ interface EffectivenessData {
 
 const API_BASE = "/api/sensory";
 
+// Icon map for categories
+const CATEGORY_ICONS = {
+  overview: BarChart3,
+  visual: Eye,
+  auditory: Ear,
+  motor: Mouse,
+  cognitive: Brain,
+  environment: Leaf,
+} as const;
+
 // Loading fallback for suspense
 function LoadingFallback() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <Loader2 className="w-12 h-12 text-violet-500 animate-spin mx-auto mb-4" />
         <p className="text-gray-600">Loading...</p>
       </div>
     </div>
@@ -86,7 +106,7 @@ function SensoryPageContent() {
           recommendations: data.recommendations || [],
         });
       }
-    } catch (err) {
+    } catch {
       setError("Failed to load sensory profile");
     } finally {
       setLoading(false);
@@ -112,11 +132,13 @@ function SensoryPageContent() {
       if (res.ok) {
         const data = await res.json();
         setProfile(data.profile);
+        showToast.success("Settings saved successfully");
       } else {
         throw new Error("Failed to update");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to save changes");
+      showToast.error("Failed to save changes");
     } finally {
       setSaving(false);
     }
@@ -137,9 +159,14 @@ function SensoryPageContent() {
       if (res.ok) {
         const data = await res.json();
         setProfile(data.profile);
+        const presetName = SENSORY_PRESETS.find(p => p.id === presetId)?.name || "Preset";
+        showToast.success(`${presetName} applied successfully`);
+      } else {
+        throw new Error("Failed to apply preset");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to apply preset");
+      showToast.error("Failed to apply preset");
     } finally {
       setSaving(false);
     }
@@ -147,9 +174,9 @@ function SensoryPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-violet-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading sensory profile...</p>
         </div>
       </div>
@@ -158,16 +185,16 @@ function SensoryPageContent() {
 
   if (error && !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
+      <div className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">⚠️</span>
+            <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
           <h1 className="text-xl font-bold text-gray-800 mb-2">Unable to Load</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={fetchProfile}
-            className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+            className="px-6 py-2 bg-violet-500 text-white rounded-xl hover:bg-violet-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
             Try Again
           </button>
@@ -177,23 +204,28 @@ function SensoryPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-lavender-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                Accessibility Settings
-              </h1>
-              <p className="text-gray-500 text-sm">
-                Customize learning experience for your learner
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center">
+                <Settings className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  Accessibility Settings
+                </h1>
+                <p className="text-gray-500 text-sm">
+                  Customize learning experience for your learner
+                </p>
+              </div>
             </div>
             {saving && (
-              <div className="flex items-center gap-2 text-indigo-600">
-                <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                <span>Saving...</span>
+              <div className="flex items-center gap-2 text-violet-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="font-medium">Saving...</span>
               </div>
             )}
           </div>
@@ -204,39 +236,43 @@ function SensoryPageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
           <nav className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-4 sticky top-24">
+            <div className="bg-white rounded-2xl shadow-lg p-4 sticky top-24">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
                 Settings
               </h3>
               <ul className="space-y-1">
-                {[
-                  { id: "overview", label: "Overview", icon: "📊" },
-                  { id: "visual", label: "Visual", icon: "👁️" },
-                  { id: "auditory", label: "Auditory", icon: "👂" },
-                  { id: "motor", label: "Motor", icon: "🖱️" },
-                  { id: "cognitive", label: "Cognitive", icon: "🧠" },
-                  { id: "environment", label: "Environment", icon: "🌿" },
-                ].map((item) => (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => setActiveCategory(item.id as SettingsCategory)}
-                      className={`
-                        w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
-                        ${activeCategory === item.id
-                          ? "bg-indigo-50 text-indigo-700"
-                          : "hover:bg-gray-50 text-gray-700"
-                        }
-                      `}
-                    >
-                      <span>{item.icon}</span>
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  </li>
-                ))}
+                {([
+                  { id: "overview", label: "Overview" },
+                  { id: "visual", label: "Visual" },
+                  { id: "auditory", label: "Auditory" },
+                  { id: "motor", label: "Motor" },
+                  { id: "cognitive", label: "Cognitive" },
+                  { id: "environment", label: "Environment" },
+                ] as const).map((item) => {
+                  const Icon = CATEGORY_ICONS[item.id];
+                  return (
+                    <li key={item.id}>
+                      <button
+                        onClick={() => setActiveCategory(item.id as SettingsCategory)}
+                        className={`
+                          w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500
+                          ${activeCategory === item.id
+                            ? "bg-violet-50 text-violet-700 shadow-sm"
+                            : "hover:bg-lavender-50 text-gray-700"
+                          }
+                        `}
+                      >
+                        <Icon className={`w-5 h-5 ${activeCategory === item.id ? "text-violet-600" : "text-gray-400"}`} />
+                        <span className="font-medium">{item.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* Quick actions */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-6 border-t border-lavender-200">
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
                   Quick Presets
                 </h3>
@@ -246,15 +282,19 @@ function SensoryPageContent() {
                       key={preset.id}
                       onClick={() => applyPreset(preset.id)}
                       className={`
-                        w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm
+                        w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-sm transition-all
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500
                         ${profile?.presetId === preset.id
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                          ? "bg-violet-100 text-violet-700 shadow-sm"
+                          : "bg-lavender-50 hover:bg-lavender-100 text-gray-700"
                         }
                       `}
                     >
                       <span>{preset.icon}</span>
                       <span>{preset.name}</span>
+                      {profile?.presetId === preset.id && (
+                        <Check className="w-4 h-4 ml-auto text-violet-600" />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -266,29 +306,29 @@ function SensoryPageContent() {
           <main className="lg:col-span-3 space-y-6">
             {/* Effectiveness Score */}
             {activeCategory === "overview" && effectiveness && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Effectiveness Overview
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-indigo-50 rounded-xl p-4 text-center">
-                    <div className="text-3xl font-bold text-indigo-600">
+                  <div className="bg-violet-50 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-bold text-violet-600">
                       {effectiveness.overallScore ?? "—"}%
                     </div>
-                    <div className="text-sm text-indigo-700">Overall Score</div>
+                    <div className="text-sm text-violet-700">Overall Score</div>
                   </div>
-                  <div className="bg-green-50 rounded-xl p-4 text-center">
-                    <div className="text-3xl font-bold text-green-600">
-                      {profile?.presetId ? "✓" : "—"}
+                  <div className="bg-emerald-50 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-bold text-emerald-600">
+                      {profile?.presetId ? <Check className="w-8 h-8 mx-auto" /> : "—"}
                     </div>
-                    <div className="text-sm text-green-700">
+                    <div className="text-sm text-emerald-700">
                       {profile?.presetId
                         ? SENSORY_PRESETS.find((p) => p.id === profile.presetId)?.name
                         : "Custom Settings"}
                     </div>
                   </div>
-                  <div className="bg-amber-50 rounded-xl p-4 text-center">
+                  <div className="bg-amber-50 rounded-2xl p-4 text-center">
                     <div className="text-3xl font-bold text-amber-600">
                       {effectiveness.recommendations.length}
                     </div>
@@ -297,8 +337,11 @@ function SensoryPageContent() {
                 </div>
 
                 {effectiveness.recommendations.length > 0 && (
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h3 className="font-medium text-gray-800 mb-2">💡 Suggestions</h3>
+                  <div className="bg-lavender-50 rounded-2xl p-4">
+                    <h3 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                      <Lightbulb className="w-5 h-5 text-amber-500" />
+                      Suggestions
+                    </h3>
                     <ul className="space-y-2">
                       {effectiveness.recommendations.map((rec, idx) => (
                         <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
@@ -314,7 +357,7 @@ function SensoryPageContent() {
 
             {/* Current Preset Info */}
             {activeCategory === "overview" && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Choose a Preset
                 </h2>
@@ -324,10 +367,11 @@ function SensoryPageContent() {
                       key={preset.id}
                       onClick={() => applyPreset(preset.id)}
                       className={`
-                        p-4 rounded-xl border-2 text-left transition-all
+                        p-4 rounded-2xl border-2 text-left transition-all
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
                         ${profile?.presetId === preset.id
-                          ? "border-indigo-500 bg-indigo-50"
-                          : "border-gray-200 hover:border-indigo-200"
+                          ? "border-violet-500 bg-violet-50 shadow-md"
+                          : "border-lavender-200 hover:border-violet-300 hover:bg-lavender-50"
                         }
                       `}
                     >
@@ -388,13 +432,14 @@ function SensoryPageContent() {
                 </SettingsGrid>
 
                 <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="font-size" className="block text-sm font-medium text-gray-700 mb-2">
                     Font Size
                   </label>
                   <select
+                    id="font-size"
                     value={profile.visual.fontSize}
                     onChange={(e) => updateProfile({ visual: { fontSize: e.target.value } })}
-                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    className="w-full p-3 border-2 border-lavender-200 rounded-xl bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-colors"
                   >
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
@@ -404,13 +449,14 @@ function SensoryPageContent() {
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="font-style" className="block text-sm font-medium text-gray-700 mb-2">
                     Font Style
                   </label>
                   <select
+                    id="font-style"
                     value={profile.visual.fontFamily}
                     onChange={(e) => updateProfile({ visual: { fontFamily: e.target.value } })}
-                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    className="w-full p-3 border-2 border-lavender-200 rounded-xl bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-colors"
                   >
                     <option value="default">Default</option>
                     <option value="dyslexic">Dyslexia-Friendly</option>
@@ -465,7 +511,7 @@ function SensoryPageContent() {
                     onChange={(e) =>
                       updateProfile({ auditory: { soundVolume: parseInt(e.target.value) } })
                     }
-                    className="w-full"
+                    className="w-full accent-violet-500"
                   />
                 </div>
               </SettingsCard>
@@ -551,7 +597,7 @@ function SensoryPageContent() {
                       onChange={(e) =>
                         updateProfile({ cognitive: { timeMultiplier: parseFloat(e.target.value) } })
                       }
-                      className="w-full"
+                      className="w-full accent-violet-500"
                     />
                   </div>
                 )}
@@ -566,7 +612,7 @@ function SensoryPageContent() {
                       onChange={(e) =>
                         updateProfile({ cognitive: { breakFrequency: parseInt(e.target.value) } })
                       }
-                      className="w-full p-3 border border-gray-200 rounded-lg"
+                      className="w-full p-3 border-2 border-lavender-200 rounded-xl bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-colors"
                     >
                       <option value="10">10 minutes</option>
                       <option value="15">15 minutes</option>
@@ -611,13 +657,14 @@ function SensoryPageContent() {
                 </SettingsGrid>
 
                 <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="background-sound" className="block text-sm font-medium text-gray-700 mb-2">
                     Background Sound
                   </label>
                   <select
+                    id="background-sound"
                     value={profile.environment.whiteNoise}
                     onChange={(e) => updateProfile({ environment: { whiteNoise: e.target.value } })}
-                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    className="w-full p-3 border-2 border-lavender-200 rounded-xl bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-colors"
                   >
                     <option value="none">None</option>
                     <option value="rain">Rain</option>
@@ -650,7 +697,7 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-2xl shadow-lg p-6">
       <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
       <p className="text-sm text-gray-500 mb-6">{description}</p>
       {children}
@@ -677,9 +724,12 @@ function ToggleSetting({
     <button
       onClick={() => onChange(!checked)}
       className={`
-        flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all
-        ${checked ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-200"}
+        flex items-center justify-between p-4 rounded-2xl border-2 text-left transition-all
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
+        ${checked ? "border-violet-500 bg-violet-50 shadow-sm" : "border-lavender-200 hover:border-violet-300"}
       `}
+      role="switch"
+      aria-checked={checked}
     >
       <div>
         <div className="font-medium text-gray-800">{label}</div>
@@ -688,7 +738,7 @@ function ToggleSetting({
       <div
         className={`
           w-12 h-7 rounded-full p-1 transition-colors
-          ${checked ? "bg-indigo-500" : "bg-gray-300"}
+          ${checked ? "bg-violet-500" : "bg-gray-300"}
         `}
       >
         <div

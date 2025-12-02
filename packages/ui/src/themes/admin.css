@@ -1,0 +1,244 @@
+/**
+ * AIVO Unified Design System - Admin Theme
+ * 
+ * Clean, professional, data-focused theme for admin apps
+ * Optimized for productivity and data visualization
+ * 
+ * Used by: admin-web, district-admin-web, platform-admin-web
+ * 
+ * @module themes/admin
+ */
+
+@import './base.css';
+
+@layer theme {
+  /* ============================================
+     Admin Theme Variables
+     ============================================ */
+  :root[data-theme="admin"],
+  [data-app="admin-web"],
+  [data-app="district-admin-web"],
+  [data-app="platform-admin-web"] {
+    /* Primary Palette - Indigo (Professional, Trustworthy) */
+    --theme-primary: 79 70 229;            /* #4F46E5 */
+    --theme-primary-light: 129 140 248;    /* #818CF8 */
+    --theme-primary-dark: 67 56 202;       /* #4338CA */
+    --theme-primary-50: 238 242 255;       /* #EEF2FF */
+    --theme-primary-100: 224 231 255;      /* #E0E7FF */
+    --theme-primary-200: 199 210 254;      /* #C7D2FE */
+    --theme-primary-300: 165 180 252;      /* #A5B4FC */
+    --theme-primary-400: 129 140 248;      /* #818CF8 */
+    --theme-primary-500: 99 102 241;       /* #6366F1 */
+    --theme-primary-600: 79 70 229;        /* #4F46E5 */
+    --theme-primary-700: 67 56 202;        /* #4338CA */
+    --theme-primary-800: 55 48 163;        /* #3730A3 */
+    --theme-primary-900: 49 46 129;        /* #312E81 */
+
+    /* Secondary Palette - Slate (Neutral, Professional) */
+    --theme-secondary: 99 102 241;         /* #6366F1 */
+    --theme-secondary-light: 165 180 252;  /* #A5B4FC */
+    --theme-secondary-dark: 79 70 229;     /* #4F46E5 */
+
+    /* Accent - Teal (Calm, Data-focused) */
+    --theme-accent: 20 184 166;            /* #14B8A6 */
+    --theme-accent-light: 94 234 212;      /* #5EEAD4 */
+    --theme-accent-dark: 13 148 136;       /* #0D9488 */
+
+    /* Backgrounds */
+    --color-bg-primary: 248 250 252;       /* #F8FAFC - Clean slate */
+    --color-bg-secondary: 255 255 255;     /* #FFFFFF */
+    --color-bg-tertiary: 241 245 249;      /* #F1F5F9 */
+    --color-bg-gradient: linear-gradient(180deg, rgb(248 250 252) 0%, rgb(241 245 249) 100%);
+
+    /* Surfaces */
+    --color-surface-primary: 255 255 255;
+    --color-surface-secondary: 248 250 252;
+    --color-surface-border: 226 232 240;   /* #E2E8F0 */
+    --color-surface-hover: 241 245 249;
+
+    /* Text */
+    --color-text-primary: 15 23 42;        /* #0F172A - High contrast */
+    --color-text-secondary: 51 65 85;      /* #334155 */
+    --color-text-muted: 100 116 139;       /* #64748B */
+    --color-text-inverse: 255 255 255;
+
+    /* Component-specific - More subtle, professional */
+    --button-radius: var(--radius-md);
+    --card-radius: var(--radius-lg);
+    --input-radius: var(--radius-DEFAULT);
+    
+    /* Data visualization colors */
+    --data-blue: 59 130 246;
+    --data-green: 16 185 129;
+    --data-yellow: 245 158 11;
+    --data-red: 239 68 68;
+    --data-purple: 139 92 246;
+    --data-cyan: 6 182 212;
+    --data-orange: 249 115 22;
+    --data-pink: 236 72 153;
+  }
+
+  /* ============================================
+     Admin-Specific Components
+     ============================================ */
+  [data-theme="admin"],
+  [data-app="admin-web"],
+  [data-app="district-admin-web"],
+  [data-app="platform-admin-web"] {
+    /* Professional buttons */
+    .btn-primary {
+      background: rgb(var(--theme-primary));
+      color: rgb(var(--color-text-inverse));
+      border-radius: var(--button-radius);
+      font-weight: 500;
+      transition: all var(--transition-fast);
+    }
+    
+    .btn-primary:hover {
+      background: rgb(var(--theme-primary-dark));
+    }
+
+    .btn-primary:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 var(--focus-ring-width) rgba(79, 70, 229, 0.5);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: rgb(var(--theme-primary));
+      border: 1px solid rgb(var(--theme-primary));
+      border-radius: var(--button-radius);
+    }
+
+    .btn-secondary:hover {
+      background: rgb(var(--theme-primary-50));
+    }
+
+    /* Data cards */
+    .card {
+      background: rgb(var(--color-surface-primary));
+      border-radius: var(--card-radius);
+      border: 1px solid rgb(var(--color-surface-border));
+      box-shadow: var(--shadow-xs);
+    }
+
+    .card-stat {
+      padding: var(--spacing-lg);
+    }
+
+    .card-stat-value {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      color: rgb(var(--color-text-primary));
+    }
+
+    .card-stat-label {
+      font-size: var(--font-size-sm);
+      color: rgb(var(--color-text-muted));
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Tables */
+    .table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    .table th {
+      background: rgb(var(--color-bg-tertiary));
+      font-weight: 600;
+      text-align: left;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgb(var(--color-text-muted));
+      border-bottom: 1px solid rgb(var(--color-surface-border));
+    }
+
+    .table td {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-bottom: 1px solid rgb(var(--color-surface-border));
+      color: rgb(var(--color-text-primary));
+    }
+
+    .table tr:hover td {
+      background: rgb(var(--color-surface-hover));
+    }
+
+    /* Navigation */
+    .nav-sidebar {
+      background: rgb(var(--color-surface-primary));
+      border-right: 1px solid rgb(var(--color-surface-border));
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      color: rgb(var(--color-text-secondary));
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+
+    .nav-link:hover {
+      background: rgb(var(--color-surface-hover));
+      color: rgb(var(--color-text-primary));
+    }
+
+    .nav-link.active {
+      background: rgb(var(--theme-primary-50));
+      color: rgb(var(--theme-primary));
+      font-weight: 500;
+    }
+
+    /* Status badges */
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: 2px var(--spacing-sm);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+    }
+
+    .badge-status-success {
+      background: rgb(var(--color-success-light));
+      color: rgb(var(--color-success-text));
+    }
+
+    .badge-status-warning {
+      background: rgb(var(--color-warning-light));
+      color: rgb(var(--color-warning-text));
+    }
+
+    .badge-status-error {
+      background: rgb(var(--color-error-light));
+      color: rgb(var(--color-error-text));
+    }
+
+    .badge-status-info {
+      background: rgb(var(--color-info-light));
+      color: rgb(var(--color-info-text));
+    }
+  }
+
+  /* ============================================
+     Admin Dashboard Specific
+     ============================================ */
+  [data-theme="admin"] .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  [data-theme="admin"] .chart-container {
+    background: rgb(var(--color-surface-primary));
+    border-radius: var(--card-radius);
+    border: 1px solid rgb(var(--color-surface-border));
+    padding: var(--spacing-lg);
+  }
+}

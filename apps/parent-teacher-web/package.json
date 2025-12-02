@@ -13,7 +13,11 @@
     "react-dom": "18.3.0",
     "@aivo/api-client": "workspace:*",
     "@aivo/types": "workspace:*",
-    "@aivo/auth": "workspace:*"
+    "@aivo/auth": "workspace:*",
+    "@aivo/ui": "workspace:*",
+    "lucide-react": "^0.462.0",
+    "recharts": "^2.12.7",
+    "sonner": "^1.7.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.18",

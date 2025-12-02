@@ -31,7 +31,7 @@ export default function IEPManagementPage() {
       description: "Browse SMART-compliant goal templates organized by domain",
       icon: BookOpen,
       href: `/teacher/learners/${learnerId}/iep/templates`,
-      color: "text-purple-600 bg-purple-100 dark:bg-purple-900",
+      color: "text-theme-primary bg-theme-primary/10 dark:bg-theme-primary/20",
     },
     {
       title: "Current Goals",

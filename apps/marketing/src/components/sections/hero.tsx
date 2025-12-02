@@ -32,7 +32,7 @@ export function Hero() {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute -bottom-20 -left-20 w-96 h-96 bg-gradient-to-tr from-purple-200/30 to-coral-200/30 rounded-full blur-3xl"
+          className="absolute -bottom-20 -left-20 w-96 h-96 bg-gradient-to-tr from-theme-primary/20 to-coral-200/30 rounded-full blur-3xl"
         />
       </div>
 
@@ -118,7 +118,7 @@ export function Hero() {
               <span>Schools Enrolled</span>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-500" />
+              <Sparkles className="w-5 h-5 text-theme-primary" />
               <span className="font-semibold">98%</span>
               <span>Parent Satisfaction</span>
             </div>

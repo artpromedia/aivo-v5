@@ -115,7 +115,7 @@ export function IEPGoalsTracker({ learnerId }: { learnerId?: string }) {
               <span>{Math.round(goal.progress)}%</span>
             </div>
             <div className="h-2 w-full rounded-full bg-slate-100">
-              <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${goal.progress}%` }} />
+              <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-theme-primary" style={{ width: `${goal.progress}%` }} />
             </div>
             <div className="flex justify-between text-xs text-slate-500">
               <span>Started: {new Date(goal.createdAt).toLocaleDateString()}</span>

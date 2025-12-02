@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../AuthProvider";
 import type { LearnerAnalyticsOverview } from "@aivo/types";
+import {
+  Loader2,
+  Lock,
+  BarChart3,
+  TrendingUp,
+  Brain,
+  Sprout,
+  MessageCircle,
+  Heart,
+  ArrowLeft,
+  FileText,
+} from "lucide-react";
 
 const MOCK_LEARNER_ID = "demo-learner";
 
@@ -28,14 +40,16 @@ export default function LearnerAnalyticsPage() {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lavender-50 to-lavender-100 p-6">
         <div className="bg-white rounded-3xl shadow-xl p-8 text-center max-w-sm">
-          <div className="text-5xl mb-4">🔐</div>
+          <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-violet-600" />
+          </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Sign In Required</h2>
           <p className="text-slate-600 mb-4">
             Please sign in to view learner progress
           </p>
           <Link
             href="/login"
-            className="block w-full py-3 bg-violet-500 hover:bg-violet-600 text-white font-semibold rounded-2xl shadow-lg transition-all"
+            className="block w-full py-3 bg-theme-primary hover:bg-theme-primary/90 text-white font-semibold rounded-2xl shadow-lg transition-all"
           >
             Sign In →
           </Link>
@@ -49,17 +63,17 @@ export default function LearnerAnalyticsPage() {
       {/* Back Navigation */}
       <Link 
         href="/learner"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-medium mb-6 transition-colors"
       >
-        <span className="text-lg">←</span> Back to Overview
+        <ArrowLeft className="w-5 h-5" /> Back to Overview
       </Link>
 
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <header className="bg-white rounded-3xl shadow-xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
-              📊
+            <div className="w-16 h-16 bg-gradient-to-br from-theme-primary/60 to-theme-primary rounded-2xl flex items-center justify-center">
+              <BarChart3 className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Progress & Insights</h1>
@@ -72,7 +86,7 @@ export default function LearnerAnalyticsPage() {
 
         {loading && (
           <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
-            <div className="animate-spin text-4xl mb-3">🌟</div>
+            <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto mb-3" />
             <p className="text-slate-500">Loading analytics...</p>
           </div>
         )}
@@ -88,7 +102,9 @@ export default function LearnerAnalyticsPage() {
             {/* Subject Progress */}
             <section className="bg-white rounded-3xl shadow-lg p-6">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">📈</span>
+                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-violet-600" />
+                </div>
                 <h2 className="text-lg font-semibold text-slate-900">Subject Progress</h2>
               </div>
               <p className="text-sm text-slate-500 mb-4">
@@ -102,7 +118,7 @@ export default function LearnerAnalyticsPage() {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="text-sm font-bold text-violet-700 uppercase tracking-wide">
+                        <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
                           {s.subject}
                         </p>
                         <p className="text-xs text-slate-600 mt-1">
@@ -112,7 +128,7 @@ export default function LearnerAnalyticsPage() {
                     </div>
                     {s.timeseries.length === 0 ? (
                       <div className="bg-white rounded-xl p-3 text-center">
-                        <span className="text-lg">🌱</span>
+                        <Sprout className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
                         <p className="text-xs text-slate-500 mt-1">
                           No practice data yet. AIVO will build this view as your learner engages.
                         </p>
@@ -126,7 +142,7 @@ export default function LearnerAnalyticsPage() {
                           >
                             <span className="text-xs font-medium text-slate-700">{pt.date}</span>
                             <div className="flex gap-3 text-xs">
-                              <span className="bg-violet-100 text-violet-700 px-2 py-1 rounded-full">
+                              <span className="bg-theme-primary/10 text-theme-primary px-2 py-1 rounded-full">
                                 Mastery: {(pt.masteryScore * 100).toFixed(0)}%
                               </span>
                               <span className="bg-sky-100 text-sky-700 px-2 py-1 rounded-full">
@@ -148,7 +164,9 @@ export default function LearnerAnalyticsPage() {
             {/* Difficulty Explanations */}
             <section className="bg-white rounded-3xl shadow-lg p-6">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">🧠</span>
+                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-violet-600" />
+                </div>
                 <h2 className="text-lg font-semibold text-slate-900">Why AIVO Chooses This Difficulty</h2>
               </div>
               <p className="text-sm text-slate-500 mb-4">
@@ -162,21 +180,22 @@ export default function LearnerAnalyticsPage() {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="text-sm font-bold text-violet-700 uppercase tracking-wide">
+                        <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
                           {d.subject}
                         </p>
                         <div className="flex gap-2 mt-2">
                           <span className="inline-flex items-center px-2 py-1 bg-white text-slate-700 rounded-full text-xs">
                             Current: Grade <span className="font-bold ml-1">{d.currentDifficultyLevel}</span>
                           </span>
-                          <span className="inline-flex items-center px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-xs">
+                          <span className="inline-flex items-center px-2 py-1 bg-theme-primary/10 text-theme-primary rounded-full text-xs">
                             Target: Grade <span className="font-bold ml-1">{d.targetDifficultyLevel}</span>
                           </span>
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-slate-600 mb-3 bg-white rounded-xl p-3">
-                      💬 {d.rationale}
+                    <p className="text-sm text-slate-600 mb-3 bg-white rounded-xl p-3 flex items-start gap-2">
+                      <MessageCircle className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
+                      <span>{d.rationale}</span>
                     </p>
                     <div>
                       <p className="text-xs font-medium text-slate-500 mb-2">AIVO considers:</p>
@@ -196,7 +215,7 @@ export default function LearnerAnalyticsPage() {
                 ))}
                 {analytics.difficultySummaries.length === 0 && (
                   <div className="bg-lavender-50 rounded-2xl p-6 text-center">
-                    <span className="text-3xl mb-3 block">📝</span>
+                    <FileText className="w-8 h-8 text-violet-400 mx-auto mb-3" />
                     <p className="text-slate-600 text-sm">
                       AIVO doesn&apos;t have enough data yet to explain difficulty choices. Once baseline and sessions are recorded, you&apos;ll see detailed reasons here.
                     </p>
@@ -208,8 +227,9 @@ export default function LearnerAnalyticsPage() {
         )}
 
         {/* Footer */}
-        <div className="text-center text-slate-400 text-sm py-4">
-          💜 Understanding helps us support your learner better
+        <div className="flex items-center justify-center gap-2 text-slate-400 text-sm py-4">
+          <Heart className="w-4 h-4 text-violet-400" />
+          Understanding helps us support your learner better
         </div>
       </div>
     </main>

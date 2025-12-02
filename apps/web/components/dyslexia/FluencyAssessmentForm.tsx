@@ -311,7 +311,7 @@ export function FluencyAssessmentForm({ learnerId, onSave }: FluencyAssessmentFo
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5 text-purple-500" />
+            <Mic className="h-5 w-5 text-theme-primary" />
             Prosody Assessment (1-4 Scale)
           </CardTitle>
           <CardDescription>
@@ -328,8 +328,8 @@ export function FluencyAssessmentForm({ learnerId, onSave }: FluencyAssessmentFo
                   key={score}
                   className={`p-3 rounded-lg border-2 cursor-pointer text-center transition-all ${
                     formData.expressionScore === score
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => setFormData({ ...formData, expressionScore: score })}
                 >
@@ -349,8 +349,8 @@ export function FluencyAssessmentForm({ learnerId, onSave }: FluencyAssessmentFo
                   key={score}
                   className={`p-3 rounded-lg border-2 cursor-pointer text-center transition-all ${
                     formData.phrasingScore === score
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => setFormData({ ...formData, phrasingScore: score })}
                 >
@@ -370,8 +370,8 @@ export function FluencyAssessmentForm({ learnerId, onSave }: FluencyAssessmentFo
                   key={score}
                   className={`p-3 rounded-lg border-2 cursor-pointer text-center transition-all ${
                     formData.smoothnessScore === score
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => setFormData({ ...formData, smoothnessScore: score })}
                 >
@@ -391,8 +391,8 @@ export function FluencyAssessmentForm({ learnerId, onSave }: FluencyAssessmentFo
                   key={score}
                   className={`p-3 rounded-lg border-2 cursor-pointer text-center transition-all ${
                     formData.paceScore === score
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => setFormData({ ...formData, paceScore: score })}
                 >
@@ -405,8 +405,8 @@ export function FluencyAssessmentForm({ learnerId, onSave }: FluencyAssessmentFo
 
           {/* Prosody Total */}
           {prosodyTotal > 0 && (
-            <div className="p-4 bg-purple-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-purple-600">{prosodyTotal}/16</div>
+            <div className="p-4 bg-theme-primary/10 rounded-lg text-center">
+              <div className="text-3xl font-bold text-theme-primary">{prosodyTotal}/16</div>
               <div className="text-sm text-gray-500">Prosody Total Score</div>
             </div>
           )}

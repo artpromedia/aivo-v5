@@ -34,7 +34,7 @@ export default function AdminAnalyticsPage() {
       {/* Back Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary-dark font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Console
       </Link>
@@ -43,7 +43,7 @@ export default function AdminAnalyticsPage() {
         {/* Header */}
         <header className="bg-white rounded-3xl shadow-xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 bg-gradient-to-br from-theme-primary-light to-theme-primary rounded-2xl flex items-center justify-center text-3xl">
               📊
             </div>
             <div>
@@ -74,7 +74,7 @@ export default function AdminAnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="bg-white rounded-3xl shadow-lg p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center text-2xl">👧</span>
+                  <span className="w-12 h-12 bg-theme-primary/10 rounded-xl flex items-center justify-center text-2xl">👧</span>
                 </div>
                 <p className="text-4xl font-bold text-slate-900">{data.learnersCount}</p>
                 <p className="text-slate-500 mt-1">Active Learners</p>
@@ -126,10 +126,10 @@ export default function AdminAnalyticsPage() {
             </section>
 
             {/* Coming Soon */}
-            <section className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-3xl p-6 text-white text-center">
+            <section className="bg-gradient-to-r from-theme-primary to-theme-primary-dark rounded-3xl p-6 text-theme-primary-contrast text-center">
               <div className="text-3xl mb-2">🚀</div>
               <h3 className="font-semibold mb-1">More Analytics Coming Soon</h3>
-              <p className="text-white/80 text-sm">
+              <p className="text-theme-primary-contrast/80 text-sm">
                 Subject breakdowns, intervention tracking, and trend analysis are on the way!
               </p>
             </section>

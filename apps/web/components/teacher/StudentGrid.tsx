@@ -47,7 +47,7 @@ export function StudentGrid({ students }: { students: TeacherStudentSummary[] })
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <button className="text-xs rounded bg-blue-100 px-3 py-1 font-semibold text-blue-700">View Progress</button>
-                <button className="text-xs rounded bg-purple-100 px-3 py-1 font-semibold text-purple-700">Send Message</button>
+                <button className="text-xs rounded bg-theme-primary/10 px-3 py-1 font-semibold text-theme-primary">Send Message</button>
                 <Link
                   href={`/portals/teacher/learners/${student.id}/accommodations`}
                   className="text-xs rounded bg-emerald-100 px-3 py-1 font-semibold text-emerald-700"

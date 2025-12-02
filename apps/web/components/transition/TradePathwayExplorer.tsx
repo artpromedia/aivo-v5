@@ -162,7 +162,7 @@ export function TradePathwayExplorer({
               type="checkbox"
               checked={showDisabilityOnly}
               onChange={(e) => setShowDisabilityOnly(e.target.checked)}
-              className="w-4 h-4 text-purple-600 rounded"
+              className="w-4 h-4 text-theme-primary rounded"
             />
             <span className="text-sm">♿ Disability Services Available</span>
           </label>
@@ -268,7 +268,7 @@ export function TradePathwayExplorer({
                 {/* Accessibility */}
                 {program.disabilityServicesAvailable && (
                   <div className="mt-3 pt-3 border-t">
-                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                    <span className="text-xs bg-theme-primary/10 text-theme-primary px-2 py-0.5 rounded inline-flex items-center gap-1">
                       ♿ Disability Services Available
                     </span>
                   </div>
@@ -333,7 +333,7 @@ export function TradePathwayExplorer({
                     )}
                     
                     {program.disabilityServicesAvailable && (
-                      <span className="text-purple-600" title="Disability Services Available">♿</span>
+                      <span className="text-theme-primary" title="Disability Services Available">♿</span>
                     )}
                     
                     <button

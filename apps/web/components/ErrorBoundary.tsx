@@ -74,7 +74,7 @@ export function ChildFriendlyErrorFallback({ error, resetError }: ErrorFallbackP
       </p>
       <button
         onClick={resetError}
-        className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-lg font-semibold text-white shadow-lg transition-transform hover:scale-105"
+        className="rounded-full bg-gradient-to-r from-indigo-500 to-theme-primary px-8 py-3 text-lg font-semibold text-white shadow-lg transition-transform hover:scale-105"
       >
         🔄 Try Again!
       </button>

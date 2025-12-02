@@ -132,7 +132,7 @@ export function DyslexiaProfileSetup({ learnerId, existingProfile, onSave }: Dys
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-500" />
+            <Brain className="h-5 w-5 text-theme-primary" />
             Diagnosis Information
           </CardTitle>
           <CardDescription>
@@ -148,8 +148,8 @@ export function DyslexiaProfileSetup({ learnerId, existingProfile, onSave }: Dys
                   key={option.value}
                   className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                     formData.severity === option.value
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => setFormData({ ...formData, severity: option.value })}
                 >
@@ -168,8 +168,8 @@ export function DyslexiaProfileSetup({ learnerId, existingProfile, onSave }: Dys
                   key={option.value}
                   className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                     formData.subtypes.includes(option.value)
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => handleSubtypeToggle(option.value)}
                 >
@@ -375,8 +375,8 @@ export function DyslexiaProfileSetup({ learnerId, existingProfile, onSave }: Dys
                   key={option.value}
                   className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                     formData.preferredModalities.includes(option.value)
-                      ? "border-purple-500 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-200"
+                      ? "border-theme-primary bg-theme-primary/10"
+                      : "border-gray-200 hover:border-theme-primary/20"
                   }`}
                   onClick={() => handleModalityToggle(option.value)}
                 >

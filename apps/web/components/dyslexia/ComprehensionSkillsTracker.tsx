@@ -93,7 +93,7 @@ const SKILL_CONFIG: Record<ComprehensionSkillType, {
       "Retell events in order",
       "Number the steps"
     ],
-    color: "bg-purple-100 text-purple-700"
+    color: "bg-theme-primary/10 text-theme-primary"
   },
   CAUSE_EFFECT: {
     label: "Cause & Effect",

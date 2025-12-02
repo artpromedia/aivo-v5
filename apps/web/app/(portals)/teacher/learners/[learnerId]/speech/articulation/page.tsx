@@ -157,7 +157,7 @@ export default function ArticulationPage() {
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-2xl font-bold text-theme-primary">
                   {Math.round(
                     targets.reduce((sum, t) => sum + t.currentAccuracy, 0) / targets.length
                   )}

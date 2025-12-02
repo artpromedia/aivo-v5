@@ -36,7 +36,7 @@ interface ArticulationProgressChartProps {
 const positionColors: Record<string, string> = {
   INITIAL: "bg-blue-500",
   MEDIAL: "bg-green-500",
-  FINAL: "bg-purple-500",
+  FINAL: "bg-theme-primary",
   BLENDS: "bg-orange-500",
   ALL_POSITIONS: "bg-gray-500",
 };
@@ -70,7 +70,7 @@ export function ArticulationProgressChart({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-purple-600">{totalTrials}</div>
+            <div className="text-3xl font-bold text-theme-primary">{totalTrials}</div>
             <div className="text-sm text-gray-500">Total Trials</div>
           </CardContent>
         </Card>
@@ -115,7 +115,7 @@ export function ArticulationProgressChart({
                     className="flex-1 flex flex-col items-center gap-1"
                   >
                     <div
-                      className="w-full bg-purple-500 rounded-t transition-all hover:bg-purple-600"
+                      className="w-full bg-theme-primary rounded-t transition-all hover:bg-theme-primary/80"
                       style={{ 
                         height: `${(day.totalTrials / maxTrials) * 100}%`,
                         minHeight: day.totalTrials > 0 ? "8px" : "0"
@@ -194,7 +194,7 @@ export function ArticulationProgressChart({
                   <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className={`absolute left-0 top-0 h-full rounded-full transition-all ${
-                        phoneme.accuracy >= goalAccuracy ? 'bg-green-500' : 'bg-purple-500'
+                        phoneme.accuracy >= goalAccuracy ? 'bg-green-500' : 'bg-theme-primary'
                       }`}
                       style={{ width: `${Math.min(phoneme.accuracy, 100)}%` }}
                     />
@@ -218,7 +218,7 @@ export function ArticulationProgressChart({
       {/* Legend */}
       <div className="flex flex-wrap gap-4 justify-center text-sm text-gray-600">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-purple-500" />
+          <div className="w-3 h-3 rounded bg-theme-primary" />
           <span>Trial Count</span>
         </div>
         <div className="flex items-center gap-2">

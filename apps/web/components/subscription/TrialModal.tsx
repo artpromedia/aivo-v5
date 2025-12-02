@@ -131,7 +131,7 @@ function WelcomeTrialContent({
   return (
     <div className="p-8 text-center">
       {/* Icon */}
-      <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+      <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-500 to-theme-primary rounded-full flex items-center justify-center mb-6">
         <svg
           className="w-10 h-10 text-white"
           fill="none"
@@ -198,7 +198,7 @@ function WelcomeTrialContent({
       <div className="flex flex-col gap-3">
         <button
           onClick={onStartSubscription}
-          className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-theme-primary text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-theme-primary transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           Start Free Trial
         </button>
@@ -322,7 +322,7 @@ function TrialActiveContent({
           className={`w-full py-3 px-6 font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 ${
             isUrgent
               ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white focus:ring-red-500"
-              : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white focus:ring-indigo-500"
+              : "bg-gradient-to-r from-indigo-600 to-theme-primary hover:from-indigo-700 hover:to-theme-primary text-white focus:ring-indigo-500"
           }`}
         >
           Subscribe Now
@@ -414,7 +414,7 @@ function TrialEndedContent({
 
       <button
         onClick={onStartSubscription}
-        className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-theme-primary text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-theme-primary transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       >
         Subscribe Now
       </button>
@@ -511,7 +511,7 @@ function SubscriptionEndedContent({
 
       <button
         onClick={onResubscribe}
-        className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-theme-primary text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-theme-primary transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       >
         Resubscribe
       </button>

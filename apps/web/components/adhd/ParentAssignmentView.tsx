@@ -64,7 +64,7 @@ const statusConfig = {
   IN_PROGRESS: { label: "In Progress", color: "bg-blue-100 text-blue-700", icon: Clock },
   COMPLETED: { label: "Completed", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
   LATE: { label: "Late", color: "bg-red-100 text-red-700", icon: AlertCircle },
-  EXCUSED: { label: "Excused", color: "bg-purple-100 text-purple-700", icon: CheckCircle2 },
+  EXCUSED: { label: "Excused", color: "bg-theme-primary/10 text-theme-primary", icon: CheckCircle2 },
 };
 
 export function ParentAssignmentView({
@@ -158,7 +158,7 @@ export function ParentAssignmentView({
           label="Pomodoros"
           value={weeklyStats.pomodorosCompleted}
           icon={Clock}
-          color="text-purple-500"
+          color="text-theme-primary"
         />
         <StatCard
           label="Focus Time"

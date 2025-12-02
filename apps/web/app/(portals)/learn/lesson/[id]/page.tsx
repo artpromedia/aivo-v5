@@ -254,8 +254,8 @@ export default function LearningSession({ params }: LearningSessionProps) {
             <h3 className="text-2xl font-bold text-slate-900">Let’s load a personalized brain break</h3>
             <p className="mt-2 text-slate-500">We noticed distraction patterns. We’ll switch into a quick game and then resume your lesson.</p>
             <div className="mt-6 flex items-center gap-3">
-              <span className="h-3 w-3 animate-ping rounded-full bg-purple-500" />
-              <span className="text-sm text-purple-600">Curating your game...</span>
+              <span className="h-3 w-3 animate-ping rounded-full bg-theme-primary" />
+              <span className="text-sm text-theme-primary">Curating your game...</span>
             </div>
           </div>
         </div>

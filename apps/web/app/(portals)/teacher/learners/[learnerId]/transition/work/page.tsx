@@ -73,7 +73,7 @@ const mockPartners = [
 
 const typeConfig: Record<ExperienceType, { label: string; icon: string; color: string }> = {
   'job-shadow': { label: 'Job Shadow', icon: '👁️', color: 'bg-blue-100 text-blue-700' },
-  'internship': { label: 'Internship', icon: '📋', color: 'bg-purple-100 text-purple-700' },
+  'internship': { label: 'Internship', icon: '📋', color: 'bg-theme-primary/10 text-theme-primary' },
   'work-experience': { label: 'Work Experience', icon: '💼', color: 'bg-green-100 text-green-700' },
 };
 

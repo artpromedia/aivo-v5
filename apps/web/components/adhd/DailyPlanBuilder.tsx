@@ -60,7 +60,7 @@ interface DailyPlanBuilderProps {
 
 const categoryConfig: Record<TimeBlockCategory, { label: string; color: string; bgColor: string }> = {
   HOMEWORK: { label: "Homework", color: "text-blue-700", bgColor: "bg-blue-100 border-blue-300" },
-  STUDY: { label: "Study", color: "text-purple-700", bgColor: "bg-purple-100 border-purple-300" },
+  STUDY: { label: "Study", color: "text-theme-primary", bgColor: "bg-theme-primary/10 border-theme-primary/30" },
   PROJECT: { label: "Project", color: "text-indigo-700", bgColor: "bg-indigo-100 border-indigo-300" },
   READING: { label: "Reading", color: "text-emerald-700", bgColor: "bg-emerald-100 border-emerald-300" },
   BREAK: { label: "Break", color: "text-orange-700", bgColor: "bg-orange-100 border-orange-300" },
@@ -217,7 +217,7 @@ export function DailyPlanBuilder({
             <Calendar className="h-5 w-5 text-gray-500" />
             <h3 className="font-semibold">{formattedDate}</h3>
             {plan?.aiGenerated && (
-              <Badge className="bg-purple-100 text-purple-700">
+              <Badge className="bg-theme-primary/10 text-theme-primary">
                 <Sparkles className="h-3 w-3 mr-1" />
                 AI Generated
               </Badge>

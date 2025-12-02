@@ -58,7 +58,7 @@ interface ParentHomePracticeProps {
 
 const TYPE_CONFIG: Record<HomePracticeActivity["type"], { icon: React.ReactNode; color: string; label: string }> = {
   reading: { icon: <BookOpen className="h-4 w-4" />, color: "bg-blue-100 text-blue-700", label: "Reading" },
-  phonics: { icon: <Target className="h-4 w-4" />, color: "bg-purple-100 text-purple-700", label: "Phonics" },
+  phonics: { icon: <Target className="h-4 w-4" />, color: "bg-theme-primary/10 text-theme-primary", label: "Phonics" },
   sight_words: { icon: <Star className="h-4 w-4" />, color: "bg-yellow-100 text-yellow-700", label: "Sight Words" },
   writing: { icon: <FileText className="h-4 w-4" />, color: "bg-green-100 text-green-700", label: "Writing" },
   fluency: { icon: <TrendingUp className="h-4 w-4" />, color: "bg-orange-100 text-orange-700", label: "Fluency" },
@@ -172,7 +172,7 @@ export function ParentHomePractice({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="bg-gradient-to-r from-blue-50 to-theme-primary/10">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -224,14 +224,14 @@ export function ParentHomePractice({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="h-5 w-5 text-purple-600" />
+            <Target className="h-5 w-5 text-theme-primary" />
             This Week's Focus
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {weeklyPlan.focusAreas.map((area, idx) => (
-              <Badge key={idx} variant="outline" className="bg-purple-50">
+              <Badge key={idx} variant="outline" className="bg-theme-primary/10">
                 {area}
               </Badge>
             ))}
@@ -476,7 +476,7 @@ export function ParentHomePractice({
             </Button>
             <Button variant="outline" className="h-auto p-4 justify-start">
               <div className="flex items-center gap-3">
-                <Video className="h-5 w-5 text-purple-600" />
+                <Video className="h-5 w-5 text-theme-primary" />
                 <div className="text-left">
                   <div className="font-medium">Video Tutorials</div>
                   <div className="text-xs text-muted-foreground">Learn multisensory techniques</div>

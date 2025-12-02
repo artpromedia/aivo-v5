@@ -37,7 +37,7 @@ export default function TenantsPage() {
       {/* Back Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary-dark font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Console
       </Link>
@@ -46,7 +46,7 @@ export default function TenantsPage() {
         {/* Header */}
         <header className="bg-white rounded-3xl shadow-xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 bg-gradient-to-br from-theme-primary-light to-theme-primary rounded-2xl flex items-center justify-center text-3xl">
               🌐
             </div>
             <div>
@@ -61,7 +61,7 @@ export default function TenantsPage() {
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3">
           <div className="bg-white rounded-2xl shadow-lg p-5 flex items-center gap-4">
-            <span className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center text-2xl">🏢</span>
+            <span className="w-12 h-12 bg-theme-primary/10 rounded-xl flex items-center justify-center text-2xl">🏢</span>
             <div>
               <p className="text-2xl font-bold text-slate-900">{tenants.length}</p>
               <p className="text-sm text-slate-500">Total Tenants</p>
@@ -110,10 +110,10 @@ export default function TenantsPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-slate-900">{t.name}</h2>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-theme-primary/10 text-theme-primary px-2 py-1 rounded-full">
                           {t.type.replace(/_/g, " ")}
                         </span>
-                        <span className="text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-theme-info/10 text-theme-info px-2 py-1 rounded-full">
                           📍 {t.region}
                         </span>
                       </div>

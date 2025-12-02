@@ -62,7 +62,7 @@ const masteryLevelColors: Record<string, string> = {
   EMERGING: "bg-yellow-100 text-yellow-800",
   DEVELOPING: "bg-blue-100 text-blue-800",
   PROFICIENT: "bg-green-100 text-green-800",
-  MASTERED: "bg-purple-100 text-purple-800",
+  MASTERED: "bg-theme-primary/10 text-theme-primary",
   GENERALIZED: "bg-indigo-100 text-indigo-800",
 };
 

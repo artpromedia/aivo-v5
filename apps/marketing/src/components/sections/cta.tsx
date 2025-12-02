@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 export function CTA() {
   return (
-    <section className="py-24 bg-gradient-to-br from-coral-500 via-salmon-500 to-purple-600 relative overflow-hidden">
+    <section className="py-24 bg-gradient-to-br from-coral-500 via-salmon-500 to-theme-primary relative overflow-hidden">
       {/* Background patterns */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl" />

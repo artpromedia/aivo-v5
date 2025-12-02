@@ -76,7 +76,7 @@ export function ActivityRenderer({
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-purple-600 uppercase tracking-wide">
+            <span className="text-sm font-semibold text-theme-primary uppercase tracking-wide">
               Question
             </span>
             <div className="flex gap-1">
@@ -84,7 +84,7 @@ export function ActivityRenderer({
                 <div
                   key={i}
                   className={`w-2 h-2 rounded-full ${
-                    i < activity.difficulty ? 'bg-purple-500' : 'bg-gray-300'
+                    i < activity.difficulty ? 'bg-theme-primary' : 'bg-gray-300'
                   }`}
                 />
               ))}
@@ -95,10 +95,10 @@ export function ActivityRenderer({
         {adaptations?.audioSupport && (
           <button
             onClick={playAudio}
-            className="p-2 rounded-lg hover:bg-purple-50 transition-colors"
+            className="p-2 rounded-lg hover:bg-theme-primary/10 transition-colors"
             title="Listen to question"
           >
-            <Volume2 className="w-5 h-5 text-purple-600" />
+            <Volume2 className="w-5 h-5 text-theme-primary" />
           </button>
         )}
       </div>
@@ -246,7 +246,7 @@ export function ActivityRenderer({
             <button
               onClick={showNextHint}
               disabled={disabled}
-              className="inline-flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium disabled:opacity-50"
+              className="inline-flex items-center gap-2 text-sm text-theme-primary hover:text-theme-primary/80 font-medium disabled:opacity-50"
             >
               <Eye className="w-4 h-4" />
               Need a hint?
@@ -255,18 +255,18 @@ export function ActivityRenderer({
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4"
+              className="bg-theme-primary/10 border-2 border-theme-primary/20 rounded-xl p-4"
             >
-              <p className="text-sm font-semibold text-purple-900 mb-2">
+              <p className="text-sm font-semibold text-theme-primary mb-2">
                 💡 Hint {currentHintIndex}:
               </p>
-              <p className="text-sm text-purple-800">
+              <p className="text-sm text-theme-primary/80">
                 {activity.hints[currentHintIndex - 1]}
               </p>
               {currentHintIndex < activity.hints.length && (
                 <button
                   onClick={showNextHint}
-                  className="text-xs text-purple-600 hover:text-purple-700 font-medium mt-2"
+                  className="text-xs text-theme-primary hover:text-theme-primary/80 font-medium mt-2"
                 >
                   Show another hint
                 </button>

@@ -49,22 +49,22 @@ export default function AdminPage() {
                 </h1>
               </div>
               {role === "district_admin" && myTenant && (
-                <p className="text-slate-600">Managing <span className="font-semibold text-violet-600">{myTenant.name}</span></p>
+                <p className="text-slate-600">Managing <span className="font-semibold text-theme-primary">{myTenant.name}</span></p>
               )}
               {role === "platform_admin" && (
                 <p className="text-slate-600">
-                  Managing <span className="font-semibold text-violet-600">{tenants.length}</span> organization{tenants.length !== 1 ? "s" : ""}
+                  Managing <span className="font-semibold text-theme-primary">{tenants.length}</span> organization{tenants.length !== 1 ? "s" : ""}
                 </p>
               )}
             </div>
             
             {/* Role Toggle */}
-            <div className="inline-flex rounded-full bg-lavender-100 p-1">
+            <div className="inline-flex rounded-full bg-theme-background-elevated p-1">
               <button
                 className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
                   role === "district_admin"
-                    ? "bg-violet-500 text-white shadow-lg"
-                    : "text-slate-600 hover:text-violet-600"
+                    ? "bg-theme-primary text-theme-primary-contrast shadow-lg"
+                    : "text-slate-600 hover:text-theme-primary"
                 }`}
                 onClick={() => setRole("district_admin")}
               >
@@ -73,8 +73,8 @@ export default function AdminPage() {
               <button
                 className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
                   role === "platform_admin"
-                    ? "bg-violet-500 text-white shadow-lg"
-                    : "text-slate-600 hover:text-violet-600"
+                    ? "bg-theme-primary text-theme-primary-contrast shadow-lg"
+                    : "text-slate-600 hover:text-theme-primary"
                 }`}
                 onClick={() => setRole("platform_admin")}
               >
@@ -103,7 +103,7 @@ export default function AdminPage() {
             {role === "district_admin" ? (
               <div className="space-y-6">
                 <p className="text-slate-600 bg-white rounded-2xl p-4 shadow-md">
-                  Manage your district's learners, teachers, content, and view progress analytics.
+                  Manage your district&apos;s learners, teachers, content, and view progress analytics.
                 </p>
                 
                 <section className="grid gap-4 md:grid-cols-2">
@@ -216,20 +216,20 @@ export default function AdminPage() {
 
 const colorClasses = {
   violet: {
-    bg: "bg-lavender-50",
-    icon: "bg-violet-100 text-violet-600",
+    bg: "bg-theme-background-elevated",
+    icon: "bg-theme-primary/10 text-theme-primary",
   },
   sky: {
-    bg: "bg-sky-50",
-    icon: "bg-sky-100 text-sky-600",
+    bg: "bg-theme-info/5",
+    icon: "bg-theme-info/10 text-theme-info",
   },
   mint: {
-    bg: "bg-mint-50",
-    icon: "bg-emerald-100 text-emerald-600",
+    bg: "bg-theme-success/5",
+    icon: "bg-theme-success/10 text-theme-success",
   },
   sunshine: {
-    bg: "bg-sunshine-50",
-    icon: "bg-amber-100 text-amber-600",
+    bg: "bg-theme-warning/5",
+    icon: "bg-theme-warning/10 text-theme-warning-dark",
   },
   slate: {
     bg: "bg-slate-50",
@@ -254,7 +254,7 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="flex items-start gap-4 rounded-3xl bg-white shadow-lg p-6 hover:shadow-xl transition-all border border-transparent hover:border-violet-200"
+      className="flex items-start gap-4 rounded-3xl bg-white shadow-lg p-6 hover:shadow-xl transition-all border border-transparent hover:border-theme-primary/20"
     >
       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${colors.icon}`}>
         {icon}
@@ -263,7 +263,7 @@ function QuickLink({
         <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
         <p className="text-sm text-slate-500 mt-1">{description}</p>
       </div>
-      <span className="text-violet-400 text-xl">→</span>
+      <span className="text-theme-primary-light text-xl">→</span>
     </Link>
   );
 }

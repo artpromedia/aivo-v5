@@ -227,8 +227,8 @@ export default function ADHDStudyPage() {
                 className="flex items-center justify-between p-3 rounded-lg border"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <Calendar className="h-4 w-4 text-purple-600" />
+                  <div className="p-2 bg-theme-primary/10 dark:bg-theme-primary/30 rounded-lg">
+                    <Calendar className="h-4 w-4 text-theme-primary" />
                   </div>
                   <div>
                     <p className="font-medium">
@@ -268,7 +268,7 @@ export default function ADHDStudyPage() {
               return (
                 <div key={day} className="flex-1 flex flex-col items-center gap-2">
                   <div
-                    className="w-full bg-purple-500 rounded-t transition-all"
+                    className="w-full bg-theme-primary rounded-t transition-all"
                     style={{ height: `${height}%` }}
                   />
                   <span className="text-xs text-muted-foreground">{day}</span>

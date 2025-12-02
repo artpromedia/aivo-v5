@@ -92,7 +92,7 @@ function LearnerOverviewInner() {
       {/* Back Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Dashboard
       </Link>
@@ -103,7 +103,7 @@ function LearnerOverviewInner() {
           {/* Header Card */}
           <header className="bg-white rounded-3xl shadow-xl p-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+              <div className="w-16 h-16 bg-gradient-to-br from-theme-primary/60 to-theme-primary rounded-2xl flex items-center justify-center text-3xl">
                 👧
               </div>
               <div>
@@ -115,7 +115,7 @@ function LearnerOverviewInner() {
                 </p>
                 {overview && (
                   <div className="flex gap-2 mt-2">
-                    <span className="inline-flex items-center px-2 py-1 bg-lavender-100 text-violet-700 rounded-full text-xs font-medium">
+                    <span className="inline-flex items-center px-2 py-1 bg-lavender-100 text-theme-primary rounded-full text-xs font-medium">
                       Grade {overview.learner.currentGrade}
                     </span>
                     <span className="inline-flex items-center px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-medium">
@@ -159,19 +159,19 @@ function LearnerOverviewInner() {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-sm font-bold text-violet-700 uppercase tracking-wide">
+                          <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
                             {s.subject}
                           </p>
                           <p className="text-sm text-slate-600 mt-1">
                             Enrolled: <span className="font-semibold">Grade {s.enrolledGrade}</span>
                           </p>
                           <p className="text-sm text-slate-600">
-                            Working at: <span className="font-semibold text-violet-600">Grade {s.assessedGradeLevel}</span>
+                            Working at: <span className="font-semibold text-theme-primary">Grade {s.assessedGradeLevel}</span>
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-slate-400">Mastery</p>
-                          <p className="text-2xl font-bold text-violet-600">
+                          <p className="text-2xl font-bold text-theme-primary">
                             {(s.masteryScore * 100).toFixed(0)}%
                           </p>
                         </div>
@@ -331,7 +331,7 @@ function LearnerOverviewInner() {
                       type="button"
                       disabled={markingNotifId === n.id}
                       onClick={() => markNotificationRead(n.id)}
-                      className="text-xs font-medium rounded-full px-3 py-1 bg-violet-100 text-violet-700 hover:bg-violet-200 transition-all disabled:opacity-60"
+                      className="text-xs font-medium rounded-full px-3 py-1 bg-theme-primary/10 text-theme-primary hover:bg-theme-primary/20 transition-all disabled:opacity-60"
                     >
                       {markingNotifId === n.id ? "Marking..." : "Mark as read"}
                     </button>

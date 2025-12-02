@@ -51,7 +51,7 @@ export default function DistrictAdminTenantPage() {
       {/* Back Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary-dark font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Console
       </Link>
@@ -60,7 +60,7 @@ export default function DistrictAdminTenantPage() {
         {/* Header */}
         <header className="bg-white rounded-3xl shadow-xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 bg-gradient-to-br from-theme-primary-light to-theme-primary rounded-2xl flex items-center justify-center text-3xl">
               🏢
             </div>
             <div>
@@ -121,8 +121,8 @@ export default function DistrictAdminTenantPage() {
                         <span className="font-medium text-slate-900">{c.label}</span>
                       </div>
                       <div className="flex gap-2">
-                        <span className="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-full">{c.region}</span>
-                        <span className="text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-full">{c.standard}</span>
+                        <span className="text-xs bg-theme-primary/10 text-theme-primary px-2 py-1 rounded-full">{c.region}</span>
+                        <span className="text-xs bg-theme-info/10 text-theme-info px-2 py-1 rounded-full">{c.standard}</span>
                       </div>
                     </div>
                   ))}
@@ -165,7 +165,7 @@ export default function DistrictAdminTenantPage() {
                     <span className="text-2xl">🏫</span>
                     <h2 className="text-lg font-semibold text-slate-900">Schools</h2>
                   </div>
-                  <span className="text-sm bg-violet-100 text-violet-700 px-3 py-1 rounded-full font-medium">
+                  <span className="text-sm bg-theme-primary/10 text-theme-primary px-3 py-1 rounded-full font-medium">
                     {totalSchools} total
                   </span>
                 </div>

@@ -45,14 +45,14 @@ export function Navigation() {
     ],
     product: [
       {
-        name: 'Virtual Brain AI',
-        href: '/features/virtual-brain',
-        description: 'Personalized AI agent for each learner',
+        name: 'AI Tutoring',
+        href: '/features/ai-tutoring',
+        description: 'Personalized AI tutor for each learner',
       },
       {
-        name: 'Adaptive Learning',
-        href: '/features/adaptive-learning',
-        description: 'Real-time content adaptation',
+        name: 'All Features',
+        href: '/features',
+        description: 'Explore all AIVO capabilities',
       },
       {
         name: 'Accessibility',
@@ -66,10 +66,8 @@ export function Navigation() {
       },
     ],
     resources: [
-      { name: 'Research', href: '/research' },
-      { name: 'Success Stories', href: '/success-stories' },
       { name: 'Blog', href: '/blog' },
-      { name: 'Help Center', href: '/help' },
+      { name: 'Contact', href: '/contact' },
     ],
   }
 
@@ -87,8 +85,8 @@ export function Navigation() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity" />
-              <div className="relative w-11 h-11 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center transform group-hover:scale-105 transition-transform">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity" />
+              <div className="relative w-11 h-11 bg-gradient-to-br from-violet-600 to-purple-500 rounded-xl flex items-center justify-center transform group-hover:scale-105 transition-transform">
                 <Brain className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -105,8 +103,8 @@ export function Navigation() {
             <Link 
               href="/pricing" 
               className={cn(
-                "text-gray-700 hover:text-purple-600 font-medium transition-colors",
-                pathname === '/pricing' && "text-purple-600"
+                "text-gray-700 hover:text-violet-600 font-medium transition-colors",
+                pathname === '/pricing' && "text-violet-600"
               )}
             >
               Pricing
@@ -115,8 +113,8 @@ export function Navigation() {
             <Link 
               href="/demo" 
               className={cn(
-                "text-gray-700 hover:text-purple-600 font-medium transition-colors",
-                pathname === '/demo' && "text-purple-600"
+                "text-gray-700 hover:text-violet-600 font-medium transition-colors",
+                pathname === '/demo' && "text-violet-600"
               )}
             >
               Demo
@@ -125,14 +123,14 @@ export function Navigation() {
 
           {/* Desktop CTAs */}
           <div className="hidden lg:flex lg:items-center lg:gap-4">
-            <Link href="/signin">
-              <Button variant="ghost" className="text-gray-700 hover:text-purple-600">
+            <Link href="/demo">
+              <Button variant="ghost" className="text-gray-700 hover:text-violet-600">
                 <LogIn className="mr-2 h-4 w-4" />
                 Sign In
               </Button>
             </Link>
-            <Link href="/signup">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+            <Link href="/demo">
+              <Button className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                 Start Free Trial
                 <Sparkles className="ml-2 h-4 w-4" />
               </Button>
@@ -167,7 +165,7 @@ function DropdownMenu({ title, items, simple = false }: { title: string; items: 
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      <button className="flex items-center gap-1 text-gray-700 hover:text-purple-600 font-medium transition-colors">
+      <button className="flex items-center gap-1 text-gray-700 hover:text-violet-600 font-medium transition-colors">
         {title}
         <ChevronDown className={cn(
           "h-4 w-4 transition-transform",
@@ -188,17 +186,17 @@ function DropdownMenu({ title, items, simple = false }: { title: string; items: 
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="block px-4 py-3 rounded-xl hover:bg-purple-50 transition-colors group"
+                  className="block px-4 py-3 rounded-xl hover:bg-violet-50 transition-colors group"
                 >
                   {!simple && (
                     <div className="flex items-start gap-3">
                       {item.icon && (
-                        <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                          <item.icon className="w-4 h-4 text-purple-600" />
+                        <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
+                          <item.icon className="w-4 h-4 text-violet-600" />
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
+                        <p className="font-medium text-gray-900 group-hover:text-violet-600 transition-colors">
                           {item.name}
                         </p>
                         <p className="text-sm text-gray-600 mt-0.5">{item.description}</p>
@@ -206,7 +204,7 @@ function DropdownMenu({ title, items, simple = false }: { title: string; items: 
                     </div>
                   )}
                   {simple && (
-                    <p className="font-medium text-gray-700 hover:text-purple-600 transition-colors">
+                    <p className="font-medium text-gray-700 hover:text-violet-600 transition-colors">
                       {item.name}
                     </p>
                   )}
@@ -236,7 +234,7 @@ function MobileMenu({ navigation }: { navigation: any }) {
             <Link
               key={item.name}
               href={item.href}
-              className="block px-3 py-2 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+              className="block px-3 py-2 text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
             >
               {item.name}
             </Link>
@@ -249,7 +247,7 @@ function MobileMenu({ navigation }: { navigation: any }) {
             <Link
               key={item.name}
               href={item.href}
-              className="block px-3 py-2 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+              className="block px-3 py-2 text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
             >
               {item.name}
             </Link>
@@ -257,13 +255,13 @@ function MobileMenu({ navigation }: { navigation: any }) {
         </div>
         
         <div className="pt-4 space-y-2">
-          <Link href="/signin">
+          <Link href="/demo">
             <Button variant="outline" className="w-full">
               Sign In
             </Button>
           </Link>
-          <Link href="/signup">
-            <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+          <Link href="/demo">
+            <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white">
               Start Free Trial
             </Button>
           </Link>

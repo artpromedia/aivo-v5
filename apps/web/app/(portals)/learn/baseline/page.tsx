@@ -461,7 +461,7 @@ export default function BaselineAssessmentComplete() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-theme-primary/5">
       <div className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between text-sm text-slate-600">
@@ -472,7 +472,7 @@ export default function BaselineAssessmentComplete() {
           </div>
           <div className="w-full bg-slate-200 rounded-full h-3">
             <motion.div
-              className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full"
+              className="bg-gradient-to-r from-theme-primary to-pink-500 h-3 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5 }}
@@ -484,7 +484,7 @@ export default function BaselineAssessmentComplete() {
       <div className="pt-24 pb-10 px-4">
         <div className="mx-auto max-w-5xl space-y-6">
           <header className="space-y-2">
-            <p className="text-sm uppercase tracking-wide text-purple-600">Comprehensive Baseline</p>
+            <p className="text-sm uppercase tracking-wide text-theme-primary">Comprehensive Baseline</p>
             <h1 className="text-4xl font-semibold text-slate-900">Multi-domain discovery</h1>
             <p className="text-slate-600">
               We will explore how you express ideas, solve problems, and navigate feelings using text, audio, and visuals. Take breaks as needed.
@@ -517,7 +517,7 @@ export default function BaselineAssessmentComplete() {
                       setCurrentDomain((prev) => prev + 1);
                     }
                   }}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl shadow-md"
+                  className="px-6 py-3 bg-gradient-to-r from-theme-primary to-pink-500 text-white rounded-xl shadow-md"
                 >
                   Next →
                 </button>
@@ -655,7 +655,7 @@ function AdaptiveSkillCard({
       className="rounded-3xl bg-white p-8 shadow-xl"
     >
       <div className="flex items-center gap-3 mb-4">
-        <span className="rounded-full border border-purple-200 px-3 py-1 text-xs font-semibold text-purple-600 uppercase">
+        <span className="rounded-full border border-theme-primary/20 px-3 py-1 text-xs font-semibold text-theme-primary uppercase">
           {badge}
         </span>
         <p className="text-sm text-slate-500">Grade target G{gradeLevel}</p>
@@ -673,7 +673,7 @@ function AdaptiveSkillCard({
           <div className="flex items-center gap-2">
             <span className="text-2xl">{getDomainIcon(domain)}</span>
             <div>
-              <p className="text-sm uppercase tracking-wide text-purple-500">{componentId.replace('_', ' ')}</p>
+              <p className="text-sm uppercase tracking-wide text-theme-primary">{componentId.replace('_', ' ')}</p>
               <h2 className="text-2xl font-semibold text-slate-900">{question.content}</h2>
             </div>
           </div>
@@ -697,7 +697,7 @@ function AdaptiveSkillCard({
                   key={option}
                   onClick={() => setAnswer(option)}
                   className={`w-full rounded-2xl border-2 p-4 text-left transition ${
-                    answer === option ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-slate-300'
+                    answer === option ? 'border-theme-primary bg-theme-primary/5' : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <span className="mr-3 font-semibold">{String.fromCharCode(65 + idx)}.</span>
@@ -711,7 +711,7 @@ function AdaptiveSkillCard({
             <textarea
               value={answer}
               onChange={(event) => setAnswer(event.target.value)}
-              className="w-full rounded-2xl border-2 border-slate-200 p-4 text-base shadow-inner focus:border-purple-500 focus:outline-none"
+              className="w-full rounded-2xl border-2 border-slate-200 p-4 text-base shadow-inner focus:border-theme-primary focus:outline-none"
               rows={4}
               placeholder="Explain your thinking…"
             />
@@ -725,7 +725,7 @@ function AdaptiveSkillCard({
             <button
               onClick={handleSubmit}
               disabled={!canSubmit || loading}
-              className="rounded-full bg-gradient-to-r from-purple-500 to-blue-500 px-8 py-3 font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full bg-gradient-to-r from-theme-primary to-blue-500 px-8 py-3 font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
             >
               Submit response
             </button>
@@ -899,7 +899,7 @@ function SpeechAssessment({ componentId, sessionId, registerSyntheticQuestion, o
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-6">
+        <div className="rounded-2xl border border-theme-primary/10 bg-theme-primary/5 p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Target sounds</h3>
           <div className="grid grid-cols-3 gap-3">
             {['buh', 'puh', 'muh', 'duh', 'tuh', 'kuh'].map((sound) => (
@@ -917,7 +917,7 @@ function SpeechAssessment({ componentId, sessionId, registerSyntheticQuestion, o
               <button
                 onClick={startRecording}
                 disabled={isSubmitting}
-                className="px-8 py-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                className="px-8 py-3 rounded-full bg-gradient-to-r from-theme-primary to-pink-500 text-white font-semibold shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 🎤 {isSubmitting ? 'Analyzing…' : 'Start recording'}
               </button>
@@ -1027,11 +1027,11 @@ function PictureNaming({
         value={current}
         onChange={(event) => setCurrent(event.target.value)}
         placeholder="Type what you would say"
-        className="w-full rounded-2xl border-2 border-slate-200 p-3 focus:border-purple-500 focus:outline-none"
+        className="w-full rounded-2xl border-2 border-slate-200 p-3 focus:border-theme-primary focus:outline-none"
       />
       <button
         onClick={submit}
-        className="w-full rounded-2xl bg-purple-500 py-3 font-semibold text-white"
+        className="w-full rounded-2xl bg-theme-primary py-3 font-semibold text-white"
       >
         {index === cards.length - 1 ? 'Done' : 'Next card'}
       </button>

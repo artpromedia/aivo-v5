@@ -27,17 +27,17 @@ export function FocusBreakGame({ definition, onComplete }: FocusBreakGameProps) 
   }, [definition, onComplete]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-rose-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-theme-primary/10 via-pink-50 to-rose-100 p-6">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="rounded-3xl bg-white/90 p-6 shadow-2xl">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-purple-400">Brain break</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-theme-primary/60">Brain break</p>
               <h1 className="text-3xl font-bold text-slate-900">{definition.title}</h1>
               <p className="mt-2 text-slate-600">{definition.instructions}</p>
               <p className="mt-2 text-sm text-slate-500">Goal: {definition.educationalGoal}</p>
             </div>
-            <div className="rounded-2xl border border-purple-100 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-600">
+            <div className="rounded-2xl border border-theme-primary/10 bg-theme-primary/10 px-4 py-2 text-sm font-semibold text-theme-primary">
               {definition.duration}-minute game
             </div>
           </div>
@@ -137,7 +137,7 @@ function MemoryGame({ pairs, onComplete }: { pairs: MemoryElement[]; onComplete?
               key={card.id}
               onClick={() => handleFlip(card.id)}
               className={`aspect-square rounded-2xl border text-center text-sm font-semibold transition ${
-                isFlipped ? "border-purple-300 bg-purple-50 text-purple-700" : "border-slate-200 bg-white text-slate-700"
+                isFlipped ? "border-theme-primary/30 bg-theme-primary/10 text-theme-primary" : "border-slate-200 bg-white text-slate-700"
               }`}
             >
               {isFlipped ? card.content : "?"}
@@ -248,9 +248,9 @@ function CreativeGame({ prompts, onComplete }: { prompts: CreativeElement[]; onC
     <div className="rounded-3xl bg-white p-6 shadow-xl">
       <p className="text-sm text-slate-500">Express then return to learning</p>
       {prompts.map((prompt) => (
-        <div key={prompt.id} className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <p className="text-sm font-semibold text-violet-700">{prompt.prompt}</p>
-          <ul className="mt-2 list-disc pl-5 text-xs text-violet-600">
+        <div key={prompt.id} className="mt-4 rounded-2xl border border-theme-primary/20 bg-theme-primary/5 p-4">
+          <p className="text-sm font-semibold text-theme-primary-dark">{prompt.prompt}</p>
+          <ul className="mt-2 list-disc pl-5 text-xs text-theme-primary">
             {prompt.cues.map((cue) => (
               <li key={cue}>{cue}</li>
             ))}
@@ -268,7 +268,7 @@ function CreativeGame({ prompts, onComplete }: { prompts: CreativeElement[]; onC
         disabled={!ready}
         onClick={onComplete}
         className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition ${
-          ready ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-400"
+          ready ? "bg-theme-primary hover:bg-theme-primary-dark" : "bg-slate-400"
         }`}
       >
         Return to Learning

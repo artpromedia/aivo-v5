@@ -30,7 +30,7 @@ const SECTION_CONFIG: Record<PlanSection, { title: string; icon: string; color: 
   dreams: {
     title: 'Dreams & Aspirations',
     icon: '✨',
-    color: 'bg-purple-100 border-purple-300 text-purple-800',
+    color: 'bg-theme-primary/10 border-theme-primary/30 text-theme-primary',
     prompt: "What does the student dream of for their future? What are their hopes?",
   },
   nightmares: {
@@ -131,7 +131,7 @@ export function PersonCenteredPlanBuilder({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+      <Card className="bg-gradient-to-r from-indigo-500 to-theme-primary text-white">
         <CardContent className="p-6">
           <h2 className="text-2xl font-bold">{learnerName}'s Person-Centered Plan</h2>
           <p className="opacity-90 mt-2">
@@ -369,7 +369,7 @@ export function PersonCenteredPlanBuilder({
         <CardContent>
           <div className="grid grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-purple-600">{plan.dreams.length}</p>
+              <p className="text-2xl font-bold text-theme-primary">{plan.dreams.length}</p>
               <p className="text-sm text-gray-600">Dreams</p>
             </div>
             <div>

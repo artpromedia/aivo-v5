@@ -261,7 +261,7 @@ export function StudySessionTimer({
   const phaseConfig = {
     FOCUS: { label: "Focus Time", color: "text-blue-600", bgColor: "bg-blue-500" },
     SHORT_BREAK: { label: "Short Break", color: "text-green-600", bgColor: "bg-green-500" },
-    LONG_BREAK: { label: "Long Break", color: "text-purple-600", bgColor: "bg-purple-500" },
+    LONG_BREAK: { label: "Long Break", color: "text-theme-primary", bgColor: "bg-theme-primary" },
   };
 
   return (
@@ -348,7 +348,7 @@ export function StudySessionTimer({
               ? "bg-blue-100 text-blue-700"
               : currentPhase === "SHORT_BREAK"
               ? "bg-green-100 text-green-700"
-              : "bg-purple-100 text-purple-700"
+              : "bg-theme-primary/10 text-theme-primary"
           )}
         >
           {currentPhase === "FOCUS" ? (

@@ -8,7 +8,7 @@ import Link from "next/link";
 const client = new AivoApiClient("http://localhost:4000");
 
 const subjects: Array<{ id: SubjectCode; label: string; emoji: string; color: string }> = [
-  { id: "math", label: "Math", emoji: "🔢", color: "bg-violet-100 text-violet-700" },
+  { id: "math", label: "Math", emoji: "🔢", color: "bg-theme-primary/10 text-theme-primary" },
   { id: "ela", label: "Reading & Writing", emoji: "📚", color: "bg-sky-100 text-sky-700" },
   { id: "science", label: "Science", emoji: "🔬", color: "bg-mint-100 text-emerald-700" },
 ];
@@ -52,7 +52,7 @@ export default function BaselinePage() {
       {/* Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Dashboard
       </Link>
@@ -87,8 +87,8 @@ export default function BaselinePage() {
                   onClick={() => toggleSubject(subject.id)}
                   className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
                     selectedSubjects.includes(subject.id)
-                      ? "border-violet-400 bg-lavender-50 shadow-md"
-                      : "border-slate-200 bg-white hover:border-violet-200"
+                      ? "border-theme-primary/40 bg-lavender-50 shadow-md"
+                      : "border-slate-200 bg-white hover:border-theme-primary/20"
                   }`}
                 >
                   <span className={`text-2xl w-12 h-12 rounded-xl flex items-center justify-center ${subject.color}`}>
@@ -96,7 +96,7 @@ export default function BaselinePage() {
                   </span>
                   <span className="text-lg font-medium text-slate-800">{subject.label}</span>
                   {selectedSubjects.includes(subject.id) && (
-                    <span className="ml-auto text-violet-500 text-xl">✓</span>
+                    <span className="ml-auto text-theme-primary text-xl">✓</span>
                   )}
                 </button>
               ))}
@@ -105,7 +105,7 @@ export default function BaselinePage() {
             <button
               onClick={() => setStep("ready")}
               disabled={selectedSubjects.length === 0}
-              className="w-full py-4 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-theme-primary text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue →
             </button>
@@ -129,7 +129,7 @@ export default function BaselinePage() {
             </p>
 
             <div className="bg-lavender-50 rounded-2xl p-4 mb-6">
-              <p className="text-sm text-violet-700">
+              <p className="text-sm text-theme-primary">
                 <span className="font-medium">You selected:</span>{" "}
                 {selectedSubjects.map(id => subjects.find(s => s.id === id)?.label).join(", ")}
               </p>
@@ -161,7 +161,7 @@ export default function BaselinePage() {
               <button
                 onClick={handleStartBaseline}
                 disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+                className="flex-1 py-4 bg-theme-primary text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -195,7 +195,7 @@ export default function BaselinePage() {
 
             {assessmentId && (
               <div className="bg-lavender-50 rounded-2xl p-4 mb-6">
-                <p className="text-xs text-violet-600 font-mono">
+                <p className="text-xs text-theme-primary font-mono">
                   Session: {assessmentId}
                 </p>
               </div>
@@ -210,7 +210,7 @@ export default function BaselinePage() {
               </Link>
               <Link
                 href="/session"
-                className="flex-1 py-4 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all text-center"
+                className="flex-1 py-4 bg-theme-primary text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all text-center"
               >
                 Start Learning 📚
               </Link>

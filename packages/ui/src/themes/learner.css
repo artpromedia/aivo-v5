@@ -1,0 +1,167 @@
+/**
+ * AIVO Unified Design System - Learner Theme
+ * 
+ * Warm, friendly, encouraging theme for learner-facing apps
+ * Optimized for student engagement and neurodiverse accessibility
+ * 
+ * Used by: learner-web, parent-teacher-web (learner views)
+ * 
+ * @module themes/learner
+ */
+
+@import './base.css';
+
+@layer theme {
+  /* ============================================
+     Learner Theme Variables
+     ============================================ */
+  :root[data-theme="learner"],
+  [data-app="learner-web"],
+  [data-app="parent-teacher-web"] {
+    /* Primary Palette - Violet (Engaging, Creative) */
+    --theme-primary: 124 58 237;           /* #7C3AED */
+    --theme-primary-light: 167 139 250;    /* #A78BFA */
+    --theme-primary-dark: 109 40 217;      /* #6D28D9 */
+    --theme-primary-50: 245 243 255;       /* #F5F3FF */
+    --theme-primary-100: 237 233 254;      /* #EDE9FE */
+    --theme-primary-200: 221 214 254;      /* #DDD6FE */
+    --theme-primary-300: 196 181 253;      /* #C4B5FD */
+    --theme-primary-400: 167 139 250;      /* #A78BFA */
+    --theme-primary-500: 139 92 246;       /* #8B5CF6 */
+    --theme-primary-600: 124 58 237;       /* #7C3AED */
+    --theme-primary-700: 109 40 217;       /* #6D28D9 */
+    --theme-primary-800: 91 33 182;        /* #5B21B6 */
+    --theme-primary-900: 76 29 149;        /* #4C1D95 */
+
+    /* Secondary Palette - Fuchsia (Fun, Energetic) */
+    --theme-secondary: 240 171 252;        /* #F0ABFC */
+    --theme-secondary-light: 250 232 255;  /* #FAE8FF */
+    --theme-secondary-dark: 217 70 239;    /* #D946EF */
+
+    /* Accent - Mint Green (Growth, Success) */
+    --theme-accent: 110 231 183;           /* #6EE7B7 */
+    --theme-accent-light: 167 243 208;     /* #A7F3D0 */
+    --theme-accent-dark: 52 211 153;       /* #34D399 */
+
+    /* Backgrounds */
+    --color-bg-primary: 250 245 255;       /* #FAF5FF - Light lavender */
+    --color-bg-secondary: 255 255 255;     /* #FFFFFF */
+    --color-bg-tertiary: 243 232 255;      /* #F3E8FF */
+    --color-bg-gradient: linear-gradient(180deg, rgb(250 245 255) 0%, rgb(255 255 255) 100%);
+
+    /* Surfaces */
+    --color-surface-primary: 255 255 255;
+    --color-surface-secondary: 255 255 255;
+    --color-surface-border: 233 213 255;   /* #E9D5FF */
+    --color-surface-hover: 250 245 255;
+
+    /* Text */
+    --color-text-primary: 30 41 59;        /* #1E293B */
+    --color-text-secondary: 71 85 105;     /* #475569 */
+    --color-text-muted: 148 163 184;       /* #94A3B8 */
+    --color-text-inverse: 255 255 255;
+
+    /* Component-specific */
+    --button-radius: var(--radius-lg);
+    --card-radius: var(--radius-xl);
+    --input-radius: var(--radius-md);
+    
+    /* Learner-specific animations */
+    --animation-bounce: bounce 1s infinite;
+    --animation-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* ============================================
+     Learner-Specific Components
+     ============================================ */
+  [data-theme="learner"],
+  [data-app="learner-web"] {
+    /* Buttons with friendly feel */
+    .btn-primary {
+      background: rgb(var(--theme-primary));
+      color: rgb(var(--color-text-inverse));
+      border-radius: var(--button-radius);
+      font-weight: 600;
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-primary);
+    }
+    
+    .btn-primary:hover {
+      background: rgb(var(--theme-primary-dark));
+      box-shadow: var(--shadow-primary-lg);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+
+    /* Cards with warmth */
+    .card {
+      background: rgb(var(--color-surface-primary));
+      border-radius: var(--card-radius);
+      border: 1px solid rgb(var(--color-surface-border));
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-normal);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    /* Progress indicators with encouragement */
+    .progress-bar {
+      background: rgb(var(--theme-primary-100));
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, 
+        rgb(var(--theme-primary)) 0%, 
+        rgb(var(--theme-accent)) 100%
+      );
+      border-radius: var(--radius-full);
+      transition: width var(--transition-slow);
+    }
+
+    /* Achievement badges */
+    .badge-achievement {
+      background: linear-gradient(135deg, 
+        rgb(var(--theme-accent)) 0%, 
+        rgb(var(--theme-primary)) 100%
+      );
+      color: rgb(var(--color-text-inverse));
+      border-radius: var(--radius-full);
+      padding: var(--spacing-xs) var(--spacing-md);
+      font-weight: 600;
+    }
+  }
+
+  /* ============================================
+     Accessibility Overrides for Learners
+     ============================================ */
+  [data-theme="learner"][data-accessibility="enhanced"] {
+    --line-height-normal: 1.75;
+    --letter-spacing: 0.025em;
+    
+    /* Larger touch targets for young learners */
+    button,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"] {
+      min-height: 48px;
+      min-width: 48px;
+    }
+  }
+
+  /* Dyslexia mode for learner theme */
+  [data-theme="learner"][data-dyslexia="true"] {
+    font-family: var(--font-dyslexic);
+    --line-height-normal: 2;
+    letter-spacing: 0.05em;
+    word-spacing: 0.16em;
+  }
+}

@@ -43,7 +43,7 @@ export function Celebration({
       icon: Zap,
       title: 'Level Up!',
       subtitle: message || 'You\'ve unlocked a new challenge level!',
-      color: 'from-purple-400 to-pink-500',
+      color: 'from-theme-primary to-pink-500',
       emoji: '⚡'
     },
     perfect: {

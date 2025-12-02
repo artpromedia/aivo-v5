@@ -102,8 +102,8 @@ export function CollegeSearchFilters({ onFilterChange, initialFilters }: College
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Disability Services - Highlighted */}
-        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-          <h4 className="font-medium text-purple-800 mb-3 flex items-center gap-2">
+        <div className="p-4 bg-theme-primary/10 rounded-lg border border-theme-primary/20">
+          <h4 className="font-medium text-theme-primary mb-3 flex items-center gap-2">
             <span className="text-lg">♿</span>
             Disability Services
           </h4>
@@ -114,7 +114,7 @@ export function CollegeSearchFilters({ onFilterChange, initialFilters }: College
                 type="checkbox"
                 checked={filters.hasDisabilityServices}
                 onChange={(e) => updateFilter('hasDisabilityServices', e.target.checked)}
-                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                className="w-4 h-4 text-theme-primary rounded focus:ring-theme-primary"
               />
               <span className="text-sm">Has Disability Services Office</span>
             </label>
@@ -130,7 +130,7 @@ export function CollegeSearchFilters({ onFilterChange, initialFilters }: College
                     )}
                     className={`w-8 h-8 rounded ${
                       filters.minDisabilityRating !== null && rating <= filters.minDisabilityRating
-                        ? 'bg-purple-500 text-white'
+                        ? 'bg-theme-primary text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -256,7 +256,7 @@ export function CollegeSearchFilters({ onFilterChange, initialFilters }: College
                 </span>
               )}
               {filters.minDisabilityRating && (
-                <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                <span className="px-2 py-1 bg-theme-primary/10 text-theme-primary text-xs rounded-full">
                   {filters.minDisabilityRating}+ ★ Disability Services
                 </span>
               )}

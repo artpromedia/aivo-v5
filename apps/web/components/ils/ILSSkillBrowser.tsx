@@ -38,7 +38,7 @@ const domainColors: Record<string, string> = {
   MONEY_MANAGEMENT: "bg-green-100 text-green-800 border-green-200",
   COOKING_NUTRITION: "bg-orange-100 text-orange-800 border-orange-200",
   TRANSPORTATION: "bg-blue-100 text-blue-800 border-blue-200",
-  HOUSING_HOME_CARE: "bg-purple-100 text-purple-800 border-purple-200",
+  HOUSING_HOME_CARE: "bg-theme-primary/10 text-theme-primary border-theme-primary/20",
   HEALTH_SAFETY: "bg-red-100 text-red-800 border-red-200",
   COMMUNITY_RESOURCES: "bg-yellow-100 text-yellow-800 border-yellow-200",
 };
@@ -51,7 +51,7 @@ const masteryColors: Record<string, string> = {
   PRACTICING: "bg-blue-100 text-blue-700",
   INDEPENDENT: "bg-green-100 text-green-700",
   MASTERED: "bg-green-200 text-green-800",
-  GENERALIZED: "bg-purple-100 text-purple-800",
+  GENERALIZED: "bg-theme-primary/10 text-theme-primary",
 };
 
 export function ILSSkillBrowser({

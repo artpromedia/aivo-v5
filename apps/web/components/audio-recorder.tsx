@@ -47,9 +47,9 @@ export function AudioRecorder({ onRecordComplete }: AudioRecorderProps) {
   };
 
   return (
-    <div className="space-y-2 rounded-xl border border-purple-200 bg-purple-50/60 p-4 text-sm">
+    <div className="space-y-2 rounded-xl border border-theme-primary/20 bg-theme-primary/10 p-4 text-sm">
       <p className="font-semibold">Audio response</p>
-      <p className="text-purple-800/80">
+      <p className="text-theme-primary/80">
         {isRecording ? "Recording..." : "Record a quick spoken response."}
       </p>
       <div className="flex gap-3">
@@ -57,7 +57,7 @@ export function AudioRecorder({ onRecordComplete }: AudioRecorderProps) {
           type="button"
           onClick={isRecording ? stopRecording : startRecording}
           className={`rounded-full px-4 py-2 font-semibold text-white transition ${
-            isRecording ? "bg-red-500" : "bg-purple-500"
+            isRecording ? "bg-red-500" : "bg-theme-primary"
           }`}
         >
           {isRecording ? "Stop" : "Start"}

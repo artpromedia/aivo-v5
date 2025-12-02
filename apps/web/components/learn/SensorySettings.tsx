@@ -53,7 +53,7 @@ export function SensorySettings({ preferences, onUpdate, onSave, onPreview }: Se
         type="button"
         onClick={() => preferences && setIsOpen(true)}
         disabled={!preferences}
-  className="fixed bottom-4 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-500 text-white shadow-lg transition hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-200 disabled:cursor-not-allowed disabled:opacity-40"
+  className="fixed bottom-4 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-theme-primary text-white shadow-lg transition hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-theme-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Adjust sensory settings"
       >
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +85,7 @@ export function SensorySettings({ preferences, onUpdate, onSave, onPreview }: Se
                         key={theme}
                         type="button"
                         onClick={() => handleUpdate({ theme: value })}
-                        className={`rounded-2xl border-2 p-3 text-left transition ${isActive ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                        className={`rounded-2xl border-2 p-3 text-left transition ${isActive ? 'border-theme-primary bg-theme-primary/10' : 'border-gray-200 hover:border-gray-300'}`}
                       >
                         <div className={`h-10 rounded-xl theme-preview-${theme}`} />
                         <span className="mt-2 block text-xs font-medium capitalize text-gray-700">{theme}</span>
@@ -148,7 +148,7 @@ export function SensorySettings({ preferences, onUpdate, onSave, onPreview }: Se
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 rounded-2xl bg-purple-500 px-4 py-3 text-center font-semibold text-white shadow-lg transition hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-200 disabled:opacity-50"
+                className="flex-1 rounded-2xl bg-theme-primary px-4 py-3 text-center font-semibold text-white shadow-lg transition hover:bg-theme-primary/90 focus:outline-none focus:ring-4 focus:ring-theme-primary/20 disabled:opacity-50"
               >
                 {isSaving ? 'Saving…' : 'Save comfort settings'}
               </button>
@@ -172,9 +172,9 @@ function ToggleCard({ label, description, checked, onChange }: { label: string; 
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${checked ? 'border-purple-400 bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+      className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${checked ? 'border-theme-primary/40 bg-theme-primary/10' : 'border-gray-200 hover:border-gray-300'}`}
     >
-      <span className={`mt-1 h-5 w-5 rounded-full border-2 ${checked ? 'border-purple-500 bg-purple-500' : 'border-gray-300'}`} />
+      <span className={`mt-1 h-5 w-5 rounded-full border-2 ${checked ? 'border-theme-primary bg-theme-primary' : 'border-gray-300'}`} />
       <div>
         <p className="text-sm font-semibold text-gray-800">{label}</p>
         <p className="text-xs text-gray-500">{description}</p>

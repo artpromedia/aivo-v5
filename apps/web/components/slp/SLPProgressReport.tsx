@@ -109,7 +109,7 @@ interface SLPProgressReportProps {
 
 const GOAL_AREAS_CONFIG: Record<GoalArea, { label: string; icon: typeof Target; color: string }> = {
   ARTICULATION: { label: "Articulation", icon: Mic, color: "bg-blue-100 text-blue-800" },
-  FLUENCY: { label: "Fluency", icon: Activity, color: "bg-purple-100 text-purple-800" },
+  FLUENCY: { label: "Fluency", icon: Activity, color: "bg-theme-secondary/10 text-theme-secondary-dark" },
   RECEPTIVE_LANGUAGE: { label: "Receptive Language", icon: BookOpen, color: "bg-green-100 text-green-800" },
   EXPRESSIVE_LANGUAGE: { label: "Expressive Language", icon: MessageSquare, color: "bg-orange-100 text-orange-800" },
   PRAGMATIC_LANGUAGE: { label: "Pragmatic Language", icon: Target, color: "bg-pink-100 text-pink-800" },
@@ -343,7 +343,7 @@ export function SLPProgressReport({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-purple-600">{stats.totalMinutes}</div>
+            <div className="text-3xl font-bold text-theme-primary">{stats.totalMinutes}</div>
             <div className="text-sm text-muted-foreground">Total Minutes</div>
           </CardContent>
         </Card>

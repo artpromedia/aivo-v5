@@ -212,7 +212,7 @@ export function PragmaticSkillsMatrix({
       <Card>
         <CardHeader className="border-b">
           <h3 className="font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5 text-purple-500" />
+            <Users className="h-5 w-5 text-theme-primary" />
             Social Setting
           </h3>
         </CardHeader>
@@ -226,11 +226,11 @@ export function PragmaticSkillsMatrix({
                   onClick={() => setSelectedSetting(setting.value)}
                   className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
                     selectedSetting === setting.value
-                      ? "border-purple-500 bg-purple-50"
+                      ? "border-theme-primary bg-theme-primary/5"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${selectedSetting === setting.value ? 'text-purple-500' : 'text-gray-400'}`} />
+                  <Icon className={`h-5 w-5 ${selectedSetting === setting.value ? 'text-theme-primary' : 'text-gray-400'}`} />
                   <span className="text-sm font-medium">{setting.label}</span>
                 </button>
               );
@@ -258,7 +258,7 @@ export function PragmaticSkillsMatrix({
                 key={skill.value}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   selectedSkill === skill.value 
-                    ? 'border-purple-400 bg-purple-50' 
+                    ? 'border-theme-primary-light bg-theme-primary/5' 
                     : 'border-gray-100 hover:border-gray-200'
                 }`}
               >
@@ -277,7 +277,7 @@ export function PragmaticSkillsMatrix({
                         onClick={() => handleRatingChange(skill.value, level.value)}
                         className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                           skillRatings[skill.value] === level.value
-                            ? level.color + " ring-2 ring-offset-1 ring-purple-400"
+                            ? level.color + " ring-2 ring-offset-1 ring-theme-primary-light"
                             : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                         }`}
                         title={level.label}
@@ -373,7 +373,7 @@ export function PragmaticSkillsMatrix({
                     onClick={() => setPeerQuality(rating)}
                     className={`flex-1 py-2 rounded-lg font-bold transition-all ${
                       peerQuality === rating
-                        ? "bg-purple-500 text-white"
+                        ? "bg-theme-primary text-theme-primary-contrast"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
@@ -393,7 +393,7 @@ export function PragmaticSkillsMatrix({
                     onClick={() => setAdultQuality(rating)}
                     className={`flex-1 py-2 rounded-lg font-bold transition-all ${
                       adultQuality === rating
-                        ? "bg-purple-500 text-white"
+                        ? "bg-theme-primary text-theme-primary-contrast"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
@@ -417,7 +417,7 @@ export function PragmaticSkillsMatrix({
             onChange={(e) => setObservationContext(e.target.value)}
             placeholder="Describe the observation context, activity, and any relevant notes..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary"
           />
         </CardContent>
       </Card>
@@ -426,7 +426,7 @@ export function PragmaticSkillsMatrix({
       <button
         onClick={handleSave}
         disabled={ratedSkillsCount === 0 || isSubmitting}
-        className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full py-3 bg-theme-primary text-theme-primary-contrast rounded-lg font-semibold hover:bg-theme-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         <Save className="h-5 w-5" />
         {isSubmitting ? "Saving..." : `Save ${ratedSkillsCount} Skill Ratings`}

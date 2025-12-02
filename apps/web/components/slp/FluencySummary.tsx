@@ -108,7 +108,7 @@ export function FluencySummary({
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-sm text-gray-500 mb-1">Goal</div>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-theme-primary">
               {goalFrequency ? `${goalFrequency}%` : "—"}
             </div>
           </CardContent>
@@ -189,12 +189,12 @@ export function FluencySummary({
                 {/* Goal line */}
                 {goalFrequency && (
                   <div
-                    className="absolute left-0 right-0 border-t-2 border-dashed border-purple-400"
+                    className="absolute left-0 right-0 border-t-2 border-dashed border-theme-primary"
                     style={{
                       bottom: `${(goalFrequency / Math.max(...frequencyTrend.map(t => t.frequency), 20)) * 100}%`
                     }}
                   >
-                    <span className="absolute -top-5 right-0 text-xs text-purple-600 bg-white px-1">
+                    <span className="absolute -top-5 right-0 text-xs text-theme-primary bg-white px-1">
                       Goal: {goalFrequency}%
                     </span>
                   </div>
@@ -231,7 +231,7 @@ export function FluencySummary({
                 { key: "repetitions", label: "Repetitions", color: "bg-blue-500" },
                 { key: "prolongations", label: "Prolongations", color: "bg-green-500" },
                 { key: "blocks", label: "Blocks", color: "bg-red-500" },
-                { key: "interjections", label: "Interjections", color: "bg-purple-500" },
+                { key: "interjections", label: "Interjections", color: "bg-theme-primary" },
               ].map(({ key, label, color }) => {
                 const count = disfluencyBreakdown[key as keyof DisfluencyBreakdown] as number;
                 const pct = disfluencyBreakdown.percentages[key as keyof typeof disfluencyBreakdown.percentages];

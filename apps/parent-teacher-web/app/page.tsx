@@ -69,7 +69,7 @@ export default function ParentTeacherPage() {
                   : "Monitor learner progress, assign scaffolds, and coordinate with parents and administrators."}
               </p>
               {!loading && (
-                <div className="mt-3 inline-flex items-center gap-2 bg-lavender-100 text-violet-700 px-3 py-1.5 rounded-full text-sm">
+                <div className="mt-3 inline-flex items-center gap-2 bg-lavender-100 text-theme-primary px-3 py-1.5 rounded-full text-sm">
                   <span>👧</span>
                   <span className="font-medium">{learnerLabel}</span>
                 </div>
@@ -87,8 +87,8 @@ export default function ParentTeacherPage() {
                 aria-selected={role === "parent"}
                 className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
                   role === "parent" 
-                    ? "bg-violet-500 text-white shadow-lg" 
-                    : "text-slate-600 hover:text-violet-600"
+                    ? "bg-theme-primary text-white shadow-lg" 
+                    : "text-slate-600 hover:text-theme-primary"
                 }`}
                 onClick={() => setRole("parent")}
               >
@@ -99,8 +99,8 @@ export default function ParentTeacherPage() {
                 aria-selected={role === "teacher"}
                 className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
                   role === "teacher" 
-                    ? "bg-violet-500 text-white shadow-lg" 
-                    : "text-slate-600 hover:text-violet-600"
+                    ? "bg-theme-primary text-white shadow-lg" 
+                    : "text-slate-600 hover:text-theme-primary"
                 }`}
                 onClick={() => setRole("teacher")}
               >
@@ -161,7 +161,7 @@ export default function ParentTeacherPage() {
               Additional features for classroom management, IEP coordination, and parent communication will be available in future iterations.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-lavender-100 text-violet-700 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-lavender-100 text-theme-primary rounded-full text-xs font-medium">
                 📋 IEP Tracking
               </span>
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-medium">
@@ -175,7 +175,7 @@ export default function ParentTeacherPage() {
         )}
 
         {/* Encouragement Banner */}
-        <div className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-3xl p-6 text-white text-center">
+        <div className="bg-gradient-to-r from-theme-primary to-theme-primary rounded-3xl p-6 text-white text-center">
           <div className="text-3xl mb-2">🌟</div>
           <p className="font-medium">
             Thank you for supporting your learner&apos;s journey!
@@ -197,8 +197,8 @@ export default function ParentTeacherPage() {
 const colorClasses = {
   violet: {
     bg: "bg-lavender-100",
-    icon: "bg-violet-100 text-violet-600",
-    button: "bg-violet-500 hover:bg-violet-600"
+    icon: "bg-theme-primary/10 text-theme-primary",
+    button: "bg-theme-primary hover:bg-theme-primary"
   },
   mint: {
     bg: "bg-mint-50",

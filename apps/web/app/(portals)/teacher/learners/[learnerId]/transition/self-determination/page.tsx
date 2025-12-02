@@ -386,9 +386,9 @@ export default function SelfDeterminationPage() {
                   </p>
                 </div>
                 
-                <div className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                  <h4 className="font-medium text-purple-900">What I'm Working On</h4>
-                  <p className="text-purple-800 mt-1 italic">
+                <div className="p-4 bg-theme-primary/5 rounded-lg border-l-4 border-theme-primary">
+                  <h4 className="font-medium text-theme-primary">What I'm Working On</h4>
+                  <p className="text-theme-primary mt-1 italic">
                     "I'm practicing asking for help when I need it. Sometimes it's hard but 
                     I'm getting better at it. Mr. Johnson at the auto shop is helping me."
                   </p>

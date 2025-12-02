@@ -240,15 +240,15 @@ export function BinderCheckIn({
 
       {/* Tips */}
       {binderOrg.tips && binderOrg.tips.length > 0 && (
-        <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+        <div className="mt-4 p-3 bg-theme-primary/5 dark:bg-theme-primary/20 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-purple-500" />
-            <span className="text-sm font-medium text-purple-700">Organization Tips</span>
+            <Sparkles className="h-4 w-4 text-theme-primary" />
+            <span className="text-sm font-medium text-theme-primary">Organization Tips</span>
           </div>
-          <ul className="text-sm text-purple-600 space-y-1">
+          <ul className="text-sm text-theme-primary space-y-1">
             {binderOrg.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-purple-400">•</span>
+                <span className="text-theme-primary/60">•</span>
                 {tip}
               </li>
             ))}

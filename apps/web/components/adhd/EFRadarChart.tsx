@@ -216,10 +216,10 @@ export function EFRadarChart({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-purple-500" />
+          <Brain className="h-5 w-5 text-theme-primary" />
           <h3 className="font-semibold">Executive Function Profile</h3>
         </div>
-        <Badge className="bg-purple-100 text-purple-700">
+        <Badge className="bg-theme-primary/10 text-theme-primary">
           Avg: {averageScore}/5
         </Badge>
       </div>
@@ -250,7 +250,7 @@ export function EFRadarChart({
             fillOpacity={0.2}
             stroke="currentColor"
             strokeWidth={2}
-            className="text-purple-500"
+            className="text-theme-primary"
           />
 
           {/* Data points */}
@@ -261,7 +261,7 @@ export function EFRadarChart({
               cy={point.y}
               r={4}
               fill="currentColor"
-              className="text-purple-500"
+              className="text-theme-primary"
             />
           ))}
 
@@ -281,7 +281,7 @@ export function EFRadarChart({
                 className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                  <div className="w-3 h-3 rounded-full bg-theme-primary" />
                   <span className="font-medium">{domainLabels[domain].label}</span>
                 </div>
                 <div className="flex items-center gap-1">

@@ -213,10 +213,10 @@ export default function TransitionDashboardPage() {
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-purple-700 mb-2">✨ Preferences</h4>
+              <h4 className="font-semibold text-theme-primary mb-2">✨ Preferences</h4>
               <div className="flex flex-wrap gap-2">
                 {mockTransitionPlan.strengthsInterests.preferences.map((s, i) => (
-                  <span key={i} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">{s}</span>
+                  <span key={i} className="px-2 py-1 bg-theme-primary/10 text-theme-primary rounded text-sm">{s}</span>
                 ))}
               </div>
             </div>

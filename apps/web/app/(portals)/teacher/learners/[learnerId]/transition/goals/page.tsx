@@ -115,7 +115,7 @@ const mockGoals: TransitionGoal[] = [
 const categoryConfig: Record<GoalCategory, { label: string; icon: string; color: string }> = {
   education: { label: 'Education/Training', icon: '🎓', color: 'bg-blue-100 text-blue-700' },
   employment: { label: 'Employment', icon: '💼', color: 'bg-green-100 text-green-700' },
-  'independent-living': { label: 'Independent Living', icon: '🏠', color: 'bg-purple-100 text-purple-700' },
+  'independent-living': { label: 'Independent Living', icon: '🏠', color: 'bg-theme-primary/10 text-theme-primary' },
   'self-determination': { label: 'Self-Determination', icon: '🎯', color: 'bg-amber-100 text-amber-700' },
 };
 
@@ -362,9 +362,9 @@ export default function TransitionGoalsPage() {
                 Goals must be based on age-appropriate transition assessments.
               </p>
             </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
-              <h4 className="font-medium text-purple-800 mb-1">🎤 Student Voice</h4>
-              <p className="text-purple-700">
+            <div className="p-3 bg-theme-primary/5 rounded-lg">
+              <h4 className="font-medium text-theme-primary mb-1">🎤 Student Voice</h4>
+              <p className="text-theme-primary">
                 Students must be invited to IEP meetings where transition is discussed.
               </p>
             </div>

@@ -229,7 +229,7 @@ export default function ADHDProjectsPage() {
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">{a.title}</h4>
                     {hasBreakdown && (
-                      <Sparkles className="h-4 w-4 text-purple-500" />
+                      <Sparkles className="h-4 w-4 text-theme-primary" />
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">

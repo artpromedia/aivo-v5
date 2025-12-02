@@ -71,7 +71,7 @@ const MASTERY_COLORS: Record<MasteryLevel, string> = {
   DEVELOPING: "bg-orange-300",
   PROFICIENT: "bg-blue-400",
   MASTERED: "bg-green-500",
-  AUTOMATICITY: "bg-purple-500",
+  AUTOMATICITY: "bg-theme-primary",
 };
 
 export function PhonicsProgressionChart({ skills, currentLevel, onSkillClick }: PhonicsProgressionChartProps) {
@@ -118,7 +118,7 @@ export function PhonicsProgressionChart({ skills, currentLevel, onSkillClick }: 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-purple-600">{currentLevel}</div>
+            <div className="text-2xl font-bold text-theme-primary">{currentLevel}</div>
             <div className="text-sm text-gray-500">Current Level</div>
           </CardContent>
         </Card>
@@ -146,7 +146,7 @@ export function PhonicsProgressionChart({ skills, currentLevel, onSkillClick }: 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-purple-500" />
+            <TrendingUp className="h-5 w-5 text-theme-primary" />
             Orton-Gillingham Progression
           </CardTitle>
           <CardDescription>
@@ -166,7 +166,7 @@ export function PhonicsProgressionChart({ skills, currentLevel, onSkillClick }: 
                   key={ogLevel.level}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     isCurrentLevel
-                      ? "border-purple-500 bg-purple-50"
+                      ? "border-theme-primary bg-theme-primary/10"
                       : isLocked
                       ? "border-gray-200 bg-gray-50 opacity-60"
                       : isCompleted
@@ -178,7 +178,7 @@ export function PhonicsProgressionChart({ skills, currentLevel, onSkillClick }: 
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         isCompleted ? "bg-green-500 text-white" :
-                        isCurrentLevel ? "bg-purple-500 text-white" :
+                        isCurrentLevel ? "bg-theme-primary text-white" :
                         isLocked ? "bg-gray-300 text-gray-500" :
                         "bg-blue-100 text-blue-600"
                       }`}>
@@ -203,7 +203,7 @@ export function PhonicsProgressionChart({ skills, currentLevel, onSkillClick }: 
                     </div>
                     <div className="flex items-center gap-2">
                       {isCurrentLevel && (
-                        <Badge className="bg-purple-500">Current</Badge>
+                        <Badge className="bg-theme-primary">Current</Badge>
                       )}
                       {isCompleted && (
                         <Badge className="bg-green-500">Complete</Badge>

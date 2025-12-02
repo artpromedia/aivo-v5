@@ -74,7 +74,7 @@ const domainColors: Record<string, string> = {
   MONEY_MANAGEMENT: "bg-green-100 text-green-800",
   COOKING_NUTRITION: "bg-orange-100 text-orange-800",
   TRANSPORTATION: "bg-blue-100 text-blue-800",
-  HOUSING_HOME_CARE: "bg-purple-100 text-purple-800",
+  HOUSING_HOME_CARE: "bg-theme-primary/10 text-theme-primary",
   HEALTH_SAFETY: "bg-red-100 text-red-800",
   COMMUNITY_RESOURCES: "bg-yellow-100 text-yellow-800",
 };
@@ -147,8 +147,8 @@ export function ILSProgressReport({
               <p className="text-3xl font-bold text-green-600">{skillsImproved}</p>
               <p className="text-sm text-muted-foreground">Skills Improved</p>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-3xl font-bold text-purple-600">{skillsMastered}</p>
+            <div className="text-center p-4 bg-theme-primary/10 rounded-lg">
+              <p className="text-3xl font-bold text-theme-primary">{skillsMastered}</p>
               <p className="text-sm text-muted-foreground">Skills Mastered</p>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">

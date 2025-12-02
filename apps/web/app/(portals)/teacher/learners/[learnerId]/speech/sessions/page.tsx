@@ -74,7 +74,7 @@ const mockSessions = [
 
 const SESSION_TYPES: Record<string, { label: string; color: string }> = {
   ARTICULATION: { label: 'Articulation', color: 'bg-blue-100 text-blue-700' },
-  FLUENCY: { label: 'Fluency', color: 'bg-purple-100 text-purple-700' },
+  FLUENCY: { label: 'Fluency', color: 'bg-theme-primary/10 text-theme-primary' },
   RECEPTIVE_LANGUAGE: { label: 'Receptive Language', color: 'bg-green-100 text-green-700' },
   EXPRESSIVE_LANGUAGE: { label: 'Expressive Language', color: 'bg-orange-100 text-orange-700' },
   PRAGMATIC_LANGUAGE: { label: 'Pragmatic', color: 'bg-pink-100 text-pink-700' },
@@ -162,7 +162,7 @@ export default function SessionsPage() {
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-purple-600">{totalMinutes}</div>
+                <div className="text-2xl font-bold text-theme-primary">{totalMinutes}</div>
                 <div className="text-xs text-slate-500">Total Minutes</div>
               </CardContent>
             </Card>

@@ -103,7 +103,7 @@ const domainColors: Record<string, string> = {
   MONEY_MANAGEMENT: 'bg-green-100 text-green-800',
   COOKING_NUTRITION: 'bg-orange-100 text-orange-800',
   TRANSPORTATION: 'bg-blue-100 text-blue-800',
-  HOUSING_HOME_CARE: 'bg-purple-100 text-purple-800',
+  HOUSING_HOME_CARE: 'bg-theme-primary/10 text-theme-primary',
   HEALTH_SAFETY: 'bg-red-100 text-red-800',
   COMMUNITY_RESOURCES: 'bg-yellow-100 text-yellow-800',
 };

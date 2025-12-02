@@ -36,11 +36,11 @@ export default function LoginPage() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Already Signed In</h2>
           <p className="text-slate-600 mb-4">
-            You&apos;re logged in as <span className="font-semibold text-violet-600">{state.user.email}</span>
+            You&apos;re logged in as <span className="font-semibold text-theme-primary">{state.user.email}</span>
           </p>
           <Link
             href="/"
-            className="block w-full py-3 bg-violet-500 hover:bg-violet-600 text-white font-semibold rounded-2xl shadow-lg transition-all"
+            className="block w-full py-3 bg-theme-primary hover:bg-theme-primary text-white font-semibold rounded-2xl shadow-lg transition-all"
           >
             Go to Dashboard →
           </Link>
@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-violet-400 to-violet-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 shadow-lg">
+          <div className="w-20 h-20 bg-gradient-to-br from-theme-primary to-theme-primary rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 shadow-lg">
             👨‍👩‍👧
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Welcome Back!</h1>
@@ -73,7 +73,7 @@ export default function LoginPage() {
               <input
                 id="email"
                 type="email"
-                className="w-full rounded-2xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                className="w-full rounded-2xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -88,7 +88,7 @@ export default function LoginPage() {
               <input
                 id="password"
                 type="password"
-                className="w-full rounded-2xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                className="w-full rounded-2xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent transition-all"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -105,7 +105,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+              className="w-full py-4 bg-gradient-to-r from-theme-primary to-theme-primary text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

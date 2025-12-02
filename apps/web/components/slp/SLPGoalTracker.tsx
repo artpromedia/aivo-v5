@@ -79,7 +79,7 @@ interface SLPGoalTrackerProps {
 
 const GOAL_AREAS: { value: GoalArea; label: string; color: string }[] = [
   { value: "ARTICULATION", label: "Articulation", color: "bg-blue-100 text-blue-800" },
-  { value: "FLUENCY", label: "Fluency", color: "bg-purple-100 text-purple-800" },
+  { value: "FLUENCY", label: "Fluency", color: "bg-theme-secondary/10 text-theme-secondary-dark" },
   { value: "RECEPTIVE_LANGUAGE", label: "Receptive Language", color: "bg-green-100 text-green-800" },
   { value: "EXPRESSIVE_LANGUAGE", label: "Expressive Language", color: "bg-orange-100 text-orange-800" },
   { value: "PRAGMATIC_LANGUAGE", label: "Pragmatic/Social", color: "bg-pink-100 text-pink-800" },
@@ -307,7 +307,7 @@ export function SLPGoalTracker({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-purple-600">{stats.avgProgress}%</div>
+            <div className="text-3xl font-bold text-theme-primary">{stats.avgProgress}%</div>
             <div className="text-sm text-muted-foreground">Avg Progress</div>
           </CardContent>
         </Card>

@@ -59,7 +59,7 @@ export default function AutismProfilePage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Brain className="h-6 w-6 text-purple-600" />
+            <Brain className="h-6 w-6 text-theme-primary" />
             Autism Profile
           </h1>
           <p className="text-muted-foreground">

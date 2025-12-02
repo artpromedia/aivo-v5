@@ -2,28 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   Marketing Site - Dynamic Theme System
+   Uses default legacy violet for brand consistency
+   ======================================== */
+
 @layer base {
   :root {
     --font-inter: 'Inter', system-ui, sans-serif;
-    --font-poppins: 'Poppins', system-ui, sans-serif;
+    --font-space-grotesk: 'Space Grotesk', system-ui, sans-serif;
     
-    /* Friendly color palette */
-    --color-lavender-50: #FAF5FF;
-    --color-lavender-100: #F5EBFF;
-    --color-lavender-200: #E9D5FF;
-    --color-violet-500: #7C3AED;
-    --color-violet-600: #6D28D9;
-    --color-mint: #6EE7B7;
-    --color-sunshine: #FCD34D;
-    --color-sky: #7DD3FC;
+    /* RGB Color Variables for Tailwind */
+    --color-primary: 124 58 237;
+    --color-primary-light: 167 139 250;
+    --color-primary-dark: 109 40 217;
+    --color-primary-contrast: 255 255 255;
+    --color-secondary: 168 85 247;
+    --color-accent-mint: 110 231 183;
+    --color-accent-sunshine: 252 211 77;
+    --color-accent-sky: 125 211 252;
+    --color-background: 255 255 255;
+    --color-background-elevated: 250 245 255;
+    --color-surface: 255 255 255;
+    --color-border: 233 213 255;
+    --color-text: 17 24 39;
+    --color-text-secondary: 75 85 99;
+    --color-text-muted: 156 163 175;
+    
+    --radius-small: 0.5rem;
+    --radius-medium: 0.75rem;
+    --radius-large: 1.25rem;
+    --focus-ring-width: 2px;
   }
   
   body {
-    @apply bg-white text-gray-900;
+    background: rgb(var(--color-background));
+    color: rgb(var(--color-text));
+    font-family: var(--font-inter);
   }
   
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Accessible focus states */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+  
+  :focus:not(:focus-visible) {
+    outline: none;
   }
 }
 
@@ -32,18 +61,21 @@
     text-wrap: balance;
   }
   
-  /* Friendly text gradient */
+  /* Dynamic text gradient using CSS variables */
   .text-gradient {
-    @apply bg-gradient-to-r from-violet-600 to-purple-500 bg-clip-text text-transparent;
+    background: linear-gradient(to right, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
-  /* Friendly gradients */
+  /* Dynamic gradients using CSS variables */
   .gradient-lavender {
-    background: linear-gradient(to bottom right, var(--color-lavender-50), var(--color-lavender-100));
+    background: linear-gradient(to bottom right, rgb(var(--color-background-elevated)), rgb(var(--color-background)));
   }
   
   .gradient-hero {
-    background: linear-gradient(135deg, #FAF5FF 0%, #F5EBFF 50%, #FDF4FF 100%);
+    background: linear-gradient(135deg, rgb(var(--color-background)) 0%, rgb(var(--color-background-elevated)) 50%, rgb(var(--color-background)) 100%);
   }
 }
 
@@ -101,50 +133,54 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--color-primary) / 0.1), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
 
-/* Friendly shadows */
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeIn, .animate-float, .animate-pulseGentle, .animate-shimmer {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Dynamic shadows using CSS variables */
 .shadow-soft {
-  box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.1), 0 2px 4px -1px rgba(124, 58, 237, 0.06);
+  box-shadow: 0 4px 6px -1px rgb(var(--color-primary) / 0.1), 0 2px 4px -1px rgb(var(--color-primary) / 0.06);
 }
 
 .shadow-friendly {
-  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15), 0 8px 10px -6px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 10px 25px -5px rgb(var(--color-primary) / 0.15), 0 8px 10px -6px rgb(var(--color-primary) / 0.1);
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar using theme colors */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5EBFF;
+  background: rgb(var(--color-background-elevated));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E9D5FF;
+  background: rgb(var(--color-border));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4BFFF;
+  background: rgb(var(--color-primary-light));
 }
 
-/* Selection color */
+/* Selection color using theme */
 ::selection {
-  background: #E9D5FF;
-  color: #5B21B6;
-}
-
-/* Focus styles */
-:focus-visible {
-  outline: 2px solid #7C3AED;
-  outline-offset: 2px;
+  background: rgb(var(--color-border));
+  color: rgb(var(--color-primary-dark));
 }
 
 /* Button hover glow effect */

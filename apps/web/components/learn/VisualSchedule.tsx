@@ -51,7 +51,7 @@ export function VisualSchedule({ preferences }: VisualScheduleProps) {
                   key={item.id}
                   className={`min-w-[120px] rounded-2xl border px-3 py-2 text-xs font-semibold transition ${
                     isCurrent
-                      ? 'border-purple-400 bg-purple-50 text-purple-700'
+                      ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-primary'
                       : item.status === 'complete'
                       ? 'border-green-200 bg-green-50 text-green-700'
                       : 'border-slate-200 bg-white text-slate-600'

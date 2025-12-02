@@ -144,7 +144,7 @@ export default function AdaptiveLessonView() {
               }
             }}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              isActive ? 'bg-purple-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-50'
+              isActive ? 'bg-theme-primary text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-50'
             } ${isLoading && isActive ? 'opacity-60' : ''}`}
           >
             {option}
@@ -163,12 +163,12 @@ export default function AdaptiveLessonView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-theme-primary/5 to-indigo-50 p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl bg-white/90 p-6 shadow">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-purple-500">Adaptive curriculum engine</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-theme-primary">Adaptive curriculum engine</p>
               <h1 className="text-4xl font-semibold text-slate-900">Dynamic lesson flow</h1>
               <p className="text-slate-600">Realtime adjustments keep you in the zone of proximal development.</p>
             </div>

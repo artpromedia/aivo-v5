@@ -68,7 +68,7 @@ interface EFInterventionTrackerProps {
 
 const domainConfig: Record<EFDomain, { label: string; color: string; icon: string }> = {
   organization: { label: "Organization", color: "bg-blue-100 text-blue-700", icon: "📁" },
-  timeManagement: { label: "Time Management", color: "bg-purple-100 text-purple-700", icon: "⏰" },
+  timeManagement: { label: "Time Management", color: "bg-theme-primary/10 text-theme-primary", icon: "⏰" },
   planning: { label: "Planning", color: "bg-indigo-100 text-indigo-700", icon: "📝" },
   taskInitiation: { label: "Task Initiation", color: "bg-green-100 text-green-700", icon: "🚀" },
   workingMemory: { label: "Working Memory", color: "bg-yellow-100 text-yellow-700", icon: "🧠" },
@@ -177,7 +177,7 @@ export function EFInterventionTracker({
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{intervention.strategy}</h4>
                           {intervention.aiSuggested && (
-                            <Badge className="bg-purple-100 text-purple-700 text-xs">
+                            <Badge className="bg-theme-primary/10 text-theme-primary text-xs">
                               <Sparkles className="h-3 w-3 mr-1" />
                               AI
                             </Badge>
@@ -465,8 +465,8 @@ function AddInterventionForm({
                     className={cn(
                       "w-full text-left text-sm p-2 rounded border transition-all",
                       strategy === s
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-300"
+                        ? "border-theme-primary bg-theme-primary/5"
+                        : "border-gray-200 hover:border-theme-primary/30"
                     )}
                   >
                     {s}

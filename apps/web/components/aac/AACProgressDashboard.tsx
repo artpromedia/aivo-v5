@@ -53,7 +53,7 @@ const FUNCTION_LABELS: Record<string, { label: string; icon: string; color: stri
   REQUESTING: { label: 'Requesting', icon: '🙋', color: 'bg-blue-100 text-blue-700' },
   REJECTING: { label: 'Rejecting', icon: '🚫', color: 'bg-red-100 text-red-700' },
   COMMENTING: { label: 'Commenting', icon: '💬', color: 'bg-green-100 text-green-700' },
-  QUESTIONING: { label: 'Questioning', icon: '❓', color: 'bg-purple-100 text-purple-700' },
+  QUESTIONING: { label: 'Questioning', icon: '❓', color: 'bg-theme-primary/10 text-theme-primary' },
   GREETING: { label: 'Greeting', icon: '👋', color: 'bg-yellow-100 text-yellow-700' },
   RESPONDING: { label: 'Responding', icon: '↩️', color: 'bg-indigo-100 text-indigo-700' },
   LABELING: { label: 'Labeling', icon: '🏷️', color: 'bg-pink-100 text-pink-700' },

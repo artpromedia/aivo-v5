@@ -13,6 +13,18 @@
       "types": "./src/components/index.ts",
       "default": "./src/components/index.ts"
     },
+    "./providers": {
+      "types": "./src/providers/index.ts",
+      "default": "./src/providers/index.ts"
+    },
+    "./theme": {
+      "types": "./src/theme/index.ts",
+      "default": "./src/theme/index.ts"
+    },
+    "./testing": {
+      "types": "./src/testing/index.ts",
+      "default": "./src/testing/index.ts"
+    },
     "./native": {
       "types": "./src/native.ts",
       "default": "./src/native.ts"
@@ -29,6 +41,7 @@
     "react-native": "^0.76.0"
   },
   "devDependencies": {
+    "@testing-library/react": "^14.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "react-native": "^0.76.0"

@@ -337,7 +337,7 @@ export function MessageCenter() {
                 </div>
                 <div className='flex gap-2'>
                   <button className='rounded-lg p-2 hover:bg-slate-100' onClick={requestInsight}>
-                    <Sparkles className='h-5 w-5 text-purple-500' />
+                    <Sparkles className='h-5 w-5 text-theme-primary' />
                   </button>
                   <button className='rounded-lg p-2 hover:bg-slate-100'>
                     <Video className='h-5 w-5 text-slate-600' />
@@ -458,13 +458,13 @@ function MessageBubble({ message, isOwn, userName }: { message: MessagePayload; 
 function AIInsightCard({ insight }: { insight: InsightPayload }) {
   const [expanded, setExpanded] = useState(false)
   return (
-    <div className='rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 p-4'>
+    <div className='rounded-xl border border-theme-primary/20 bg-gradient-to-r from-theme-primary/10 to-blue-50 p-4'>
       <div className='flex items-start gap-3'>
-        <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white'>
+        <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-theme-primary to-blue-500 text-white'>
           <Sparkles className='h-4 w-4' />
         </div>
         <div className='flex-1 text-sm text-slate-700'>
-          <p className='font-semibold text-purple-900'>AI Insight</p>
+          <p className='font-semibold text-theme-primary'>AI Insight</p>
           <p>{insight.summary}</p>
           {expanded && (
             <ul className='mt-3 space-y-1 text-xs text-slate-600'>
@@ -473,7 +473,7 @@ function AIInsightCard({ insight }: { insight: InsightPayload }) {
               ))}
             </ul>
           )}
-          <button className='text-xs text-purple-600' onClick={() => setExpanded((prev) => !prev)}>
+          <button className='text-xs text-theme-primary' onClick={() => setExpanded((prev) => !prev)}>
             {expanded ? 'Show less' : 'Show more'}
           </button>
         </div>

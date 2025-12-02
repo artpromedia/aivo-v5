@@ -2,54 +2,694 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   Enterprise Dynamic Theming System
+   For Neurodiverse Learners (K-12)
+   WCAG 2.1 AA Compliant
+   ======================================== */
+
 :root {
   color-scheme: light;
   
-  /* Friendly color tokens */
-  --color-primary: #7C3AED;
-  --color-primary-light: #A78BFA;
-  --color-lavender: #FAF5FF;
-  --color-mint: #6EE7B7;
-  --color-sunshine: #FCD34D;
-  --color-sky: #7DD3FC;
-  --color-coral: #FF7B5C;
+  /* ========================================
+     RGB Color Variables for Tailwind
+     Format: R G B (space-separated for alpha support)
+     ======================================== */
+  
+  /* Default/Legacy theme (violet) */
+  --color-primary: 124 58 237;
+  --color-primary-light: 167 139 250;
+  --color-primary-dark: 109 40 217;
+  --color-primary-contrast: 255 255 255;
+  --color-secondary: 179 157 219;
+  --color-secondary-light: 225 190 231;
+  --color-secondary-dark: 126 87 194;
+  --color-secondary-contrast: 255 255 255;
+  --color-accent: 0 188 212;
+  --color-accent-light: 128 222 234;
+  --color-accent-dark: 0 151 167;
+  --color-background: 255 255 255;
+  --color-background-elevated: 255 255 255;
+  --color-background-sunken: 248 250 252;
+  --color-surface: 248 250 252;
+  --color-surface-elevated: 255 255 255;
+  --color-border: 203 213 225;
+  --color-text-primary: 15 23 42;
+  --color-text: 15 23 42;
+  --color-text-secondary: 71 85 105;
+  --color-text-muted: 148 163 184;
+  --color-text-inverse: 255 255 255;
+  --color-success: 110 231 183;
+  --color-success-light: 167 243 208;
+  --color-success-dark: 5 150 105;
+  --color-warning: 252 211 77;
+  --color-warning-light: 254 243 199;
+  --color-warning-dark: 217 119 6;
+  --color-error: 239 68 68;
+  --color-error-light: 254 205 211;
+  --color-error-dark: 220 38 38;
+  --color-info: 125 211 252;
+  --color-info-light: 224 242 254;
+  --color-info-dark: 2 132 199;
+
+  /* ========================================
+     Spacing and Sizing
+     ======================================== */
+  --radius-small: 0.375rem;
+  --radius-medium: 0.75rem;
+  --radius-large: 1.25rem;
+  --radius-full: 9999px;
+
+  /* ========================================
+     Focus Ring System
+     ======================================== */
+  --focus-ring-color: var(--color-primary);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ========================================
+     Animation Timing
+     ======================================== */
+  --transition-fast: 150ms;
+  --transition-normal: 200ms;
+  --transition-slow: 300ms;
+
+  /* ========================================
+     Typography System
+     ======================================== */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-display: 'Inter', system-ui, sans-serif;
+  --letter-spacing: normal;
+  --word-spacing: normal;
+  --line-height: 1.6;
+
+  /* Legacy hex tokens */
+  --theme-primary: #7C3AED;
+  --theme-primary-light: #A78BFA;
+  --theme-primary-dark: #6D28D9;
+  --theme-secondary: #B39DDB;
+  --theme-accent: #00BCD4;
+  --theme-background: #FFFFFF;
+  --theme-surface: #F8FAFC;
+  --theme-text: #0F172A;
+  --theme-text-muted: #64748B;
+  --theme-success: #6EE7B7;
+  --theme-warning: #FCD34D;
+  --theme-error: #EF4444;
+  --theme-info: #7DD3FC;
+  --theme-focus-ring: 0 0 0 3px rgba(124, 58, 237, 0.4);
+  --theme-border-radius-sm: 0.5rem;
+  --theme-border-radius-md: 0.75rem;
+  --theme-border-radius-lg: 1rem;
 }
 
-/* Friendly base styles */
+/* ========================================
+   K-5 Elementary Theme (Warm & Playful)
+   ======================================== */
+[data-grade="k-5"],
+[data-grade-band="k_5"],
+.theme-k5,
+.grade-k5 {
+  /* RGB values - Warm, playful palette */
+  --color-primary: 255 138 128;
+  --color-primary-light: 255 171 145;
+  --color-primary-dark: 239 83 80;
+  --color-primary-contrast: 62 39 35;
+  --color-secondary: 255 224 130;
+  --color-secondary-light: 255 248 225;
+  --color-secondary-dark: 255 213 79;
+  --color-secondary-contrast: 62 39 35;
+  --color-accent: 165 214 167;
+  --color-accent-light: 200 230 201;
+  --color-accent-dark: 129 199 132;
+  --color-background: 255 248 231;
+  --color-background-elevated: 255 255 255;
+  --color-background-sunken: 255 253 248;
+  --color-surface: 255 253 248;
+  --color-surface-elevated: 255 255 255;
+  --color-border: 255 228 214;
+  --color-text-primary: 62 39 35;
+  --color-text: 62 39 35;
+  --color-text-secondary: 93 64 55;
+  --color-text-muted: 141 110 99;
+  --color-text-inverse: 255 255 255;
+  --color-success: 129 199 132;
+  --color-success-light: 200 230 201;
+  --color-success-dark: 102 187 106;
+  --color-warning: 255 213 79;
+  --color-warning-light: 255 248 225;
+  --color-warning-dark: 255 193 7;
+  --color-error: 239 154 154;
+  --color-error-light: 255 205 210;
+  --color-error-dark: 229 115 115;
+  --color-info: 129 212 250;
+  --color-info-light: 225 245 254;
+  --color-info-dark: 79 195 247;
+
+  /* Larger, friendlier borders for young learners */
+  --radius-small: 0.5rem;
+  --radius-medium: 1rem;
+  --radius-large: 1.5rem;
+
+  /* Larger focus for younger learners */
+  --focus-ring-width: 3px;
+  --focus-ring-color: 255 138 128;
+
+  /* Typography for K-5 */
+  --font-family: 'Nunito', 'Comic Neue', system-ui, sans-serif;
+  --line-height: 1.7;
+
+  /* Hex tokens */
+  --theme-primary: #FF8A80;
+  --theme-primary-light: #FFAB91;
+  --theme-primary-dark: #EF5350;
+  --theme-secondary: #FFE082;
+  --theme-accent: #A5D6A7;
+  --theme-background: #FFF8E7;
+  --theme-surface: #FFFDF8;
+  --theme-text: #3E2723;
+  --theme-text-muted: #8D6E63;
+  --theme-success: #81C784;
+  --theme-warning: #FFD54F;
+  --theme-error: #EF9A9A;
+  --theme-info: #81D4FA;
+  --theme-focus-ring: 0 0 0 3px rgba(255, 138, 128, 0.4);
+  --theme-border-radius-sm: 0.75rem;
+  --theme-border-radius-md: 1.25rem;
+  --theme-border-radius-lg: 1.75rem;
+}
+
+/* ========================================
+   6-8 Middle School Theme (Balanced)
+   ======================================== */
+[data-grade="6-8"],
+[data-grade-band="6_8"],
+.theme-ms,
+.grade-68 {
+  /* RGB values - Balanced, transitional palette */
+  --color-primary: 38 166 154;
+  --color-primary-light: 77 182 172;
+  --color-primary-dark: 0 137 123;
+  --color-primary-contrast: 255 255 255;
+  --color-secondary: 179 157 219;
+  --color-secondary-light: 225 190 231;
+  --color-secondary-dark: 126 87 194;
+  --color-secondary-contrast: 255 255 255;
+  --color-accent: 79 195 247;
+  --color-accent-light: 179 229 252;
+  --color-accent-dark: 3 169 244;
+  --color-background: 245 245 245;
+  --color-background-elevated: 255 255 255;
+  --color-background-sunken: 250 250 250;
+  --color-surface: 250 250 250;
+  --color-surface-elevated: 255 255 255;
+  --color-border: 224 224 224;
+  --color-text-primary: 55 71 79;
+  --color-text: 55 71 79;
+  --color-text-secondary: 84 110 122;
+  --color-text-muted: 120 144 156;
+  --color-text-inverse: 255 255 255;
+  --color-success: 77 182 172;
+  --color-success-light: 178 223 219;
+  --color-success-dark: 38 166 154;
+  --color-warning: 255 183 77;
+  --color-warning-light: 255 224 178;
+  --color-warning-dark: 255 167 38;
+  --color-error: 239 83 80;
+  --color-error-light: 255 205 210;
+  --color-error-dark: 229 57 53;
+  --color-info: 79 195 247;
+  --color-info-light: 225 245 254;
+  --color-info-dark: 41 182 246;
+
+  /* Standard border radius */
+  --radius-small: 0.375rem;
+  --radius-medium: 0.75rem;
+  --radius-large: 1.25rem;
+
+  /* Focus ring */
+  --focus-ring-color: 38 166 154;
+  --focus-ring-width: 2px;
+
+  /* Typography for middle school */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --line-height: 1.6;
+
+  /* Hex tokens */
+  --theme-primary: #26A69A;
+  --theme-primary-light: #4DB6AC;
+  --theme-primary-dark: #00897B;
+  --theme-secondary: #B39DDB;
+  --theme-accent: #4FC3F7;
+  --theme-background: #F5F5F5;
+  --theme-surface: #FAFAFA;
+  --theme-text: #37474F;
+  --theme-text-muted: #78909C;
+  --theme-success: #4DB6AC;
+  --theme-warning: #FFB74D;
+  --theme-error: #EF5350;
+  --theme-info: #4FC3F7;
+  --theme-focus-ring: 0 0 0 3px rgba(38, 166, 154, 0.4);
+  --theme-border-radius-sm: 0.5rem;
+  --theme-border-radius-md: 0.75rem;
+  --theme-border-radius-lg: 1rem;
+}
+
+/* ========================================
+   9-12 High School Theme (Professional)
+   ======================================== */
+[data-grade="9-12"],
+[data-grade-band="9_12"],
+.theme-hs,
+.grade-912 {
+  /* RGB values - Professional, sophisticated palette */
+  --color-primary: 63 81 181;
+  --color-primary-light: 92 107 192;
+  --color-primary-dark: 48 63 159;
+  --color-primary-contrast: 255 255 255;
+  --color-secondary: 120 144 156;
+  --color-secondary-light: 176 190 197;
+  --color-secondary-dark: 84 110 122;
+  --color-secondary-contrast: 255 255 255;
+  --color-accent: 0 188 212;
+  --color-accent-light: 128 222 234;
+  --color-accent-dark: 0 151 167;
+  --color-background: 255 255 255;
+  --color-background-elevated: 255 255 255;
+  --color-background-sunken: 250 250 250;
+  --color-surface: 250 250 250;
+  --color-surface-elevated: 255 255 255;
+  --color-border: 224 224 224;
+  --color-text-primary: 33 33 33;
+  --color-text: 33 33 33;
+  --color-text-secondary: 97 97 97;
+  --color-text-muted: 117 117 117;
+  --color-text-inverse: 255 255 255;
+  --color-success: 67 160 71;
+  --color-success-light: 200 230 201;
+  --color-success-dark: 56 142 60;
+  --color-warning: 255 160 0;
+  --color-warning-light: 255 224 178;
+  --color-warning-dark: 255 143 0;
+  --color-error: 229 57 53;
+  --color-error-light: 255 205 210;
+  --color-error-dark: 211 47 47;
+  --color-info: 33 150 243;
+  --color-info-light: 187 222 251;
+  --color-info-dark: 25 118 210;
+
+  /* Sharper, more professional borders */
+  --radius-small: 0.25rem;
+  --radius-medium: 0.5rem;
+  --radius-large: 0.75rem;
+
+  /* Focus ring */
+  --focus-ring-color: 63 81 181;
+  --focus-ring-width: 2px;
+
+  /* Typography for high school */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --line-height: 1.5;
+
+  /* Hex tokens */
+  --theme-primary: #3F51B5;
+  --theme-primary-light: #5C6BC0;
+  --theme-primary-dark: #303F9F;
+  --theme-secondary: #78909C;
+  --theme-accent: #00BCD4;
+  --theme-background: #FFFFFF;
+  --theme-surface: #FAFAFA;
+  --theme-text: #212121;
+  --theme-text-muted: #757575;
+  --theme-success: #43A047;
+  --theme-warning: #FFA000;
+  --theme-error: #E53935;
+  --theme-info: #2196F3;
+  --theme-focus-ring: 0 0 0 3px rgba(63, 81, 181, 0.4);
+  --theme-border-radius-sm: 0.375rem;
+  --theme-border-radius-md: 0.5rem;
+  --theme-border-radius-lg: 0.75rem;
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(180deg, #FAF5FF 0%, #FFFFFF 50%, #F8FAFC 100%);
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-text-primary));
+  font-family: var(--font-family);
+  line-height: var(--line-height);
+  letter-spacing: var(--letter-spacing);
+  word-spacing: var(--word-spacing);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus styles for accessibility */
+/* K-5 specific body font */
+[data-grade="k-5"] body,
+[data-grade-band="k_5"] body,
+.theme-k5 body,
+.grade-k5 body {
+  font-family: 'Nunito', 'Comic Neue', system-ui, sans-serif;
+}
+
+/* ========================================
+   Accessible Focus States
+   ======================================== */
+   
+/* Modern focus-visible for keyboard navigation */
+:focus-visible {
+  outline: var(--focus-ring-width) solid rgb(var(--focus-ring-color));
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Remove focus for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Legacy focus support */
 *:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  box-shadow: var(--theme-focus-ring);
 }
 
-/* Smooth transitions */
-* {
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow;
-  transition-duration: 200ms;
-  transition-timing-function: ease-out;
+/* ========================================
+   Skip Link for Keyboard Navigation
+   ======================================== */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-primary-contrast));
+  padding: 8px 16px;
+  z-index: 100;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: var(--radius-small);
+  transition: top var(--transition-fast) ease-out;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ========================================
+   Reduced Motion Support
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-slow: 0ms;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+    transition-duration: var(--transition-normal);
+    transition-timing-function: ease-out;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--theme-background); }
+::-webkit-scrollbar-thumb { background: var(--theme-text-muted); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--theme-text); }
+
+/* ========================================
+   Accessibility & Educational Components
+   ======================================== */
+
+/* ========================================
+   High Contrast Mode
+   ======================================== */
+[data-contrast="high"],
+.high-contrast {
+  --color-background: 0 0 0;
+  --color-background-elevated: 17 17 17;
+  --color-background-sunken: 0 0 0;
+  --color-surface: 17 17 17;
+  --color-surface-elevated: 34 34 34;
+  --color-text-primary: 255 255 255;
+  --color-text: 255 255 255;
+  --color-text-secondary: 229 229 229;
+  --color-text-muted: 200 200 200;
+  --color-border: 255 255 255;
+  --focus-ring-width: 3px;
+  --focus-ring-color: 255 255 0;
+  
+  --theme-background: #000000;
+  --theme-surface: #111111;
+  --theme-text: #FFFFFF;
+  --theme-text-muted: #E5E5E5;
 }
 
-::-webkit-scrollbar-track {
-  background: #F8FAFC;
+/* System high contrast preference */
+@media (prefers-contrast: high) {
+  :root {
+    --color-text: 0 0 0;
+    --color-text-primary: 0 0 0;
+    --color-background: 255 255 255;
+    --color-border: 0 0 0;
+    --focus-ring-width: 3px;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 4px;
+/* ========================================
+   Dyslexia-Friendly Mode
+   ======================================== */
+[data-font="dyslexic"],
+.dyslexic-mode {
+  --font-family: 'OpenDyslexic', 'Comic Sans MS', cursive;
+  --letter-spacing: 0.05em;
+  --word-spacing: 0.1em;
+  --line-height: 1.8;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+/* Dyslexia-friendly text styling class */
+.dyslexia-friendly {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', 'Verdana', sans-serif;
+  letter-spacing: 0.05em;
+  word-spacing: 0.2em;
+  line-height: 1.8;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-background: 15 23 42;
+    --color-background-elevated: 30 41 59;
+    --color-background-sunken: 2 6 23;
+    --color-surface: 30 41 59;
+    --color-surface-elevated: 51 65 85;
+    --color-text: 248 250 252;
+    --color-text-secondary: 203 213 225;
+    --color-text-muted: 148 163 184;
+    --color-border: 51 65 85;
+    --theme-background: #0F172A;
+    --theme-surface: #1E293B;
+    --theme-text: #F8FAFC;
+    --theme-text-muted: #94A3B8;
+  }
+}
+
+/* Touch-friendly tap targets (WCAG 2.5.5) */
+@layer utilities {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .touch-target-lg {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  /* Grade-specific touch targets */
+  [data-grade-band="k_5"] .touch-target,
+  .theme-k5 .touch-target {
+    min-width: 52px;
+    min-height: 52px;
+  }
+}
+
+/* Educational card components */
+@layer components {
+  .edu-card {
+    background: rgb(var(--color-surface));
+    border-radius: var(--theme-border-radius-md);
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(var(--color-border));
+  }
+
+  .edu-card-interactive {
+    cursor: pointer;
+    transition: transform 200ms, box-shadow 200ms;
+  }
+
+  .edu-card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .edu-card-interactive:active {
+    transform: translateY(0);
+  }
+
+  /* Grade-band specific card styling */
+  [data-grade-band="k_5"] .edu-card,
+  .theme-k5 .edu-card {
+    border-radius: var(--theme-border-radius-lg);
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(255, 138, 128, 0.15);
+  }
+
+  [data-grade-band="9_12"] .edu-card,
+  .theme-hs .edu-card {
+    border-radius: var(--theme-border-radius-sm);
+    padding: 1.25rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Educational button base */
+  .edu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--theme-border-radius-sm);
+    font-weight: 600;
+    transition: all 200ms;
+    min-height: 44px;
+  }
+
+  .edu-btn-primary {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-primary-contrast));
+  }
+
+  .edu-btn-primary:hover {
+    background: rgb(var(--color-primary-dark));
+  }
+
+  .edu-btn-secondary {
+    background: rgb(var(--color-secondary));
+    color: rgb(var(--color-secondary-contrast));
+  }
+
+  /* Grade-band button sizing */
+  [data-grade-band="k_5"] .edu-btn,
+  .theme-k5 .edu-btn {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+    border-radius: 9999px;
+    min-height: 52px;
+  }
+
+  [data-grade-band="9_12"] .edu-btn,
+  .theme-hs .edu-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    min-height: 40px;
+  }
+
+  /* Progress indicator */
+  .edu-progress {
+    width: 100%;
+    height: 0.75rem;
+    background: rgb(var(--color-background-sunken));
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .edu-progress-bar {
+    height: 100%;
+    background: rgb(var(--color-primary));
+    border-radius: 9999px;
+    transition: width 500ms ease-out;
+  }
+
+  [data-grade-band="k_5"] .edu-progress,
+  .theme-k5 .edu-progress {
+    height: 1rem;
+  }
+
+  /* Badge/Achievement component */
+  .edu-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    background: rgb(var(--color-primary-light));
+    color: rgb(var(--color-primary-dark));
+  }
+
+  .edu-badge-success {
+    background: rgb(var(--color-success-light));
+    color: rgb(var(--color-success-dark));
+  }
+
+  .edu-badge-warning {
+    background: rgb(var(--color-warning-light));
+    color: rgb(var(--color-warning-dark));
+  }
+}
+
+/* Typography grade scales */
+@layer utilities {
+  /* K-5 typography */
+  .text-k5-xs { font-size: 0.875rem; line-height: 1.5; }
+  .text-k5-sm { font-size: 1rem; line-height: 1.6; }
+  .text-k5-base { font-size: 1.125rem; line-height: 1.7; }
+  .text-k5-lg { font-size: 1.5rem; line-height: 1.6; }
+  .text-k5-xl { font-size: 1.875rem; line-height: 1.5; }
+  .text-k5-2xl { font-size: 2.25rem; line-height: 1.4; }
+  .text-k5-3xl { font-size: 3rem; line-height: 1.3; }
+  .text-k5-hero { font-size: 3.75rem; line-height: 1.2; }
+
+  /* Middle school typography */
+  .text-ms-xs { font-size: 0.75rem; line-height: 1.5; }
+  .text-ms-sm { font-size: 0.875rem; line-height: 1.5; }
+  .text-ms-base { font-size: 1rem; line-height: 1.6; }
+  .text-ms-lg { font-size: 1.25rem; line-height: 1.5; }
+  .text-ms-xl { font-size: 1.5rem; line-height: 1.4; }
+  .text-ms-2xl { font-size: 2rem; line-height: 1.3; }
+  .text-ms-3xl { font-size: 2.5rem; line-height: 1.2; }
+  .text-ms-hero { font-size: 3rem; line-height: 1.1; }
+
+  /* High school typography */
+  .text-hs-xs { font-size: 0.7rem; line-height: 1.4; }
+  .text-hs-sm { font-size: 0.8rem; line-height: 1.4; }
+  .text-hs-base { font-size: 0.9375rem; line-height: 1.5; }
+  .text-hs-lg { font-size: 1.125rem; line-height: 1.4; }
+  .text-hs-xl { font-size: 1.375rem; line-height: 1.3; }
+  .text-hs-2xl { font-size: 1.75rem; line-height: 1.25; }
+  .text-hs-3xl { font-size: 2.25rem; line-height: 1.2; }
+  .text-hs-hero { font-size: 2.75rem; line-height: 1.1; }
 }

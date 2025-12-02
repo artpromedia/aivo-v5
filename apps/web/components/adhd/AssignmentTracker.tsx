@@ -57,7 +57,7 @@ const statusConfig: Record<ADHDAssignmentStatus, { label: string; color: string 
   IN_PROGRESS: { label: "In Progress", color: "bg-blue-100 text-blue-700" },
   COMPLETED: { label: "Completed", color: "bg-green-100 text-green-700" },
   LATE: { label: "Late", color: "bg-red-100 text-red-700" },
-  EXCUSED: { label: "Excused", color: "bg-purple-100 text-purple-700" },
+  EXCUSED: { label: "Excused", color: "bg-theme-primary/10 text-theme-primary" },
 };
 
 type SortField = "dueDate" | "urgency" | "title" | "status";

@@ -288,7 +288,7 @@ export default function EFAssessmentPage() {
                 <ul className="mt-1 space-y-1">
                   {mockProfile.accommodations.map((acc, i) => (
                     <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
+                      <span className="w-1.5 h-1.5 bg-theme-primary rounded-full" />
                       {acc}
                     </li>
                   ))}
@@ -329,7 +329,7 @@ export default function EFAssessmentPage() {
                 onClick={() => setSelectedDomain(selectedDomain === domain ? null : domain)}
                 className={`p-4 rounded-lg border text-left transition-all ${
                   selectedDomain === domain
-                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                    ? "border-theme-primary bg-theme-primary/5 dark:bg-theme-primary/20"
                     : "hover:border-gray-300"
                 }`}
               >
@@ -349,7 +349,7 @@ export default function EFAssessmentPage() {
                         }}
                         className={`w-8 h-8 rounded text-sm font-medium transition-all ${
                           ratings[domain] >= value
-                            ? "bg-purple-500 text-white"
+                            ? "bg-theme-primary text-white"
                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         }`}
                       >
@@ -361,7 +361,7 @@ export default function EFAssessmentPage() {
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-purple-500 rounded-full transition-all"
+                        className="h-full bg-theme-primary rounded-full transition-all"
                         style={{ width: `${(ratings[domain] / 5) * 100}%` }}
                       />
                     </div>
@@ -382,7 +382,7 @@ export default function EFAssessmentPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-purple-500" />
+              <Info className="h-5 w-5 text-theme-primary" />
               <CardTitle className="text-lg">{efDomainInfo[selectedDomain].name}</CardTitle>
             </div>
             <CardDescription>{efDomainInfo[selectedDomain].description}</CardDescription>
@@ -393,7 +393,7 @@ export default function EFAssessmentPage() {
               <ul className="space-y-2">
                 {efDomainInfo[selectedDomain].indicators.map((indicator, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 bg-purple-500 rounded-full" />
+                    <span className="w-2 h-2 bg-theme-primary rounded-full" />
                     {indicator}
                   </li>
                 ))}
@@ -405,7 +405,7 @@ export default function EFAssessmentPage() {
                 {mockHistoricalRatings[selectedDomain].map((rating, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <div
-                      className="w-full bg-purple-500 rounded-t transition-all"
+                      className="w-full bg-theme-primary rounded-t transition-all"
                       style={{ height: `${(rating / 5) * 100}%` }}
                     />
                     <span className="text-xs text-muted-foreground">Q{i + 1}</span>

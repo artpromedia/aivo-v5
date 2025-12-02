@@ -64,7 +64,7 @@ interface LessonPlanTemplateProps {
 }
 
 const LESSON_TYPE_CONFIG: Record<DyslexiaLessonType, { label: string; color: string; defaultDuration: number }> = {
-  PHONEMIC_AWARENESS: { label: "Phonemic Awareness", color: "bg-purple-100 text-purple-700", defaultDuration: 15 },
+  PHONEMIC_AWARENESS: { label: "Phonemic Awareness", color: "bg-theme-primary/10 text-theme-primary", defaultDuration: 15 },
   PHONICS_DECODING: { label: "Phonics & Decoding", color: "bg-blue-100 text-blue-700", defaultDuration: 20 },
   SIGHT_WORDS: { label: "Sight Words", color: "bg-green-100 text-green-700", defaultDuration: 10 },
   FLUENCY: { label: "Fluency Practice", color: "bg-orange-100 text-orange-700", defaultDuration: 15 },
@@ -410,7 +410,7 @@ export function LessonPlanTemplate({
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs flex items-center justify-center">1</span>
+                <span className="w-6 h-6 rounded-full bg-theme-primary/10 text-theme-primary text-xs flex items-center justify-center">1</span>
                 Warm-Up / Review (2-3 min)
               </label>
               <Textarea

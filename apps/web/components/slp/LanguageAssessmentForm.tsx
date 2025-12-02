@@ -539,7 +539,7 @@ export function LanguageAssessmentForm({
                     onClick={() => toggleStructure(structure)}
                     className={`px-3 py-1.5 rounded-full text-sm transition-all ${
                       selectedStructures.includes(structure)
-                        ? "bg-purple-500 text-white"
+                        ? "bg-theme-primary text-white"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >

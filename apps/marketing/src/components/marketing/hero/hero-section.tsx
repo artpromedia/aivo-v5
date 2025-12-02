@@ -10,7 +10,7 @@ export function HeroSection() {
   const [isVideoOpen, setIsVideoOpen] = useState(false)
 
   return (
-    <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 via-white to-pink-50">
+    <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-theme-primary/5 via-white to-pink-50">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -24,7 +24,7 @@ export function HeroSection() {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute -top-40 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-3xl"
+          className="absolute -top-40 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-theme-primary/20 to-pink-200/30 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -37,7 +37,7 @@ export function HeroSection() {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute -bottom-40 -left-40 w-[800px] h-[800px] bg-gradient-to-tr from-blue-200/30 to-purple-200/30 rounded-full blur-3xl"
+          className="absolute -bottom-40 -left-40 w-[800px] h-[800px] bg-gradient-to-tr from-blue-200/30 to-theme-primary/20 rounded-full blur-3xl"
         />
       </div>
 
@@ -48,10 +48,10 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 mb-8"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-theme-primary/10 to-pink-100 border border-theme-primary/20 mb-8"
           >
-            <Brain className="w-5 h-5 text-purple-600 animate-pulse" />
-            <span className="text-sm font-semibold text-purple-700">
+            <Brain className="w-5 h-5 text-theme-primary animate-pulse" />
+            <span className="text-sm font-semibold text-theme-primary">
               Introducing Virtual Brain AI - A personalized learning companion for every child
             </span>
           </motion.div>
@@ -64,7 +64,7 @@ export function HeroSection() {
             className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight"
           >
             Welcome to{' '}
-            <span className="text-gradient bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <span className="text-gradient bg-gradient-to-r from-theme-primary to-pink-600 bg-clip-text text-transparent">
               AIVO Learning
             </span>
             <br />
@@ -97,7 +97,7 @@ export function HeroSection() {
               <span className="text-sm font-medium">4.9/5 Rating</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
-              <Award className="w-5 h-5 text-purple-500" />
+              <Award className="w-5 h-5 text-theme-primary" />
               <span className="text-sm font-medium">EdTech Award 2024</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
@@ -116,7 +116,7 @@ export function HeroSection() {
             <Link href="/signup">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-theme-primary to-pink-600 hover:from-theme-primary/90 hover:to-pink-700 text-white rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Start Free Trial
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -126,7 +126,7 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               onClick={() => setIsVideoOpen(true)}
-              className="rounded-xl px-8 py-6 text-lg font-semibold border-2 border-purple-300 text-purple-700 hover:bg-purple-50 transition-all duration-300"
+              className="rounded-xl px-8 py-6 text-lg font-semibold border-2 border-theme-primary/30 text-theme-primary hover:bg-theme-primary/5 transition-all duration-300"
             >
               <PlayCircle className="mr-2 w-5 h-5" />
               Watch Demo (2 min)
@@ -141,7 +141,7 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row items-center justify-center gap-8 text-gray-600"
           >
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-500" />
+              <Users className="w-5 h-5 text-theme-primary" />
               <span><strong className="text-gray-900">50,000+</strong> Active Learners</span>
             </div>
             <div className="flex items-center gap-2">
@@ -164,19 +164,19 @@ export function HeroSection() {
         >
           <div className="relative mx-auto max-w-6xl">
             {/* Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-3xl blur-3xl opacity-20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-theme-primary to-pink-400 rounded-3xl blur-3xl opacity-20" />
             
             {/* Main Container */}
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-100 to-pink-100 p-1">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-theme-primary/10 to-pink-100 p-1">
               <div className="rounded-3xl bg-white p-2">
-                <div className="aspect-video bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl flex items-center justify-center relative overflow-hidden">
+                <div className="aspect-video bg-gradient-to-br from-theme-primary/5 to-pink-50 rounded-2xl flex items-center justify-center relative overflow-hidden">
                   {/* Placeholder for Dashboard Preview */}
                   <div className="absolute inset-0 p-8">
                     <div className="bg-white rounded-2xl shadow-lg h-full p-6">
                       {/* Mock Dashboard Header */}
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                          <div className="w-12 h-12 bg-gradient-to-br from-theme-primary to-pink-500 rounded-xl flex items-center justify-center">
                             <Brain className="w-7 h-7 text-white" />
                           </div>
                           <div>
@@ -188,7 +188,7 @@ export function HeroSection() {
                           <div className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
                             Streak: 7 days
                           </div>
-                          <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium">
+                          <div className="px-3 py-1 bg-theme-primary/10 text-theme-primary rounded-lg text-sm font-medium">
                             Level 12
                           </div>
                         </div>
@@ -206,8 +206,8 @@ export function HeroSection() {
                           <p className="font-semibold text-gray-900">Science</p>
                           <p className="text-xs text-gray-600">New activity</p>
                         </div>
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
-                          <Award className="w-8 h-8 text-purple-600 mb-2" />
+                        <div className="bg-gradient-to-br from-theme-primary/5 to-theme-primary/10 rounded-xl p-4">
+                          <Award className="w-8 h-8 text-theme-primary mb-2" />
                           <p className="font-semibold text-gray-900">Progress</p>
                           <p className="text-xs text-gray-600">View report</p>
                         </div>
@@ -225,7 +225,7 @@ export function HeroSection() {
               className="absolute -left-10 top-20 bg-white rounded-2xl shadow-xl p-4 hidden lg:block"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-theme-primary to-pink-500 rounded-xl flex items-center justify-center">
                   <Brain className="w-6 h-6 text-white" />
                 </div>
                 <div>

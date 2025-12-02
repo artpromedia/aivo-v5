@@ -157,9 +157,9 @@ export function ArticulationPractice({
       <div className="bg-white rounded-3xl shadow-lg p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-theme-primary/10 px-4 py-2 rounded-full mb-4">
             <span className="text-2xl">🗣️</span>
-            <span className="text-sm font-semibold text-purple-700 uppercase tracking-wide">
+            <span className="text-sm font-semibold text-theme-primary uppercase tracking-wide">
               Speech Practice
             </span>
           </div>
@@ -236,7 +236,7 @@ export function ArticulationPractice({
         {/* Analyzing State */}
         {isAnalyzing && (
           <div className="flex flex-col items-center justify-center py-8 mb-8">
-            <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4" />
+            <div className="w-12 h-12 border-4 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin mb-4" />
             <p className="text-gray-600">Analyzing your pronunciation...</p>
           </div>
         )}

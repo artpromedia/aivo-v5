@@ -113,7 +113,7 @@ const MASTERY_CONFIG: Record<MasteryLevel, { color: string; bgColor: string; ico
   DEVELOPING: { color: "text-orange-500", bgColor: "bg-orange-50", icon: <Clock className="h-4 w-4" />, label: "Developing" },
   PROFICIENT: { color: "text-blue-500", bgColor: "bg-blue-50", icon: <CheckCircle2 className="h-4 w-4" />, label: "Proficient" },
   MASTERED: { color: "text-green-500", bgColor: "bg-green-50", icon: <CheckCircle2 className="h-4 w-4" />, label: "Mastered" },
-  AUTOMATICITY: { color: "text-purple-500", bgColor: "bg-purple-50", icon: <Star className="h-4 w-4" />, label: "Automatic" },
+  AUTOMATICITY: { color: "text-theme-primary", bgColor: "bg-theme-primary/10", icon: <Star className="h-4 w-4" />, label: "Automatic" },
 };
 
 // Group skills by developmental level

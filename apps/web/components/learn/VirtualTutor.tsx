@@ -28,7 +28,7 @@ export function VirtualTutor({ message, engagement, mood = 'supportive' }: Virtu
       case 'encouraging':
         return 'from-orange-400 to-red-400'
       case 'excited':
-        return 'from-purple-400 to-pink-400'
+        return 'from-theme-primary to-pink-400'
       case 'celebrating':
         return 'from-yellow-400 to-orange-400'
       default:
@@ -100,7 +100,7 @@ export function VirtualTutor({ message, engagement, mood = 'supportive' }: Virtu
             className="bg-white rounded-3xl shadow-lg p-6"
           >
             <div className="flex items-start gap-3 mb-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-theme-primary to-pink-400 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
@@ -116,7 +116,7 @@ export function VirtualTutor({ message, engagement, mood = 'supportive' }: Virtu
 
             {/* Action Suggestions */}
             <div className="mt-4 space-y-2">
-              <button className="w-full px-4 py-2 rounded-xl border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all text-sm font-medium text-gray-700 flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 rounded-xl border-2 border-theme-primary/20 hover:border-theme-primary/40 hover:bg-theme-primary/10 transition-all text-sm font-medium text-gray-700 flex items-center justify-center gap-2">
                 <Brain className="w-4 h-4" />
                 Get a Hint
               </button>

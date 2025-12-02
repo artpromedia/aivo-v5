@@ -70,7 +70,7 @@ export function ShareReportButton({ assessmentId }: { assessmentId: string }) {
   return (
     <button
       onClick={handleShare}
-      className="rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-700 transition hover:bg-purple-200"
+      className="rounded-full bg-theme-primary/10 px-4 py-2 text-sm font-semibold text-theme-primary transition hover:bg-theme-primary/20"
     >
       {status === "copied" ? "Link copied" : status === "error" ? "Copy failed" : "Share link"}
     </button>

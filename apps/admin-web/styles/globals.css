@@ -2,18 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   Admin Web - Dynamic Theme System
+   Inherits from learner-web globals
+   ======================================== */
+
 :root {
-  --color-lavender-50: #FAF5FF;
-  --color-lavender-100: #F5EBFF;
-  --color-lavender-200: #E9D5FF;
-  --color-violet-500: #7C3AED;
-  --color-violet-600: #6D28D9;
+  color-scheme: light;
+  
+  /* RGB Color Variables for Tailwind */
+  --color-primary: 124 58 237;
+  --color-primary-light: 167 139 250;
+  --color-primary-dark: 109 40 217;
+  --color-primary-contrast: 255 255 255;
+  --color-secondary: 179 157 219;
+  --color-accent: 0 188 212;
+  --color-background: 250 245 255;
+  --color-background-elevated: 255 255 255;
+  --color-surface: 255 255 255;
+  --color-border: 233 213 255;
+  --color-text: 15 23 42;
+  --color-text-secondary: 71 85 105;
+  --color-text-muted: 148 163 184;
+  --color-success: 110 231 183;
+  --color-warning: 252 211 77;
+  --color-error: 239 68 68;
+  --color-info: 125 211 252;
+  
+  --radius-small: 0.5rem;
+  --radius-medium: 0.75rem;
+  --radius-large: 1.25rem;
+  --focus-ring-width: 2px;
+  --font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Grade-band themes (inherited) */
+[data-grade-band="k_5"], .theme-k5 {
+  --color-primary: 255 138 128;
+  --color-primary-dark: 239 83 80;
+  --color-background: 255 248 231;
+  --color-text: 62 39 35;
+}
+
+[data-grade-band="6_8"], .theme-ms {
+  --color-primary: 38 166 154;
+  --color-primary-dark: 0 137 123;
+  --color-background: 245 245 245;
+  --color-text: 55 71 79;
+}
+
+[data-grade-band="9_12"], .theme-hs {
+  --color-primary: 63 81 181;
+  --color-primary-dark: 48 63 159;
+  --color-background: 255 255 255;
+  --color-text: 33 33 33;
 }
 
 body {
-  background: linear-gradient(to bottom right, var(--color-lavender-50), var(--color-lavender-100));
+  background: linear-gradient(to bottom right, rgb(var(--color-background)), rgb(var(--color-background-elevated)));
+  color: rgb(var(--color-text));
+  font-family: var(--font-family);
 }
 
+/* Accessible focus states */
+:focus-visible {
+  outline: var(--focus-ring-width) solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -32,21 +93,29 @@ body {
   animation: pulseGentle 2s ease-in-out infinite;
 }
 
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeIn, .animate-pulseGentle {
+    animation: none;
+  }
+}
+
+/* Custom scrollbar using theme colors */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5EBFF;
+  background: rgb(var(--color-background));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E9D5FF;
+  background: rgb(var(--color-border));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4BFFF;
+  background: rgb(var(--color-primary-light));
 }

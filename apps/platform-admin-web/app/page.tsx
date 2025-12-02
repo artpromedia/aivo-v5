@@ -2,8 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  Building2,
+  CheckCircle2,
+  PauseCircle,
+  Search,
+  Users,
+  Globe,
+  BarChart3,
+  AlertTriangle,
+} from "lucide-react";
 import { AivoApiClient } from "@aivo/api-client";
 import type { Tenant } from "@aivo/types";
+import { DashboardSkeleton } from "../components/Skeletons";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 const client = new AivoApiClient(API_BASE_URL, async () => null);
@@ -33,38 +44,39 @@ export default function Page() {
   const inactiveTenants = tenants.length - activeTenants;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
+    <main className="min-h-screen bg-slate-50 p-6">
       <section className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-coral to-amber-300 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-violet-500 bg-clip-text text-transparent">
               Platform Admin Console
             </h1>
-            <span className="inline-flex items-center gap-1.5 rounded-pill px-3 py-1 text-xs font-semibold bg-slate-800 text-slate-200">
-              District
-              <span className="inline-block w-1 h-1 rounded-full bg-emerald-400" />
-              Platform
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              System Online
             </span>
           </div>
-          <p className="text-sm text-slate-300 max-w-2xl">
-            This is a placeholder admin console. In a later iteration, add controls for tenant provisioning, permissions, and data residency policies.
+          <p className="text-sm text-slate-600 max-w-2xl">
+            Manage tenants, permissions, and data residency policies across the AIVO platform.
           </p>
         </header>
 
-        {loading && (
-          <div className="flex items-center gap-2 text-slate-400 text-sm">
-            <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-            Loading platform overview…
-          </div>
-        )}
+        {loading && <DashboardSkeleton />}
 
         {error && (
-          <div className="rounded-xl bg-red-500/10 border border-red-500/40 p-4 text-sm text-red-200">
-            <p className="font-semibold">Error loading data</p>
-            <p className="text-xs text-red-300 mt-1">{error}</p>
-            <p className="text-xs text-red-400 mt-2">
-              Ensure the API gateway is running on port 4000 and the database is seeded with tenants.
-            </p>
+          <div className="rounded-2xl bg-red-50 border border-red-200 p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-red-800">Error loading data</p>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <p className="text-xs text-red-600 mt-2">
+                  Ensure the API gateway is running on port 4000 and the database is seeded with tenants.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -75,19 +87,25 @@ export default function Page() {
                 label="Total organizations"
                 value={tenants.length}
                 helper="Onboarded to AIVO"
-                icon="🏢"
+                icon={Building2}
+                iconBg="bg-violet-100"
+                iconColor="text-violet-600"
               />
               <MetricCard
                 label="Active tenants"
                 value={activeTenants}
                 helper="Enabled & operational"
-                icon="✅"
+                icon={CheckCircle2}
+                iconBg="bg-emerald-100"
+                iconColor="text-emerald-600"
               />
               <MetricCard
                 label="Paused"
                 value={inactiveTenants}
                 helper="Need review or support"
-                icon="⏸️"
+                icon={PauseCircle}
+                iconBg="bg-amber-100"
+                iconColor="text-amber-600"
               />
             </section>
 
@@ -97,7 +115,7 @@ export default function Page() {
                 description="View all tenants, inspect usage guardrails, audit logs, and governance policies."
                 href="/tenants"
                 buttonLabel="Manage tenants"
-                icon="🔍"
+                icon={Search}
               />
               <ActionCard
                 title="User Provisioning"
@@ -105,7 +123,7 @@ export default function Page() {
                 href="#"
                 buttonLabel="Coming soon"
                 disabled
-                icon="👥"
+                icon={Users}
               />
               <ActionCard
                 title="Data Residency"
@@ -113,7 +131,7 @@ export default function Page() {
                 href="#"
                 buttonLabel="Coming soon"
                 disabled
-                icon="🌍"
+                icon={Globe}
               />
               <ActionCard
                 title="Analytics & Reporting"
@@ -121,17 +139,17 @@ export default function Page() {
                 href="#"
                 buttonLabel="Coming soon"
                 disabled
-                icon="📊"
+                icon={BarChart3}
               />
             </section>
 
             {tenants.length > 0 && (
-              <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-3">
+              <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Recent tenants</h2>
+                  <h2 className="text-lg font-semibold text-slate-900">Recent Tenants</h2>
                   <Link
                     href="/tenants"
-                    className="text-xs text-coral hover:text-coral/80 underline underline-offset-2"
+                    className="text-sm text-violet-600 hover:text-violet-700 font-medium"
                   >
                     View all →
                   </Link>
@@ -140,19 +158,19 @@ export default function Page() {
                   {tenants.slice(0, 5).map((tenant) => (
                     <li
                       key={tenant.id}
-                      className="flex items-center justify-between rounded-xl bg-slate-800/60 border border-slate-700 p-3 text-sm"
+                      className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 p-4 transition-all hover:border-violet-200 hover:bg-violet-50/30"
                     >
                       <div>
-                        <p className="font-semibold text-slate-100">{tenant.name}</p>
-                        <p className="text-xs text-slate-400">
+                        <p className="font-semibold text-slate-900">{tenant.name}</p>
+                        <p className="text-sm text-slate-500">
                           {tenant.type.replace(/_/g, " ")} • {tenant.region}
                         </p>
                       </div>
                       <span
-                        className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                           tenant.isActive
-                            ? "bg-emerald-500/20 text-emerald-200"
-                            : "bg-slate-600/40 text-slate-300"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-600"
                         }`}
                       >
                         {tenant.isActive ? "ACTIVE" : "INACTIVE"}
@@ -173,21 +191,27 @@ function MetricCard({
   label,
   value,
   helper,
-  icon
+  icon: Icon,
+  iconBg,
+  iconColor,
 }: {
   label: string;
   value: number;
   helper: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconBg: string;
+  iconColor: string;
 }) {
   return (
-    <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <p className="text-xs text-slate-400 font-medium">{label}</p>
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 transition-all hover:shadow-md hover:border-violet-200">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center`}>
+          <Icon className={`w-5 h-5 ${iconColor}`} />
+        </div>
+        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{label}</p>
       </div>
-      <p className="text-3xl font-bold text-slate-50">{value}</p>
-      <p className="text-xs text-slate-500">{helper}</p>
+      <p className="text-3xl font-bold text-slate-900">{value}</p>
+      <p className="text-xs text-slate-500 mt-1">{helper}</p>
     </div>
   );
 }
@@ -198,35 +222,37 @@ function ActionCard({
   href,
   buttonLabel,
   disabled,
-  icon
+  icon: Icon,
 }: {
   title: string;
   description: string;
   href: string;
   buttonLabel: string;
   disabled?: boolean;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-3">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">{icon}</span>
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 transition-all hover:shadow-md hover:border-violet-200">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+          <Icon className="w-5 h-5 text-violet-600" />
+        </div>
         <div className="flex-1">
-          <h3 className="text-base font-semibold text-slate-100">{title}</h3>
-          <p className="text-xs text-slate-400 mt-1">{description}</p>
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          <p className="text-sm text-slate-500 mt-1">{description}</p>
         </div>
       </div>
       {disabled ? (
         <button
           disabled
-          className="w-full rounded-pill bg-slate-800/60 px-4 py-2 text-sm font-semibold text-slate-400 cursor-not-allowed"
+          className="w-full rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-400 cursor-not-allowed"
         >
           {buttonLabel}
         </button>
       ) : (
         <Link
           href={href}
-          className="block w-full rounded-pill bg-coral px-4 py-2 text-sm font-semibold text-white text-center hover:bg-coral/90 transition"
+          className="block w-full rounded-full bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white text-center hover:bg-violet-700 transition-colors"
         >
           {buttonLabel}
         </Link>

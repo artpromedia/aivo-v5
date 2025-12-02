@@ -121,8 +121,8 @@ export default function DyslexiaDashboardPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Clock className="h-5 w-5 text-purple-600" />
+              <div className="p-2 bg-theme-primary/10 rounded-lg">
+                <Clock className="h-5 w-5 text-theme-primary" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{DASHBOARD_DATA.totalPracticeMinutes}</div>
@@ -150,7 +150,7 @@ export default function DyslexiaDashboardPage() {
         {/* Main Progress Section */}
         <div className="lg:col-span-2 space-y-6">
           {/* Next Lesson */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
+          <Card className="bg-gradient-to-r from-blue-50 to-theme-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-blue-600" />
@@ -215,7 +215,7 @@ export default function DyslexiaDashboardPage() {
                     <div className="p-1.5 bg-background rounded">
                       {activity.type === "lesson" && <BookOpen className="h-4 w-4 text-blue-600" />}
                       {activity.type === "practice" && <Target className="h-4 w-4 text-green-600" />}
-                      {activity.type === "assessment" && <BarChart3 className="h-4 w-4 text-purple-600" />}
+                      {activity.type === "assessment" && <BarChart3 className="h-4 w-4 text-theme-primary" />}
                     </div>
                     <div>
                       <div className="text-sm font-medium">{activity.activity}</div>
@@ -256,11 +256,11 @@ export default function DyslexiaDashboardPage() {
           </Card>
 
           {/* Current Phase */}
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-theme-primary/10 border-theme-primary/20">
             <CardContent className="p-4">
-              <div className="text-sm text-purple-600 font-medium">Current Phase</div>
-              <div className="text-lg font-bold text-purple-900">{DASHBOARD_DATA.currentPhase}</div>
-              <div className="mt-2 text-sm text-purple-700">
+              <div className="text-sm text-theme-primary font-medium">Current Phase</div>
+              <div className="text-lg font-bold text-theme-primary">{DASHBOARD_DATA.currentPhase}</div>
+              <div className="mt-2 text-sm text-theme-primary">
                 Mastering foundational phonics patterns before advancing to complex vowel teams
               </div>
             </CardContent>

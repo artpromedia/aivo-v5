@@ -116,7 +116,7 @@ export default auth((req) => {
     // Skip CSRF check for exempt paths or internal API calls
     if (!isCSRFExempt(pathname) && !hasInternalApiKey(req.headers)) {
       const headerToken = req.headers.get(CSRF_HEADER_NAME);
-      const cookieToken = req.cookies.get(CSRF_COOKIE_NAME)?.value;
+      const cookieToken = req.cookies?.get(CSRF_COOKIE_NAME)?.value;
 
       if (!headerToken || !cookieToken || !validateCSRFToken(headerToken, cookieToken)) {
         return new NextResponse(
@@ -138,7 +138,7 @@ export default auth((req) => {
   }
 
   // Ensure CSRF cookie exists for authenticated users on page requests
-  if (req.auth && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
+  if (req.auth && req.cookies && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
     const existingCookie = req.cookies.get(CSRF_COOKIE_NAME);
     if (!existingCookie) {
       const { token } = generateCSRFToken();
@@ -163,9 +163,13 @@ export default auth((req) => {
   }
 
   // Allow unauthenticated access to public paths
-  if (!req.auth) {
+  if (!req.auth || !req.auth.user) {
     // Don't redirect for API routes or public assets
     if (pathname.startsWith("/api") || pathname.startsWith("/_next")) {
+      return response;
+    }
+    // Don't redirect if already on login/register page
+    if (pathname === "/login" || pathname === "/register") {
       return response;
     }
     const signInUrl = new URL("/login", req.nextUrl.origin);
@@ -173,8 +177,8 @@ export default auth((req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  const role = req.auth.user.role;
-  const onboardingStatus = (req.auth.user as any).onboardingStatus;
+  const role = req.auth.user?.role;
+  const onboardingStatus = (req.auth.user as any)?.onboardingStatus;
 
   // Skip onboarding check for exempt paths
   if (!isOnboardingExempt(pathname)) {
@@ -186,14 +190,16 @@ export default auth((req) => {
     }
   }
 
-  // Role-based access control
-  if (pathname.startsWith("/learners") && role === "LEARNER") {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
-  }
+  // Role-based access control (only if role is defined)
+  if (role) {
+    if (pathname.startsWith("/learners") && role === "LEARNER") {
+      return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
+    }
 
-  // Block learners from admin routes
-  if (pathname.startsWith("/admin") && role === "LEARNER") {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
+    // Block learners from admin routes
+    if (pathname.startsWith("/admin") && role === "LEARNER") {
+      return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
+    }
   }
 
   return response;
@@ -201,10 +207,13 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/learners/:path*",
     "/onboarding/:path*",
     "/admin/:path*",
+    "/login",
+    "/register",
     "/api/:path*",
   ]
 };

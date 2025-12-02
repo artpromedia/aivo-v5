@@ -203,13 +203,13 @@ function ChunkNavigation({ current, total, onPrev, onNext, onComplete }: { curre
       </button>
       <div className="flex gap-1">
         {Array.from({ length: total }).map((_, index) => (
-          <span key={index} className={`h-2 w-2 rounded-full ${index === current ? 'bg-purple-500' : index < current ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+          <span key={index} className={`h-2 w-2 rounded-full ${index === current ? 'bg-theme-primary' : index < current ? 'bg-emerald-500' : 'bg-slate-300'}`} />
         ))}
       </div>
       <button
         type="button"
         onClick={isLast ? onComplete : onNext}
-        className={`rounded-full px-4 py-2 text-sm font-semibold text-white ${isLast ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-purple-500 hover:bg-purple-600'}`}
+        className={`rounded-full px-4 py-2 text-sm font-semibold text-white ${isLast ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-theme-primary hover:bg-theme-primary/90'}`}
       >
         {isLast ? 'Check understanding ✓' : 'Next →'}
       </button>
@@ -252,7 +252,7 @@ function VisualAids({ concepts, onSelect }: { concepts: LearningConcept[]; onSel
   return (
     <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {concepts.slice(0, 6).map((concept) => (
-        <button key={concept.term} type="button" onClick={() => onSelect(concept)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-purple-200 hover:shadow">
+        <button key={concept.term} type="button" onClick={() => onSelect(concept)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-theme-primary/20 hover:shadow">
           <p className="text-sm font-semibold text-slate-900">{concept.term}</p>
           <p className="text-xs text-slate-500">{concept.simpleDefinition}</p>
         </button>

@@ -129,7 +129,7 @@ export function SelfDeterminationRadar({
   return (
     <div className="space-y-6">
       {/* Overall Score */}
-      <Card className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
+      <Card className="bg-gradient-to-r from-theme-primary to-indigo-600 text-white">
         <CardContent className="p-6">
           <div className="flex justify-between items-center">
             <div>

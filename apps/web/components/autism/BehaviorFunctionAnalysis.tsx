@@ -82,8 +82,8 @@ const FUNCTION_DEFINITIONS: Record<string, Omit<FunctionData, "count" | "percent
     function: "sensory",
     label: "Automatic/Sensory",
     icon: Zap,
-    color: "text-purple-600",
-    bgColor: "bg-purple-100 dark:bg-purple-900",
+    color: "text-theme-primary",
+    bgColor: "bg-theme-primary/10 dark:bg-theme-primary/20",
     strategies: [
       "Provide alternative sensory activities that meet the same need",
       "Create a sensory diet with OT consultation",

@@ -36,7 +36,7 @@ export default function ADHDDashboardPage() {
       description: "AI-powered project breakdown into manageable steps",
       icon: Sparkles,
       href: `/teacher/learners/${learnerId}/adhd/projects`,
-      color: "text-purple-600 bg-purple-100 dark:bg-purple-900",
+      color: "text-theme-primary bg-theme-primary/10 dark:bg-theme-primary/20",
       badge: "AI",
     },
     {
@@ -161,7 +161,7 @@ export default function ADHDDashboardPage() {
                       <Icon className="h-5 w-5" />
                     </div>
                     {feature.badge && (
-                      <Badge className="bg-purple-100 text-purple-700">
+                      <Badge className="bg-theme-primary/10 text-theme-primary">
                         <Sparkles className="h-3 w-3 mr-1" />
                         {feature.badge}
                       </Badge>
@@ -204,9 +204,9 @@ export default function ADHDDashboardPage() {
                 <p className="text-sm text-muted-foreground">5 hours ago</p>
               </div>
             </div>
-            <div className="flex items-center gap-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-              <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-full">
-                <FolderOpen className="h-4 w-4 text-purple-600" />
+            <div className="flex items-center gap-4 p-3 bg-theme-primary/5 dark:bg-theme-primary/20 rounded-lg">
+              <div className="p-2 bg-theme-primary/10 dark:bg-theme-primary/30 rounded-full">
+                <FolderOpen className="h-4 w-4 text-theme-primary" />
               </div>
               <div className="flex-1">
                 <p className="font-medium">Binder check-in completed</p>

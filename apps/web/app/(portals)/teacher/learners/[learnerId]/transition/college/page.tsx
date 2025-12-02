@@ -103,7 +103,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   applied: { bg: 'bg-blue-100', text: 'text-blue-700' },
   accepted: { bg: 'bg-green-100', text: 'text-green-700' },
   denied: { bg: 'bg-red-100', text: 'text-red-700' },
-  enrolled: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  enrolled: { bg: 'bg-theme-primary/10', text: 'text-theme-primary' },
   withdrawn: { bg: 'bg-gray-100', text: 'text-gray-500' },
 };
 
@@ -191,7 +191,7 @@ export default function CollegePrepPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-lg">{college.name}</h3>
                         {college.hasDisabilityServices && (
-                          <span className="text-purple-600" title="Disability Services Available">♿</span>
+                          <span className="text-theme-primary" title="Disability Services Available">♿</span>
                         )}
                       </div>
                       <p className="text-gray-600">{college.city}, {college.state} • {college.distance} miles away</p>
@@ -267,7 +267,7 @@ export default function CollegePrepPage() {
                           {app.deadline && <span>Deadline: {app.deadline}</span>}
                           {app.submittedDate && <span>Submitted: {app.submittedDate}</span>}
                           {app.accommodationsRequested && (
-                            <span className="text-purple-600">♿ Accommodations Requested</span>
+                            <span className="text-theme-primary">♿ Accommodations Requested</span>
                           )}
                         </div>
                       </div>

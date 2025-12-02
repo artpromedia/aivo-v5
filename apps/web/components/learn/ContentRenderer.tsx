@@ -40,7 +40,7 @@ export function ContentRenderer({ activity, adaptiveMode = true, onComplete }: C
     <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -32 }} className="rounded-3xl bg-white p-8 shadow-xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-purple-400">Adaptive sequence #{activity.sequence}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-primary/60">Adaptive sequence #{activity.sequence}</p>
           <h2 className="text-3xl font-semibold text-slate-900">{activity.title}</h2>
           <p className="text-sm text-slate-500">{activity.description}</p>
         </div>
@@ -83,7 +83,7 @@ export function ContentRenderer({ activity, adaptiveMode = true, onComplete }: C
               rows={5}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 p-3 text-sm text-slate-800 focus:border-purple-500 focus:outline-none"
+              className="mt-2 w-full rounded-2xl border border-slate-200 p-3 text-sm text-slate-800 focus:border-theme-primary focus:outline-none"
               placeholder="Explain how you solved it, sketch ideas, or note any stuck points"
             />
           </section>
@@ -119,7 +119,7 @@ export function ContentRenderer({ activity, adaptiveMode = true, onComplete }: C
           <button
             type="button"
             onClick={handleComplete}
-            className="w-full rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 py-3 text-center text-base font-semibold text-white shadow-lg"
+            className="w-full rounded-2xl bg-gradient-to-r from-theme-primary to-blue-500 py-3 text-center text-base font-semibold text-white shadow-lg"
           >
             {adaptiveMode ? 'Submit & adapt' : 'Mark complete'}
           </button>
@@ -137,7 +137,7 @@ export function PerformanceIndicator({ metrics }: PerformanceIndicatorProps) {
   const bands = [
     { label: 'Accuracy', value: `${Math.round(metrics.accuracy * 100)}%`, accent: 'text-emerald-600' },
     { label: 'Avg. time', value: `${Math.round(metrics.timePerQuestion / 1000)}s`, accent: 'text-blue-600' },
-    { label: 'Streak', value: `${metrics.consecutiveCorrect} ✓ / ${metrics.consecutiveIncorrect} ✕`, accent: 'text-purple-600' }
+    { label: 'Streak', value: `${metrics.consecutiveCorrect} ✓ / ${metrics.consecutiveIncorrect} ✕`, accent: 'text-theme-primary' }
   ];
 
   return (

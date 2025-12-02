@@ -1,6 +1,9 @@
+import "../styles/globals.css";
+import { AdminSidebar } from "../components/AdminSidebar";
+
 export const metadata = {
-  title: "District Admin",
-  description: "AIVO District Admin UI"
+  title: "District Admin | AIVO",
+  description: "AIVO District Administration Console"
 };
 
 export default function RootLayout({
@@ -10,7 +13,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-slate-50">
+        <div className="flex min-h-screen">
+          <AdminSidebar />
+          <div className="flex-1 overflow-auto">
+            {children}
+          </div>
+        </div>
+      </body>
     </html>
   );
 }

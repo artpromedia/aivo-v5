@@ -45,7 +45,7 @@ export default function DifficultyReviewPage() {
       {/* Back Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Dashboard
       </Link>
@@ -53,7 +53,7 @@ export default function DifficultyReviewPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <header className="bg-white rounded-3xl shadow-xl p-6 text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-theme-primary to-theme-primary rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
             ✅
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Difficulty Change Requests</h1>

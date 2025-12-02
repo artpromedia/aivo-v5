@@ -60,7 +60,7 @@ const MODALITY_CONFIG: Record<SensoryModality, { icon: React.ReactNode; label: s
   VISUAL: { icon: <Eye className="h-4 w-4" />, label: "Visual", color: "bg-blue-100 text-blue-700" },
   AUDITORY: { icon: <Ear className="h-4 w-4" />, label: "Auditory", color: "bg-green-100 text-green-700" },
   KINESTHETIC: { icon: <Hand className="h-4 w-4" />, label: "Kinesthetic", color: "bg-orange-100 text-orange-700" },
-  TACTILE: { icon: <Hand className="h-4 w-4" />, label: "Tactile", color: "bg-purple-100 text-purple-700" },
+  TACTILE: { icon: <Hand className="h-4 w-4" />, label: "Tactile", color: "bg-theme-primary/10 text-theme-primary" },
   MULTISENSORY_VAKT: { icon: <Sparkles className="h-4 w-4" />, label: "Multisensory", color: "bg-pink-100 text-pink-700" },
 };
 

@@ -155,7 +155,7 @@ export function ProjectBreakdownGenerator({
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">Project Breakdown</h3>
           {breakdown?.aiGenerated && (
-            <Badge className="bg-purple-100 text-purple-700">
+            <Badge className="bg-theme-primary/10 text-theme-primary">
               <Sparkles className="h-3 w-3 mr-1" />
               AI Generated
             </Badge>

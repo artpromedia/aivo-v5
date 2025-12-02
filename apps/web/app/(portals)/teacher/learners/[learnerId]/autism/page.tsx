@@ -28,7 +28,7 @@ export default function AutismDashboardPage() {
       description: "Communication, sensory, and social interaction preferences",
       icon: Brain,
       href: `/teacher/learners/${learnerId}/autism/profile`,
-      color: "text-purple-600 bg-purple-100 dark:bg-purple-900",
+      color: "text-theme-primary bg-theme-primary/10 dark:bg-theme-primary/20",
       badge: null,
     },
     {
@@ -103,7 +103,7 @@ export default function AutismDashboardPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Brain className="h-6 w-6 text-purple-600" />
+            <Brain className="h-6 w-6 text-theme-primary" />
             Autism Support System
           </h1>
           <p className="text-muted-foreground">
@@ -117,8 +117,8 @@ export default function AutismDashboardPage() {
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
-                <Brain className="h-5 w-5 text-purple-600" />
+              <div className="p-2 rounded-lg bg-theme-primary/10 dark:bg-theme-primary/20">
+                <Brain className="h-5 w-5 text-theme-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Profile</p>

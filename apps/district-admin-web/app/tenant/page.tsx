@@ -13,6 +13,21 @@ import type {
   TenantLimits,
   TenantUsage
 } from "@aivo/types";
+import {
+  Users,
+  TrendingUp,
+  Clock,
+  Building2,
+  School as SchoolIcon,
+  Shield,
+  Activity,
+  AlertTriangle,
+  FileText,
+  Calendar,
+  MapPin,
+  ChevronRight,
+} from "lucide-react";
+import { DashboardSkeleton } from "../../components/Skeletons";
 
 const client = new AivoApiClient("http://localhost:4000", async () => null);
 
@@ -149,79 +164,88 @@ export default function DistrictAdminTenantPage() {
   }, [roleAssignments]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
+    <main className="min-h-screen bg-slate-50 text-slate-900 p-6">
       <section className="max-w-6xl mx-auto space-y-6">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold">District Admin – Command Center</h1>
-            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-200">
+            <h1 className="text-2xl font-bold text-slate-900">Command Center</h1>
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-violet-100 text-violet-700">
               Tenant {CURRENT_TENANT_ID}
             </span>
           </div>
-          <p className="text-sm text-slate-300 max-w-2xl">
+          <p className="text-sm text-slate-600 max-w-2xl">
             Monitor curriculum coverage, governance guardrails, and daily usage signals across
             your district&apos;s schools. All data is sourced from the governance APIs already running
             in the platform.
           </p>
         </div>
 
-        {loading && <p className="text-sm text-slate-400">Loading…</p>}
-        {error && <p className="text-sm text-red-400">Error: {error}</p>}
+        {loading && <DashboardSkeleton />}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            <p className="text-sm text-red-800">Error: {error}</p>
+          </div>
+        )}
 
         <section className="grid gap-4 md:grid-cols-3">
           <MetricCard
             label="Learners"
             value={analytics ? numberFormatter.format(analytics.learnersCount) : "—"}
             helper="Enrolled learners"
+            icon={Users}
           />
           <MetricCard
             label="Avg mastery"
             value={analytics ? `${analytics.avgMasteryScore.toFixed(1)}%` : "—"}
             helper="Rolling 30-day"
+            icon={TrendingUp}
           />
           <MetricCard
             label="Daily minutes"
             value={analytics ? `${analytics.avgMinutesPracticed.toFixed(0)} min` : "—"}
             helper="Average per learner"
+            icon={Clock}
           />
         </section>
 
         {tenantInfo && (
-          <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">
                   {tenantInfo.tenant.name}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-sm text-slate-500 mt-1">
                   Region: {tenantInfo.tenant.region} • Type: {tenantInfo.tenant.type}
                 </p>
               </div>
-              <div className="flex gap-6 text-xs text-slate-300">
+              <div className="flex gap-8 text-sm">
                 <div>
-                  <p className="font-semibold">Curricula</p>
-                  <p>{tenantInfo.config.curricula.length}</p>
+                  <p className="font-semibold text-slate-900">Curricula</p>
+                  <p className="text-slate-600">{tenantInfo.config.curricula.length}</p>
                 </div>
                 <div>
-                  <p className="font-semibold">Providers</p>
-                  <p>{tenantInfo.config.allowedProviders.join(", ") || "default"}</p>
+                  <p className="font-semibold text-slate-900">Providers</p>
+                  <p className="text-slate-600">{tenantInfo.config.allowedProviders.join(", ") || "default"}</p>
                 </div>
               </div>
             </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
               <div>
-                <h3 className="text-xs font-semibold text-slate-300 mb-1">Active Curricula</h3>
-                <ul className="space-y-1">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Active Curricula</h3>
+                <ul className="space-y-2">
                   {tenantInfo.config.curricula.map((c) => (
-                    <li key={c.id} className="text-xs text-slate-300">
-                      <span className="font-medium">{c.label}</span> – {c.region} ({c.standard})
+                    <li key={c.id} className="text-sm text-slate-600 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-violet-500" />
+                      <span className="font-medium text-slate-800">{c.label}</span> – {c.region} ({c.standard})
                     </li>
                   ))}
                 </ul>
               </div>
               {limits && (
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-300 mb-2">Guardrails</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Guardrails</h3>
                   <LimitBar
                     label="Daily LLM calls"
                     used={usageSummary.latest?.llmCalls ?? 0}
@@ -239,14 +263,17 @@ export default function DistrictAdminTenantPage() {
         )}
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Usage pulse (7d)</h2>
-              <span className="text-[10px] text-slate-400">
-                Last day: {usageSummary.latest?.date ?? "—"}
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-violet-600" />
+                <h2 className="text-base font-semibold text-slate-900">Usage Pulse (7d)</h2>
+              </div>
+              <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                Last: {usageSummary.latest?.date ?? "—"}
               </span>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <UsageStat
                 label="LLM calls"
                 value={usageSummary.totals.llmCalls}
@@ -260,31 +287,34 @@ export default function DistrictAdminTenantPage() {
               <UsageStat label="Sessions planned" value={usageSummary.totals.sessionsPlanned} />
               <UsageStat label="Safety incidents" value={usageSummary.totals.safetyIncidents} />
             </div>
-            <ul className="text-[11px] text-slate-400 space-y-1">
+            <ul className="text-sm text-slate-500 space-y-2 border-t border-slate-100 pt-4">
               {usageSummary.window.map((day) => (
-                <li key={day.date} className="flex justify-between">
-                  <span>{day.date}</span>
-                  <span>
+                <li key={day.date} className="flex justify-between items-center">
+                  <span className="text-slate-700">{day.date}</span>
+                  <span className="text-xs bg-slate-100 px-2 py-1 rounded">
                     {day.llmCalls} calls • {day.tutorTurns} turns • {day.safetyIncidents} incidents
                   </span>
                 </li>
               ))}
               {usageSummary.window.length === 0 && (
-                <li className="text-slate-500">No usage data recorded yet.</li>
+                <li className="text-slate-400">No usage data recorded yet.</li>
               )}
             </ul>
           </div>
 
-          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-3">
-            <h2 className="text-sm font-semibold">Role coverage</h2>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-violet-600" />
+              <h2 className="text-base font-semibold text-slate-900">Role Coverage</h2>
+            </div>
             {roleSummary.length === 0 ? (
-              <p className="text-xs text-slate-400">No role assignments yet.</p>
+              <p className="text-sm text-slate-500">No role assignments yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {roleSummary.map(([role, count]) => (
-                  <li key={role} className="flex items-center justify-between text-xs text-slate-300">
-                    <span className="font-medium">{role}</span>
-                    <span>{count}</span>
+                  <li key={role} className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-800">{role}</span>
+                    <span className="bg-violet-100 text-violet-700 px-2.5 py-1 rounded-full text-xs font-semibold">{count}</span>
                   </li>
                 ))}
               </ul>
@@ -293,27 +323,32 @@ export default function DistrictAdminTenantPage() {
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold">
-                Districts <span className="text-xs text-slate-400">({districts.length})</span>
-              </h2>
-              <span className="text-[10px] text-slate-400">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-violet-600" />
+                <h2 className="text-base font-semibold text-slate-900">
+                  Districts <span className="text-sm text-slate-500 font-normal">({districts.length})</span>
+                </h2>
+              </div>
+              <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
                 {schools.length} schools total
               </span>
             </div>
             {districts.length === 0 && (
-              <p className="text-xs text-slate-400">No districts configured.</p>
+              <p className="text-sm text-slate-500">No districts configured.</p>
             )}
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {districts.map((d) => (
-                <li key={d.id} className="text-xs text-slate-300">
+                <li key={d.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{d.name}</p>
-                      <p className="text-[11px] text-slate-500">{d.country}</p>
+                      <p className="font-semibold text-slate-800">{d.name}</p>
+                      <p className="text-sm text-slate-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {d.country}
+                      </p>
                     </div>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-sm bg-violet-100 text-violet-700 px-2.5 py-1 rounded-full font-medium">
                       {schoolsByDistrict.get(d.id) ?? 0} schools
                     </span>
                   </div>
@@ -322,21 +357,25 @@ export default function DistrictAdminTenantPage() {
             </ul>
           </div>
 
-          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-            <h2 className="text-sm font-semibold mb-3">Latest governance activity</h2>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="w-5 h-5 text-violet-600" />
+              <h2 className="text-base font-semibold text-slate-900">Latest Governance Activity</h2>
+            </div>
             {auditLogs.length === 0 ? (
-              <p className="text-xs text-slate-400">No audit events captured.</p>
+              <p className="text-sm text-slate-500">No audit events captured.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {auditLogs.map((log) => (
-                  <li key={log.id} className="text-xs text-slate-300">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{log.type}</span>
-                      <span className="text-[10px] text-slate-500">
+                  <li key={log.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-slate-800">{log.type}</span>
+                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
                         {new Date(log.createdAt).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400">{log.message}</p>
+                    <p className="text-sm text-slate-600">{log.message}</p>
                   </li>
                 ))}
               </ul>
@@ -344,30 +383,33 @@ export default function DistrictAdminTenantPage() {
           </div>
         </section>
 
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-          <h2 className="text-sm font-semibold mb-2">Schools</h2>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <SchoolIcon className="w-5 h-5 text-violet-600" />
+            <h2 className="text-base font-semibold text-slate-900">Schools</h2>
+          </div>
           {schools.length === 0 ? (
-            <p className="text-xs text-slate-400">No schools configured.</p>
+            <p className="text-sm text-slate-500">No schools configured.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="text-slate-400">
-                    <th className="py-2">School</th>
-                    <th className="py-2">City</th>
-                    <th className="py-2">District</th>
-                    <th className="py-2">Created</th>
+                  <tr className="text-slate-500 border-b border-slate-200">
+                    <th className="py-3 font-medium">School</th>
+                    <th className="py-3 font-medium">City</th>
+                    <th className="py-3 font-medium">District</th>
+                    <th className="py-3 font-medium">Created</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-slate-100">
                   {schools.map((s) => (
-                    <tr key={s.id}>
-                      <td className="py-2 text-slate-200">{s.name}</td>
-                      <td className="py-2 text-slate-400">{s.city ?? "—"}</td>
-                      <td className="py-2 text-slate-400">
+                    <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 text-slate-900 font-medium">{s.name}</td>
+                      <td className="py-3 text-slate-600">{s.city ?? "—"}</td>
+                      <td className="py-3 text-slate-600">
                         {districts.find((d) => d.id === s.districtId)?.name ?? "Unassigned"}
                       </td>
-                      <td className="py-2 text-slate-400">
+                      <td className="py-3 text-slate-500">
                         {new Date(s.createdAt).toLocaleDateString()}
                       </td>
                     </tr>
@@ -385,17 +427,22 @@ export default function DistrictAdminTenantPage() {
 function MetricCard({
   label,
   value,
-  helper
+  helper,
+  icon: Icon,
 }: {
   label: string;
   value: string;
   helper?: string;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="text-2xl font-semibold text-slate-50 mt-1">{value}</p>
-      {helper && <p className="text-[11px] text-slate-500 mt-1">{helper}</p>}
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 transition-all hover:shadow-md hover:border-violet-200">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="w-4 h-4 text-violet-600" />
+        <p className="text-sm text-slate-500">{label}</p>
+      </div>
+      <p className="text-2xl font-bold text-slate-900">{value}</p>
+      {helper && <p className="text-xs text-slate-500 mt-1">{helper}</p>}
     </div>
   );
 }
@@ -410,11 +457,11 @@ function UsageStat({
   limitPct?: number;
 }) {
   return (
-    <div>
-      <p className="text-[11px] text-slate-400">{label}</p>
-      <p className="text-lg font-semibold text-slate-100">{numberFormatter.format(value)}</p>
+    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+      <p className="text-xs text-slate-500 font-medium">{label}</p>
+      <p className="text-xl font-bold text-slate-900 mt-1">{numberFormatter.format(value)}</p>
       {typeof limitPct === "number" && (
-        <p className={`text-[10px] mt-0.5 ${limitPct > 100 ? "text-amber-300" : "text-slate-500"}`}>
+        <p className={`text-xs mt-1 font-medium ${limitPct > 100 ? "text-amber-600" : "text-slate-500"}`}>
           {limitPct}% of limit
         </p>
       )}
@@ -433,13 +480,13 @@ function LimitBar({
 }) {
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : null;
   return (
-    <div className="mb-2">
-      <p className="text-[11px] text-slate-400">
-        {label} – {numberFormatter.format(used)} {limit ? `/ ${numberFormatter.format(limit)}` : "(no limit)"}
+    <div className="mb-3">
+      <p className="text-sm text-slate-600 mb-1">
+        {label} – <span className="font-semibold text-slate-800">{numberFormatter.format(used)}</span> {limit ? `/ ${numberFormatter.format(limit)}` : "(no limit)"}
       </p>
-      <div className="h-2 mt-1 rounded-full bg-slate-800 overflow-hidden">
+      <div className="h-2.5 rounded-full bg-slate-200 overflow-hidden">
         <div
-          className={`h-full rounded-full ${pct !== null && pct > 90 ? "bg-amber-400" : "bg-emerald-400"}`}
+          className={`h-full rounded-full transition-all ${pct !== null && pct > 90 ? "bg-amber-500" : "bg-violet-500"}`}
           style={{ width: `${pct ?? 15}%` }}
         />
       </div>

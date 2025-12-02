@@ -1,0 +1,310 @@
+/**
+ * AIVO Unified Design System - Marketing Theme
+ * 
+ * Engaging, conversion-focused, brand-forward theme
+ * Optimized for public website and marketing pages
+ * 
+ * Used by: marketing
+ * 
+ * @module themes/marketing
+ */
+
+@import './base.css';
+
+@layer theme {
+  /* ============================================
+     Marketing Theme Variables
+     ============================================ */
+  :root[data-theme="marketing"],
+  [data-app="marketing"] {
+    /* Primary Palette - Violet (Brand-forward) */
+    --theme-primary: 124 58 237;           /* #7C3AED */
+    --theme-primary-light: 167 139 250;    /* #A78BFA */
+    --theme-primary-dark: 109 40 217;      /* #6D28D9 */
+    --theme-primary-50: 245 243 255;       /* #F5F3FF */
+    --theme-primary-100: 237 233 254;      /* #EDE9FE */
+    --theme-primary-200: 221 214 254;      /* #DDD6FE */
+    --theme-primary-300: 196 181 253;      /* #C4B5FD */
+    --theme-primary-400: 167 139 250;      /* #A78BFA */
+    --theme-primary-500: 139 92 246;       /* #8B5CF6 */
+    --theme-primary-600: 124 58 237;       /* #7C3AED */
+    --theme-primary-700: 109 40 217;       /* #6D28D9 */
+    --theme-primary-800: 91 33 182;        /* #5B21B6 */
+    --theme-primary-900: 76 29 149;        /* #4C1D95 */
+
+    /* Secondary Palette - Pink (Energetic, Call-to-action) */
+    --theme-secondary: 236 72 153;         /* #EC4899 */
+    --theme-secondary-light: 251 207 232;  /* #FBCFE8 */
+    --theme-secondary-dark: 219 39 119;    /* #DB2777 */
+
+    /* Accent - Orange (Urgency, Action) */
+    --theme-accent: 249 115 22;            /* #F97316 */
+    --theme-accent-light: 255 237 213;     /* #FFEDD5 */
+    --theme-accent-dark: 234 88 12;        /* #EA580C */
+
+    /* Backgrounds */
+    --color-bg-primary: 255 255 255;       /* #FFFFFF - Clean white */
+    --color-bg-secondary: 250 245 255;     /* #FAF5FF */
+    --color-bg-tertiary: 248 250 252;      /* #F8FAFC */
+    --color-bg-gradient: linear-gradient(180deg, rgb(255 255 255) 0%, rgb(250 245 255) 100%);
+    
+    /* Hero gradients */
+    --gradient-hero: linear-gradient(135deg, rgb(124 58 237) 0%, rgb(236 72 153) 100%);
+    --gradient-hero-alt: linear-gradient(135deg, rgb(109 40 217) 0%, rgb(139 92 246) 50%, rgb(236 72 153) 100%);
+    --gradient-cta: linear-gradient(90deg, rgb(124 58 237) 0%, rgb(139 92 246) 100%);
+
+    /* Surfaces */
+    --color-surface-primary: 255 255 255;
+    --color-surface-secondary: 255 255 255;
+    --color-surface-border: 229 231 235;   /* #E5E7EB */
+    --color-surface-hover: 250 245 255;
+
+    /* Text */
+    --color-text-primary: 17 24 39;        /* #111827 */
+    --color-text-secondary: 75 85 99;      /* #4B5563 */
+    --color-text-muted: 156 163 175;       /* #9CA3AF */
+    --color-text-inverse: 255 255 255;
+
+    /* Component-specific - Bold, engaging */
+    --button-radius: var(--radius-full);
+    --card-radius: var(--radius-2xl);
+    --input-radius: var(--radius-lg);
+  }
+
+  /* ============================================
+     Marketing-Specific Components
+     ============================================ */
+  [data-theme="marketing"],
+  [data-app="marketing"] {
+    /* Hero CTA buttons */
+    .btn-cta {
+      background: var(--gradient-cta);
+      color: rgb(var(--color-text-inverse));
+      border-radius: var(--button-radius);
+      font-weight: 600;
+      font-size: var(--font-size-lg);
+      padding: var(--spacing-md) var(--spacing-2xl);
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-primary);
+    }
+    
+    .btn-cta:hover {
+      box-shadow: var(--shadow-primary-lg);
+      transform: translateY(-2px);
+    }
+
+    .btn-cta:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+
+    /* Secondary buttons */
+    .btn-secondary {
+      background: transparent;
+      color: rgb(var(--theme-primary));
+      border: 2px solid rgb(var(--theme-primary));
+      border-radius: var(--button-radius);
+      font-weight: 600;
+      transition: all var(--transition-normal);
+    }
+
+    .btn-secondary:hover {
+      background: rgb(var(--theme-primary));
+      color: rgb(var(--color-text-inverse));
+    }
+
+    /* Hero sections */
+    .hero {
+      background: var(--gradient-hero);
+      padding: var(--spacing-4xl) var(--spacing-lg);
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      line-height: var(--line-height-tight);
+      color: rgb(var(--color-text-inverse));
+    }
+
+    .hero-subtitle {
+      font-size: var(--font-size-xl);
+      color: rgba(255, 255, 255, 0.9);
+      line-height: var(--line-height-relaxed);
+      max-width: 600px;
+    }
+
+    /* Feature cards */
+    .feature-card {
+      background: rgb(var(--color-surface-primary));
+      border-radius: var(--card-radius);
+      padding: var(--spacing-xl);
+      box-shadow: var(--shadow-lg);
+      transition: all var(--transition-normal);
+      border: 1px solid transparent;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-2xl);
+      border-color: rgb(var(--theme-primary-200));
+    }
+
+    .feature-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, rgb(var(--theme-primary-100)) 0%, rgb(var(--theme-primary-200)) 100%);
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgb(var(--theme-primary));
+    }
+
+    /* Testimonial cards */
+    .testimonial-card {
+      background: rgb(var(--color-surface-primary));
+      border-radius: var(--card-radius);
+      padding: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: var(--spacing-md);
+      left: var(--spacing-lg);
+      font-size: 4rem;
+      color: rgb(var(--theme-primary-200));
+      font-family: Georgia, serif;
+      line-height: 1;
+    }
+
+    .testimonial-text {
+      font-size: var(--font-size-lg);
+      color: rgb(var(--color-text-secondary));
+      font-style: italic;
+      line-height: var(--line-height-relaxed);
+      padding-left: var(--spacing-lg);
+    }
+
+    /* Pricing cards */
+    .pricing-card {
+      background: rgb(var(--color-surface-primary));
+      border-radius: var(--card-radius);
+      padding: var(--spacing-xl);
+      border: 2px solid rgb(var(--color-surface-border));
+      transition: all var(--transition-normal);
+    }
+
+    .pricing-card.featured {
+      border-color: rgb(var(--theme-primary));
+      box-shadow: var(--shadow-primary-lg);
+      transform: scale(1.05);
+    }
+
+    .pricing-price {
+      font-size: var(--font-size-4xl);
+      font-weight: 800;
+      color: rgb(var(--color-text-primary));
+    }
+
+    .pricing-price span {
+      font-size: var(--font-size-base);
+      font-weight: 400;
+      color: rgb(var(--color-text-muted));
+    }
+
+    /* Section headers */
+    .section-header {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto var(--spacing-3xl);
+    }
+
+    .section-title {
+      font-size: var(--font-size-4xl);
+      font-weight: 700;
+      color: rgb(var(--color-text-primary));
+      margin-bottom: var(--spacing-md);
+    }
+
+    .section-subtitle {
+      font-size: var(--font-size-lg);
+      color: rgb(var(--color-text-secondary));
+      line-height: var(--line-height-relaxed);
+    }
+
+    /* Navigation */
+    .nav-marketing {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgb(var(--color-surface-border));
+    }
+
+    .nav-link {
+      color: rgb(var(--color-text-secondary));
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-link:hover {
+      color: rgb(var(--theme-primary));
+    }
+
+    /* Footer */
+    .footer {
+      background: rgb(var(--color-slate-900));
+      color: rgb(var(--color-slate-300));
+      padding: var(--spacing-4xl) var(--spacing-lg);
+    }
+
+    .footer-link {
+      color: rgb(var(--color-slate-400));
+      transition: color var(--transition-fast);
+    }
+
+    .footer-link:hover {
+      color: rgb(var(--color-white));
+    }
+  }
+
+  /* ============================================
+     Marketing Animations
+     ============================================ */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.95); opacity: 1; }
+    100% { transform: scale(1.1); opacity: 0; }
+  }
+
+  [data-theme="marketing"] .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  [data-theme="marketing"] .btn-cta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--gradient-cta);
+    opacity: 0.5;
+    z-index: -1;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  /* Reduce animations for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    [data-theme="marketing"] .animate-float {
+      animation: none;
+    }
+    
+    [data-theme="marketing"] .btn-cta::after {
+      animation: none;
+    }
+  }
+}

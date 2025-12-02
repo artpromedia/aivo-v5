@@ -56,7 +56,7 @@ const checkTypeConfig: Record<
     title: "Attention Check",
     question: "How focused are you right now?",
     icon: Brain,
-    color: "bg-purple-500",
+    color: "bg-theme-primary",
     options: [
       { value: 1, label: "Very distracted", emoji: "😵" },
       { value: 2, label: "Somewhat distracted", emoji: "😕" },

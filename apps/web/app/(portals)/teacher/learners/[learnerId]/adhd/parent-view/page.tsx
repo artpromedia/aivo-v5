@@ -319,7 +319,7 @@ export default function ParentViewPage() {
                         <span className="text-xs text-muted-foreground">{minutes}m</span>
                         <div
                           className={`w-full rounded-t transition-all ${
-                            isToday ? "bg-purple-500" : "bg-blue-500"
+                            isToday ? "bg-theme-primary" : "bg-blue-500"
                           }`}
                           style={{ height: `${Math.max(height, 5)}%` }}
                         />

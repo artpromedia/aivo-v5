@@ -311,7 +311,7 @@ export function VocabularySelector({
             type="button"
             onClick={handleAddToGoals}
             disabled={selectedSymbolIds.size === 0}
-            className="px-4 py-2 rounded-lg bg-purple-500 text-white font-medium hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg bg-theme-primary text-white font-medium hover:bg-theme-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Add to Goals ({selectedSymbolIds.size})
           </button>

@@ -235,13 +235,13 @@ export default function BaselineAssessment() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-theme-primary/5 to-indigo-50 p-6">
       <div className="mx-auto max-w-4xl space-y-8">
         {resumeSnapshot && (
           <ResumeBanner onResume={handleResume} onRestart={handleRestart} snapshot={resumeSnapshot} />
         )}
         <header>
-          <p className="text-sm uppercase tracking-wide text-purple-500">Adaptive Baseline</p>
+          <p className="text-sm uppercase tracking-wide text-theme-primary">Adaptive Baseline</p>
           <h1 className="text-4xl font-semibold text-slate-900">Discover how you learn best</h1>
           <p className="text-slate-600">
             We will ask five questions for each domain. Breathe, take your time, and let the AI adjust to your comfort level.
@@ -257,7 +257,7 @@ export default function BaselineAssessment() {
           </div>
           <div className="h-3 w-full rounded-full bg-slate-200">
             <motion.div
-              className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
+              className="h-3 rounded-full bg-gradient-to-r from-theme-primary to-blue-500"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4 }}
@@ -284,7 +284,7 @@ export default function BaselineAssessment() {
               className="flex h-96 items-center justify-center rounded-2xl bg-white shadow-lg"
             >
               <div className="text-center">
-                <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-2 border-purple-500" />
+                <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-2 border-theme-primary" />
                 <p className="text-slate-600">Preparing your next prompt…</p>
               </div>
             </motion.div>
@@ -308,7 +308,7 @@ export default function BaselineAssessment() {
             >
               <div className="text-center text-slate-500">
                 <p>Take a breath while we fetch your next adaptive prompt.</p>
-                <button onClick={loadNextQuestion} className="mt-3 text-sm font-semibold text-purple-600">
+                <button onClick={loadNextQuestion} className="mt-3 text-sm font-semibold text-theme-primary">
                   Refresh prompt
                 </button>
               </div>
@@ -338,10 +338,10 @@ function ResumeBanner({
   onRestart: () => void;
 }) {
   return (
-    <div className="rounded-3xl border border-purple-200 bg-white/80 p-5 shadow-sm">
+    <div className="rounded-3xl border border-theme-primary/20 bg-white/80 p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-purple-600">Resume where you left off?</p>
+          <p className="text-sm font-semibold text-theme-primary">Resume where you left off?</p>
           <p className="text-xs text-slate-500">
             Last saved {formatRelativeTime(snapshot.updatedAt)} • Domain {snapshot.currentDomainIndex + 1} of {DOMAINS.length}
           </p>
@@ -350,7 +350,7 @@ function ResumeBanner({
           <button onClick={onRestart} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
             Start over
           </button>
-          <button onClick={onResume} className="rounded-full bg-purple-500 px-4 py-2 text-sm font-semibold text-white">
+          <button onClick={onResume} className="rounded-full bg-theme-primary px-4 py-2 text-sm font-semibold text-white">
             Resume
           </button>
         </div>
@@ -386,7 +386,7 @@ function QuestionDisplay({ question, onSubmit, domain }: QuestionDisplayProps) {
       <div className="flex items-center gap-3">
         <span className="text-3xl">{getDomainIcon(domain)}</span>
         <div>
-          <p className="text-sm uppercase tracking-wide text-purple-500">{domain}</p>
+          <p className="text-sm uppercase tracking-wide text-theme-primary">{domain}</p>
           <h2 className="text-2xl font-semibold text-slate-900">Adaptive difficulty G{question.difficulty}</h2>
         </div>
       </div>
@@ -414,7 +414,7 @@ function QuestionDisplay({ question, onSubmit, domain }: QuestionDisplayProps) {
               key={option}
               onClick={() => setSelected(option)}
               className={`w-full rounded-2xl border-2 p-4 text-left transition ${
-                selected === option ? "border-purple-500 bg-purple-50" : "border-slate-200 hover:border-slate-300"
+                selected === option ? "border-theme-primary bg-theme-primary/5" : "border-slate-200 hover:border-slate-300"
               }`}
             >
               <span className="mr-3 font-semibold">{String.fromCharCode(65 + idx)}.</span>
@@ -428,7 +428,7 @@ function QuestionDisplay({ question, onSubmit, domain }: QuestionDisplayProps) {
         <textarea
           value={selected}
           onChange={(event) => setSelected(event.target.value)}
-          className="w-full rounded-2xl border-2 border-slate-200 p-4 text-base shadow-inner focus:border-purple-500 focus:outline-none"
+          className="w-full rounded-2xl border-2 border-slate-200 p-4 text-base shadow-inner focus:border-theme-primary focus:outline-none"
           rows={5}
           placeholder="Share your thinking…"
         />
@@ -442,7 +442,7 @@ function QuestionDisplay({ question, onSubmit, domain }: QuestionDisplayProps) {
         <button
           onClick={submit}
           disabled={!canSubmit}
-          className="rounded-full bg-gradient-to-r from-purple-500 to-blue-500 px-8 py-3 font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-gradient-to-r from-theme-primary to-blue-500 px-8 py-3 font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
         >
           Submit answer
         </button>

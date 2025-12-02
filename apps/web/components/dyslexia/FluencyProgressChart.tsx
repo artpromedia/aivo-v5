@@ -95,7 +95,7 @@ export function FluencyProgressChart({ assessments, targetWCPM = 100 }: FluencyP
         </Card>
         <Card>
           <CardContent className="pt-4 text-center">
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-theme-primary">
               {latestAssessment.prosodyTotal || "-"}/16
             </div>
             <div className="text-sm text-gray-500">Prosody Score</div>
@@ -212,7 +212,7 @@ export function FluencyProgressChart({ assessments, targetWCPM = 100 }: FluencyP
                   </div>
                   {assessment.prosodyTotal && (
                     <div className="text-right">
-                      <div className="font-bold text-lg text-purple-600">{assessment.prosodyTotal}/16</div>
+                      <div className="font-bold text-lg text-theme-primary">{assessment.prosodyTotal}/16</div>
                       <div className="text-xs text-gray-500">Prosody</div>
                     </div>
                   )}

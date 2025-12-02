@@ -43,7 +43,7 @@ export function BrainBreak({ onComplete, duration = 60, type = 'breathing' }: Br
     visual: {
       icon: Eye,
       title: 'Eye Rest',
-      color: 'from-purple-400 to-pink-400',
+      color: 'from-theme-primary to-pink-400',
       steps: [
         'Look away from the screen',
         'Focus on something 20 feet away',
@@ -152,7 +152,7 @@ export function BrainBreak({ onComplete, duration = 60, type = 'breathing' }: Br
       {!isActive ? (
         /* Pre-break Screen */
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6">
+          <div className="bg-gradient-to-r from-theme-primary/10 to-pink-50 rounded-2xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               {activity.title}
             </h3>
@@ -162,7 +162,7 @@ export function BrainBreak({ onComplete, duration = 60, type = 'breathing' }: Br
             <ul className="space-y-2">
               {activity.steps.map((step, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white flex items-center justify-center text-xs font-semibold text-purple-600">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white flex items-center justify-center text-xs font-semibold text-theme-primary">
                     {index + 1}
                   </span>
                   <span>{step}</span>
@@ -213,9 +213,9 @@ export function BrainBreak({ onComplete, duration = 60, type = 'breathing' }: Br
             key={currentStep}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-8 text-center"
+            className="bg-gradient-to-r from-theme-primary/10 to-pink-50 rounded-2xl p-8 text-center"
           >
-            <div className="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-2">
+            <div className="text-sm font-semibold text-theme-primary uppercase tracking-wide mb-2">
               Step {currentStep + 1} of {activity.steps.length}
             </div>
             <p className="text-2xl font-semibold text-gray-900">

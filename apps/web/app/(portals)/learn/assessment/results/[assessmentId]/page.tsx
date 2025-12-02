@@ -45,7 +45,7 @@ export default async function AssessmentResultsPage({ params }: { params: { asse
         <header className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-wide text-purple-500">Baseline completed</p>
+              <p className="text-sm uppercase tracking-wide text-theme-primary">Baseline completed</p>
               <h1 className="text-4xl font-semibold text-slate-900">Personalized capability map</h1>
               <p className="text-slate-600">
                 Your AI tutor calibrated each domain to meet you where you are today.
@@ -60,7 +60,7 @@ export default async function AssessmentResultsPage({ params }: { params: { asse
         </header>
 
         <section className="grid gap-4 md:grid-cols-5">
-          <div className="rounded-3xl bg-gradient-to-br from-purple-500 to-blue-500 p-6 text-white md:col-span-2">
+          <div className="rounded-3xl bg-gradient-to-br from-theme-primary to-blue-500 p-6 text-white md:col-span-2">
             <p className="text-sm uppercase">Overall level</p>
             <p className="text-5xl font-semibold">G{results.overallLevel}</p>
             <p className="mt-2 text-sm text-white/80">
@@ -109,7 +109,7 @@ export default async function AssessmentResultsPage({ params }: { params: { asse
           <Link href="/learn/assessment" className="rounded-full border border-slate-300 px-6 py-3 font-semibold text-slate-700">
             Re-run baseline
           </Link>
-          <Link href="/dashboard" className="rounded-full bg-purple-500 px-6 py-3 font-semibold text-white">
+          <Link href="/dashboard" className="rounded-full bg-theme-primary px-6 py-3 font-semibold text-white">
             Back to dashboard
           </Link>
         </div>
@@ -143,7 +143,7 @@ function CapabilityCard({
       <p className="mt-3 text-sm text-slate-600">{summaryText}</p>
       <div className="mt-4 h-2 w-full rounded-full bg-slate-100">
         <div
-          className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
+          className="h-2 rounded-full bg-gradient-to-r from-theme-primary to-blue-500"
           style={{ width: `${Math.min(100, Math.max(0, ((level ?? 1) / 12) * 100))}%` }}
         />
       </div>
@@ -202,7 +202,7 @@ function DomainResponseCard({ domain, responses }: { domain: AssessmentDomainNam
         {responses.map((entry) => (
           <span
             key={entry.id}
-            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${entry.isCorrect ? "bg-purple-50 text-purple-700" : "bg-slate-100 text-slate-600"}`}
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${entry.isCorrect ? "bg-theme-primary/5 text-theme-primary" : "bg-slate-100 text-slate-600"}`}
             title={`G${entry.difficulty} • ${entry.type}`}
           >
             G{entry.difficulty}

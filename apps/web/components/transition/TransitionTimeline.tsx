@@ -24,7 +24,7 @@ interface TransitionTimelineProps {
 const categoryColors: Record<string, { bg: string; border: string; text: string }> = {
   education: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-700' },
   employment: { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-700' },
-  assessment: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
+  assessment: { bg: 'bg-theme-primary/10', border: 'border-theme-primary', text: 'text-theme-primary' },
   deadline: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700' },
   meeting: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-700' },
   milestone: { bg: 'bg-indigo-100', border: 'border-indigo-500', text: 'text-indigo-700' },
@@ -78,7 +78,7 @@ export function TransitionTimeline({
   return (
     <div className="space-y-6">
       {/* Graduation Countdown */}
-      <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+      <Card className="bg-gradient-to-r from-indigo-500 to-theme-primary text-white">
         <CardContent className="p-6">
           <div className="flex justify-between items-center">
             <div>

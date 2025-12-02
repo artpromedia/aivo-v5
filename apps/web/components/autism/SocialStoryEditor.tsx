@@ -89,7 +89,7 @@ interface SocialStoryEditorProps {
 
 const sentenceTypes: { value: SocialStorySentenceType; label: string; color: string; description: string }[] = [
   { value: "DESCRIPTIVE", label: "Descriptive", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100", description: "Facts about the situation" },
-  { value: "PERSPECTIVE", label: "Perspective", color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100", description: "Others' thoughts/feelings" },
+  { value: "PERSPECTIVE", label: "Perspective", color: "bg-theme-primary/10 text-theme-primary dark:bg-theme-primary/20 dark:text-theme-primary", description: "Others' thoughts/feelings" },
   { value: "DIRECTIVE", label: "Directive", color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100", description: "Suggested response" },
   { value: "AFFIRMATIVE", label: "Affirmative", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100", description: "Reassuring statements" },
   { value: "CONTROL", label: "Control", color: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100", description: "Learner's own strategies" },

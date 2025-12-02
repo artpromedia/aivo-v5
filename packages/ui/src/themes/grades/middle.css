@@ -1,0 +1,269 @@
+/**
+ * AIVO Unified Design System - Middle School Grade Theme (6-8)
+ * 
+ * Balanced, transitional theme for pre-teens (ages 11-13)
+ * Bridge between playful K-5 and professional High School
+ * 
+ * Used by: learner-web (6-8 grade band)
+ * 
+ * @module themes/grades/middle
+ */
+
+@layer grade-theme {
+  /* ============================================
+     Middle School Grade Theme Variables
+     ============================================ */
+  :root[data-grade="6_8"],
+  :root[data-grade="middle"],
+  [data-grade-band="6_8"],
+  [data-grade-band="middle"] {
+    /* Primary Palette - Purple (Creative, Imaginative) */
+    --theme-primary: 139 92 246;           /* #8B5CF6 */
+    --theme-primary-light: 196 181 253;    /* #C4B5FD */
+    --theme-primary-dark: 124 58 237;      /* #7C3AED */
+    --theme-primary-50: 245 243 255;       /* #F5F3FF */
+    --theme-primary-100: 237 233 254;      /* #EDE9FE */
+    --theme-primary-200: 221 214 254;      /* #DDD6FE */
+    --theme-primary-300: 196 181 253;      /* #C4B5FD */
+    --theme-primary-400: 167 139 250;      /* #A78BFA */
+    --theme-primary-500: 139 92 246;       /* #8B5CF6 */
+    --theme-primary-600: 124 58 237;       /* #7C3AED */
+    --theme-primary-700: 109 40 217;       /* #6D28D9 */
+    --theme-primary-800: 91 33 182;        /* #5B21B6 */
+    --theme-primary-900: 76 29 149;        /* #4C1D95 */
+
+    /* Secondary Palette - Light Purple (Calming) */
+    --theme-secondary: 167 139 250;        /* #A78BFA */
+    --theme-secondary-light: 221 214 254;  /* #DDD6FE */
+    --theme-secondary-dark: 139 92 246;    /* #8B5CF6 */
+
+    /* Accent - Cyan (Modern, Tech-forward) */
+    --theme-accent: 6 182 212;             /* #06B6D4 */
+    --theme-accent-light: 165 243 252;     /* #A5F3FC */
+    --theme-accent-dark: 8 145 178;        /* #0891B2 */
+
+    /* Backgrounds - Light Lavender */
+    --color-bg-primary: 250 245 255;       /* #FAF5FF */
+    --color-bg-secondary: 255 255 255;
+    --color-bg-tertiary: 243 232 255;      /* #F3E8FF */
+    --color-bg-gradient: linear-gradient(180deg, rgb(250 245 255) 0%, rgb(243 232 255) 100%);
+
+    /* Surfaces */
+    --color-surface-primary: 255 255 255;
+    --color-surface-secondary: 250 245 255;
+    --color-surface-border: 233 213 255;   /* #E9D5FF */
+    --color-surface-hover: 250 245 255;
+
+    /* Text - Slate (Professional yet approachable) */
+    --color-text-primary: 30 41 59;        /* #1E293B */
+    --color-text-secondary: 71 85 105;     /* #475569 */
+    --color-text-muted: 100 116 139;       /* #64748B */
+    --color-text-inverse: 255 255 255;
+
+    /* Middle School Specific - Balanced styling */
+    --button-radius: var(--radius-lg);
+    --card-radius: var(--radius-xl);
+    --input-radius: var(--radius-md);
+    
+    /* Standard text size with good readability */
+    --font-size-base: 1rem;
+    --line-height-normal: 1.625;
+    
+    /* Standard touch targets */
+    --touch-target-min: 44px;
+
+    /* Subtle shadows */
+    --shadow-primary: 0 4px 14px 0 rgba(139, 92, 246, 0.25);
+    --shadow-primary-lg: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
+  }
+
+  /* ============================================
+     Middle School Specific Component Styles
+     ============================================ */
+  [data-grade="6_8"],
+  [data-grade="middle"],
+  [data-grade-band="6_8"],
+  [data-grade-band="middle"] {
+    /* Base typography */
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+
+    /* Balanced buttons */
+    .btn-primary {
+      background: rgb(var(--theme-primary));
+      color: rgb(var(--color-text-inverse));
+      border-radius: var(--button-radius);
+      font-weight: 600;
+      font-size: var(--font-size-base);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      min-height: var(--touch-target-min);
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-primary);
+    }
+    
+    .btn-primary:hover {
+      background: rgb(var(--theme-primary-dark));
+      box-shadow: var(--shadow-primary-lg);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.5);
+    }
+
+    /* Modern cards */
+    .card {
+      background: rgb(var(--color-surface-primary));
+      border-radius: var(--card-radius);
+      border: 1px solid rgb(var(--color-surface-border));
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-normal);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: rgb(var(--theme-primary-300));
+    }
+
+    /* Icon containers */
+    .icon-container {
+      width: 56px;
+      height: 56px;
+      background: rgb(var(--theme-primary-100));
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgb(var(--theme-primary));
+    }
+
+    /* Progress bars */
+    .progress-bar {
+      background: rgb(var(--theme-primary-100));
+      border-radius: var(--radius-full);
+      height: 12px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, 
+        rgb(var(--theme-primary)) 0%, 
+        rgb(var(--theme-accent)) 100%
+      );
+      border-radius: var(--radius-full);
+      height: 100%;
+      transition: width 0.4s ease-out;
+    }
+
+    /* Achievement badges */
+    .badge-achievement {
+      background: linear-gradient(135deg, 
+        rgb(var(--theme-primary)) 0%, 
+        rgb(var(--theme-accent)) 100%
+      );
+      color: rgb(var(--color-text-inverse));
+      border-radius: var(--radius-full);
+      padding: var(--spacing-xs) var(--spacing-md);
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+    }
+
+    /* Form inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+      font-size: var(--font-size-base);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--input-radius);
+      border: 2px solid rgb(var(--color-surface-border));
+      min-height: var(--touch-target-min);
+      transition: all var(--transition-fast);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgb(var(--theme-primary));
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    /* Tags and chips */
+    .tag {
+      background: rgb(var(--theme-primary-100));
+      color: rgb(var(--theme-primary-700));
+      border-radius: var(--radius-full);
+      padding: 2px var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+    }
+
+    /* Navigation tabs */
+    .tab-item {
+      padding: var(--spacing-sm) var(--spacing-md);
+      color: rgb(var(--color-text-secondary));
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .tab-item:hover {
+      color: rgb(var(--theme-primary));
+    }
+
+    .tab-item.active {
+      color: rgb(var(--theme-primary));
+      border-bottom-color: rgb(var(--theme-primary));
+      font-weight: 500;
+    }
+
+    /* Avatar */
+    .avatar {
+      border: 3px solid rgb(var(--theme-primary-200));
+    }
+
+    /* Stats display */
+    .stat-value {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      color: rgb(var(--theme-primary));
+    }
+
+    .stat-label {
+      font-size: var(--font-size-sm);
+      color: rgb(var(--color-text-muted));
+    }
+  }
+
+  /* ============================================
+     Middle School Subtle Animations
+     ============================================ */
+  @keyframes subtle-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  [data-grade="6_8"] .animate-pulse,
+  [data-grade="middle"] .animate-pulse {
+    animation: subtle-pulse 2s ease-in-out infinite;
+  }
+
+  /* Reduce animations for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    [data-grade="6_8"],
+    [data-grade="middle"],
+    [data-grade-band="6_8"],
+    [data-grade-band="middle"] {
+      .animate-pulse {
+        animation: none;
+      }
+      
+      .card:hover,
+      .btn-primary:hover {
+        transform: none;
+      }
+    }
+  }
+}

@@ -45,7 +45,7 @@ const therapyAreas = [
     id: 'fluency',
     label: 'Fluency',
     icon: Activity,
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-theme-primary/10 text-theme-primary',
     description: 'Stuttering and speech flow management',
   },
   {
@@ -178,7 +178,7 @@ export default function SpeechDashboardPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.avgProgress}%</div>
+            <div className="text-2xl font-bold text-theme-primary">{stats.avgProgress}%</div>
             <div className="text-xs text-slate-500">Avg Progress</div>
           </CardContent>
         </Card>

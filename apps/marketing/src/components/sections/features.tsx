@@ -8,7 +8,7 @@ const features = [
     icon: Brain,
     title: 'AI-Powered Personalization',
     description: 'Advanced AI creates unique learning paths for each child based on their strengths, challenges, and learning style.',
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: 'from-theme-primary to-pink-500',
   },
   {
     icon: Users,

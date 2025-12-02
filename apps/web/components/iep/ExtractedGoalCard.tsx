@@ -118,7 +118,7 @@ export function ExtractedGoalCard({
   const getDomainColor = (domain: string) => {
     const colors: Record<string, string> = {
       ACADEMIC_READING: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      ACADEMIC_MATH: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      ACADEMIC_MATH: "bg-theme-primary/10 text-theme-primary dark:bg-theme-primary/20 dark:text-theme-primary",
       ACADEMIC_WRITING: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
       COMMUNICATION: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       SOCIAL_EMOTIONAL: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",

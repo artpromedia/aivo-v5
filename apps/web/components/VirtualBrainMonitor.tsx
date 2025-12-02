@@ -238,9 +238,9 @@ export function VirtualBrainMonitor({
                 {(performance.consistency * 100).toFixed(1)}%
               </div>
             </div>
-            <div className="rounded-lg bg-purple-50 p-3">
-              <div className="text-sm text-purple-600">Response Time</div>
-              <div className="text-2xl font-bold text-purple-900">
+            <div className="rounded-lg bg-theme-primary/10 p-3">
+              <div className="text-sm text-theme-primary">Response Time</div>
+              <div className="text-2xl font-bold text-theme-primary">
                 {performance.response_time.toFixed(1)}s
               </div>
             </div>

@@ -58,7 +58,7 @@ const domains = [
     id: 'HOUSING_HOME_CARE',
     label: 'Housing & Home Care',
     icon: Home,
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-theme-primary/10 text-theme-primary',
     description: 'Cleaning, laundry, home maintenance',
   },
   {
@@ -153,7 +153,7 @@ export default function IndependentLivingPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-purple-600">{mockDashboardStats.skillsMastered}</p>
+            <p className="text-3xl font-bold text-theme-primary">{mockDashboardStats.skillsMastered}</p>
             <p className="text-sm text-muted-foreground">Mastered</p>
           </CardContent>
         </Card>

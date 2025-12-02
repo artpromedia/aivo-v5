@@ -67,12 +67,12 @@ const errorTypes = [
 ];
 
 const promptLevels = [
-  { value: "INDEPENDENT", label: "Independent", color: "bg-green-100 text-green-800" },
-  { value: "VISUAL_CUE", label: "Visual Cue", color: "bg-blue-100 text-blue-800" },
-  { value: "VERBAL_CUE", label: "Verbal Cue", color: "bg-yellow-100 text-yellow-800" },
+  { value: "INDEPENDENT", label: "Independent", color: "bg-theme-success/10 text-theme-success-dark" },
+  { value: "VISUAL_CUE", label: "Visual Cue", color: "bg-theme-info/10 text-theme-info-dark" },
+  { value: "VERBAL_CUE", label: "Verbal Cue", color: "bg-theme-warning/10 text-theme-warning-dark" },
   { value: "MODEL", label: "Model", color: "bg-orange-100 text-orange-800" },
-  { value: "TACTILE_CUE", label: "Tactile Cue", color: "bg-purple-100 text-purple-800" },
-  { value: "FULL_MODEL", label: "Full Model", color: "bg-red-100 text-red-800" },
+  { value: "TACTILE_CUE", label: "Tactile Cue", color: "bg-theme-secondary/10 text-theme-secondary-dark" },
+  { value: "FULL_MODEL", label: "Full Model", color: "bg-theme-error/10 text-theme-error-dark" },
 ];
 
 const levelLabels: Record<string, string> = {
@@ -198,7 +198,7 @@ export function ArticulationTrialCollector({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Mic className="h-5 w-5 text-purple-500" />
+              <Mic className="h-5 w-5 text-theme-primary" />
               Articulation Trial Collection
             </h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -252,7 +252,7 @@ export function ArticulationTrialCollector({
             value={currentWord}
             onChange={(e) => setCurrentWord(e.target.value)}
             placeholder="Or enter custom word..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary"
           />
         </div>
 
@@ -268,7 +268,7 @@ export function ArticulationTrialCollector({
                 onClick={() => setCurrentPromptLevel(level.value)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                   currentPromptLevel === level.value
-                    ? level.color + " ring-2 ring-offset-2 ring-purple-500"
+                    ? level.color + " ring-2 ring-offset-2 ring-theme-primary"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -284,7 +284,7 @@ export function ArticulationTrialCollector({
             {trialStartTime === null ? (
               <button
                 onClick={startTrial}
-                className="flex-1 py-4 bg-purple-600 text-white rounded-xl font-semibold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-4 bg-theme-primary text-theme-primary-contrast rounded-xl font-semibold text-lg hover:bg-theme-primary-dark transition-colors flex items-center justify-center gap-2"
               >
                 <Clock className="h-5 w-5" />
                 Start Trial
@@ -390,7 +390,7 @@ export function ArticulationTrialCollector({
           <button
             onClick={handleSave}
             disabled={trials.length === 0 || isSubmitting}
-            className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-theme-primary text-theme-primary-contrast rounded-lg font-semibold hover:bg-theme-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Save className="h-5 w-5" />
             {isSubmitting ? "Saving..." : `Save ${trials.length} Trials`}

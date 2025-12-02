@@ -114,7 +114,7 @@ export default function GovernancePage() {
       {/* Back Navigation */}
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium mb-6"
+        className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary-dark font-medium mb-6"
       >
         <span className="text-lg">←</span> Back to Console
       </Link>
@@ -123,7 +123,7 @@ export default function GovernancePage() {
         {/* Header */}
         <header className="bg-white rounded-3xl shadow-xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 bg-gradient-to-br from-theme-primary-light to-theme-primary rounded-2xl flex items-center justify-center text-3xl">
               🔒
             </div>
             <div>
@@ -131,7 +131,7 @@ export default function GovernancePage() {
               <p className="text-slate-500 mt-1">
                 Monitor usage, update AI guardrails, and review audit events
               </p>
-              <p className="text-xs text-violet-600 font-mono mt-2">
+              <p className="text-xs text-theme-primary font-mono mt-2">
                 Managing: {activeTenantId}
               </p>
             </div>
@@ -161,11 +161,11 @@ export default function GovernancePage() {
               </div>
               {latestUsage ? (
                 <div className="space-y-3">
-                  <div className="bg-violet-50 rounded-2xl p-4">
+                  <div className="bg-theme-primary/5 rounded-2xl p-4">
                     <p className="text-xs text-slate-500 uppercase mb-1">LLM Calls</p>
-                    <p className="text-2xl font-bold text-violet-600">{latestUsage.llmCalls}</p>
+                    <p className="text-2xl font-bold text-theme-primary">{latestUsage.llmCalls}</p>
                   </div>
-                  <div className="bg-sky-50 rounded-2xl p-4">
+                  <div className="bg-theme-info/5 rounded-2xl p-4">
                     <p className="text-xs text-slate-500 uppercase mb-1">Tutor Turns</p>
                     <p className="text-2xl font-bold text-sky-600">{latestUsage.tutorTurns}</p>
                   </div>
@@ -202,7 +202,7 @@ export default function GovernancePage() {
                     Max Daily LLM Calls
                   </label>
                   <input
-                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={maxDailyLlmCalls}
                     onChange={(e) => setMaxDailyLlmCalls(e.target.value)}
                     placeholder="unlimited"
@@ -213,7 +213,7 @@ export default function GovernancePage() {
                     Max Daily Tutor Turns
                   </label>
                   <input
-                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={maxDailyTutorTurns}
                     onChange={(e) => setMaxDailyTutorTurns(e.target.value)}
                     placeholder="unlimited"
@@ -224,7 +224,7 @@ export default function GovernancePage() {
                     Allowed Providers
                   </label>
                   <input
-                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={allowedProviders}
                     onChange={(e) => setAllowedProviders(e.target.value)}
                     placeholder="openai,anthropic"
@@ -235,7 +235,7 @@ export default function GovernancePage() {
                     Blocked Providers
                   </label>
                   <input
-                    className="w-full rounded-xl bg-lavender-50 border border-lavender-200 px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={blockedProviders}
                     onChange={(e) => setBlockedProviders(e.target.value)}
                     placeholder=""
@@ -245,7 +245,7 @@ export default function GovernancePage() {
                   type="button"
                   onClick={handleSaveLimits}
                   disabled={saving}
-                  className="w-full py-3 bg-gradient-to-r from-violet-500 to-violet-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+                  className="w-full py-3 bg-gradient-to-r from-theme-primary to-theme-primary-dark text-theme-primary-contrast font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
                 >
                   {saving ? "Saving..." : "💾 Save Limits"}
                 </button>
@@ -266,10 +266,10 @@ export default function GovernancePage() {
                   </div>
                 ) : (
                   logs.map((log) => (
-                    <div key={log.id} className="bg-lavender-50 rounded-xl p-4">
+                    <div key={log.id} className="bg-theme-background-elevated rounded-xl p-4">
                       <p className="text-sm text-slate-900">{log.message}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-theme-primary/10 text-theme-primary px-2 py-0.5 rounded-full">
                           {log.type}
                         </span>
                         <span className="text-xs text-slate-400">

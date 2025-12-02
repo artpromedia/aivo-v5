@@ -227,7 +227,7 @@ export function DyslexiaProgressReport({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-theme-primary" />
             <div className="text-2xl font-bold">{latestFluency?.wcpm || 0}</div>
             <div className="text-sm text-muted-foreground">Current WCPM</div>
           </CardContent>
@@ -428,7 +428,7 @@ export function DyslexiaProgressReport({
               <div className="text-sm text-muted-foreground">New This Period</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-purple-600">{data.sightWordProgress.total}</div>
+              <div className="text-3xl font-bold text-theme-primary">{data.sightWordProgress.total}</div>
               <div className="text-sm text-muted-foreground">Total Target Words</div>
             </div>
           </div>

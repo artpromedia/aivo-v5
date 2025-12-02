@@ -10,7 +10,7 @@ import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import Redis from "ioredis";
-import { verify } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import { PersonalizedLearningAgent } from "@aivo/agents";
 import { AITutorAgent } from "@aivo/agents";
@@ -170,7 +170,7 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 		try {
 			// Verify JWT token
 			const jwtSecret = process.env.NEXTAUTH_SECRET || "development-secret";
-			const decoded = verify(token, jwtSecret) as any;
+			const decoded = jwt.verify(token, jwtSecret) as any;
 
 			socket.userId = decoded.userId || decoded.sub;
 			socket.learnerId = learnerId || socket.userId;
