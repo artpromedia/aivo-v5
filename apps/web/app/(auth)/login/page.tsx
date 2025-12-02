@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,46 +16,69 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const result = await signIn("credentials", {
+    const result = await signIn('credentials', {
       redirect: false,
       identifier,
-      password
+      password,
     });
 
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid credentials");
+      setError('Invalid credentials');
       return;
     }
 
-    router.push("/dashboard");
+    router.push('/dashboard');
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main
+      className="flex min-h-screen items-center justify-center px-4"
+      style={{ background: 'rgb(var(--color-background))' }}
+    >
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-4 rounded-2xl bg-slate-900/80 p-8 shadow-soft-coral"
+        className="edu-card w-full max-w-md space-y-4 shadow-lg"
+        style={{
+          background: 'rgb(var(--color-surface))',
+          borderColor: 'rgb(var(--color-border))',
+          borderRadius: 'var(--radius-large)',
+        }}
       >
         <div>
-          <h1 className="text-2xl font-semibold">Welcome back</h1>
-          <p className="text-sm text-slate-300">Sign in with your email or learner username.</p>
+          <h1 className="text-2xl font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
+            Welcome back
+          </h1>
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            Sign in with your email or learner username.
+          </p>
         </div>
-        {error && <p className="rounded border border-red-500/60 bg-red-500/10 p-3 text-sm">{error}</p>}
-        <label className="block text-sm font-semibold">
+        {error && (
+          <p
+            className="rounded p-3 text-sm"
+            style={{
+              background: 'rgb(var(--color-error) / 0.1)',
+              borderColor: 'rgb(var(--color-error) / 0.6)',
+              color: 'rgb(var(--color-error))',
+            }}
+          >
+            {error}
+          </p>
+        )}
+        <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
           Email or username
           <input
-            className="mt-1 w-full rounded border border-slate-700 bg-slate-950/60 px-3 py-2"
+            className="input mt-1 w-full"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             required
           />
         </label>
-        <label className="block text-sm font-semibold">
+        <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
           Password
           <input
-            className="mt-1 w-full rounded border border-slate-700 bg-slate-950/60 px-3 py-2"
+            className="input mt-1 w-full"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -65,9 +88,10 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-coral px-4 py-3 font-semibold text-slate-950 transition hover:bg-coral/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="edu-btn w-full transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          style={{ borderRadius: 'var(--radius-large)' }}
         >
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
     </main>

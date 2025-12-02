@@ -1,26 +1,33 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Menu, X, ChevronDown, Brain, Users, BookOpen, 
-  BarChart3, LogIn, Sparkles 
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Brain,
+  Users,
+  BookOpen,
+  BarChart3,
+  LogIn,
+  Sparkles,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function Navigation() {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navigation = {
     solutions: [
@@ -28,7 +35,7 @@ export function Navigation() {
         name: 'For Parents',
         href: '/features/parents',
         icon: Users,
-        description: 'Support your child\'s unique learning journey',
+        description: "Support your child's unique learning journey",
       },
       {
         name: 'For Teachers',
@@ -69,7 +76,7 @@ export function Navigation() {
       { name: 'Blog', href: '/blog' },
       { name: 'Contact', href: '/contact' },
     ],
-  }
+  };
 
   return (
     <header
@@ -77,7 +84,7 @@ export function Navigation() {
         'fixed top-0 w-full z-50 transition-all duration-300',
         isScrolled
           ? 'bg-white/95 backdrop-blur-lg shadow-sm border-b border-gray-100'
-          : 'bg-transparent'
+          : 'bg-transparent',
       )}
     >
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -100,21 +107,21 @@ export function Navigation() {
           <div className="hidden lg:flex lg:items-center lg:gap-8">
             <DropdownMenu title="Solutions" items={navigation.solutions} />
             <DropdownMenu title="Product" items={navigation.product} />
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className={cn(
-                "text-gray-700 hover:text-violet-600 font-medium transition-colors",
-                pathname === '/pricing' && "text-violet-600"
+                'text-gray-700 hover:text-violet-600 font-medium transition-colors',
+                pathname === '/pricing' && 'text-violet-600',
               )}
             >
               Pricing
             </Link>
             <DropdownMenu title="Resources" items={navigation.resources} simple />
-            <Link 
-              href="/demo" 
+            <Link
+              href="/demo"
               className={cn(
-                "text-gray-700 hover:text-violet-600 font-medium transition-colors",
-                pathname === '/demo' && "text-violet-600"
+                'text-gray-700 hover:text-violet-600 font-medium transition-colors',
+                pathname === '/demo' && 'text-violet-600',
               )}
             >
               Demo
@@ -123,13 +130,13 @@ export function Navigation() {
 
           {/* Desktop CTAs */}
           <div className="hidden lg:flex lg:items-center lg:gap-4">
-            <Link href="/demo">
+            <Link href="http://localhost:3000/login">
               <Button variant="ghost" className="text-gray-700 hover:text-violet-600">
                 <LogIn className="mr-2 h-4 w-4" />
                 Sign In
               </Button>
             </Link>
-            <Link href="/demo">
+            <Link href="http://localhost:3000/register">
               <Button className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                 Start Free Trial
                 <Sparkles className="ml-2 h-4 w-4" />
@@ -149,30 +156,45 @@ export function Navigation() {
       </nav>
 
       {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && <MobileMenu navigation={navigation} />}
-      </AnimatePresence>
+      <AnimatePresence>{mobileMenuOpen && <MobileMenu navigation={navigation} />}</AnimatePresence>
     </header>
-  )
+  );
 }
 
-function DropdownMenu({ title, items, simple = false }: { title: string; items: any[]; simple?: boolean }) {
-  const [isOpen, setIsOpen] = useState(false)
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon?: React.ElementType;
+  description?: string;
+}
+
+function DropdownMenu({
+  title,
+  items,
+  simple = false,
+}: {
+  title: string;
+  items: NavigationItem[];
+  simple?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div 
+    <div
       className="relative"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
+      role="navigation"
     >
-      <button className="flex items-center gap-1 text-gray-700 hover:text-violet-600 font-medium transition-colors">
+      <button
+        className="flex items-center gap-1 text-gray-700 hover:text-violet-600 font-medium transition-colors"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
         {title}
-        <ChevronDown className={cn(
-          "h-4 w-4 transition-transform",
-          isOpen && "rotate-180"
-        )} />
+        <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
       </button>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -215,10 +237,16 @@ function DropdownMenu({ title, items, simple = false }: { title: string; items: 
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
 
-function MobileMenu({ navigation }: { navigation: any }) {
+interface MobileNavigationProps {
+  solutions: NavigationItem[];
+  product: NavigationItem[];
+  resources: NavigationItem[];
+}
+
+function MobileMenu({ navigation }: { navigation: MobileNavigationProps }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -230,7 +258,7 @@ function MobileMenu({ navigation }: { navigation: any }) {
         {/* Mobile navigation items */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Solutions</p>
-          {navigation.solutions.map((item: any) => (
+          {navigation.solutions.map((item) => (
             <Link
               key={item.name}
               href={item.href}
@@ -240,10 +268,10 @@ function MobileMenu({ navigation }: { navigation: any }) {
             </Link>
           ))}
         </div>
-        
+
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</p>
-          {navigation.product.map((item: any) => (
+          {navigation.product.map((item) => (
             <Link
               key={item.name}
               href={item.href}
@@ -253,14 +281,14 @@ function MobileMenu({ navigation }: { navigation: any }) {
             </Link>
           ))}
         </div>
-        
+
         <div className="pt-4 space-y-2">
-          <Link href="/demo">
+          <Link href="http://localhost:3000/login">
             <Button variant="outline" className="w-full">
               Sign In
             </Button>
           </Link>
-          <Link href="/demo">
+          <Link href="http://localhost:3000/register">
             <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white">
               Start Free Trial
             </Button>
@@ -268,5 +296,5 @@ function MobileMenu({ navigation }: { navigation: any }) {
         </div>
       </div>
     </motion.div>
-  )
+  );
 }

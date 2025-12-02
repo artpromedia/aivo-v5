@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { motion } from 'framer-motion'
-import { ArrowRight, PlayCircle, Brain, Users, Award, BookOpen, Star, X } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { motion } from 'framer-motion';
+import { ArrowRight, PlayCircle, Brain, Users, Award, BookOpen, Star, X } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 export function HeroSection() {
-  const [isVideoOpen, setIsVideoOpen] = useState(false)
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-theme-primary/5 via-white to-pink-50">
@@ -22,7 +22,7 @@ export function HeroSection() {
           transition={{
             duration: 20,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
           className="absolute -top-40 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-theme-primary/20 to-pink-200/30 rounded-full blur-3xl"
         />
@@ -35,7 +35,7 @@ export function HeroSection() {
           transition={{
             duration: 25,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
           className="absolute -bottom-40 -left-40 w-[800px] h-[800px] bg-gradient-to-tr from-blue-200/30 to-theme-primary/20 rounded-full blur-3xl"
         />
@@ -68,9 +68,7 @@ export function HeroSection() {
               AIVO Learning
             </span>
             <br />
-            <span className="text-3xl sm:text-4xl lg:text-5xl">
-              Where Every Mind Thrives
-            </span>
+            <span className="text-3xl sm:text-4xl lg:text-5xl">Where Every Mind Thrives</span>
           </motion.h1>
 
           {/* Subheading */}
@@ -80,9 +78,9 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto mb-10 leading-relaxed"
           >
-            Revolutionary AI-powered learning platform that creates a personalized "Virtual Brain" 
-            for each student. Supporting neurodiverse learners including those with ADHD, Autism, 
-            Dyslexia, and all learning differences.
+            Revolutionary AI-powered learning platform that creates a personalized &quot;Virtual
+            Brain&quot; for each student. Supporting neurodiverse learners including those with
+            ADHD, Autism, Dyslexia, and all learning differences.
           </motion.p>
 
           {/* Trust Badges */}
@@ -113,9 +111,9 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
           >
-            <Link href="/signup">
-              <Button 
-                size="lg" 
+            <Link href="http://localhost:3000/register">
+              <Button
+                size="lg"
                 className="bg-gradient-to-r from-theme-primary to-pink-600 hover:from-theme-primary/90 hover:to-pink-700 text-white rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Start Free Trial
@@ -142,15 +140,21 @@ export function HeroSection() {
           >
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-theme-primary" />
-              <span><strong className="text-gray-900">50,000+</strong> Active Learners</span>
+              <span>
+                <strong className="text-gray-900">50,000+</strong> Active Learners
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-pink-500" />
-              <span><strong className="text-gray-900">AI-Powered</strong> Virtual Brain</span>
+              <span>
+                <strong className="text-gray-900">AI-Powered</strong> Virtual Brain
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-blue-500" />
-              <span><strong className="text-gray-900">K-12</strong> Full Curriculum</span>
+              <span>
+                <strong className="text-gray-900">K-12</strong> Full Curriculum
+              </span>
             </div>
           </motion.div>
         </div>
@@ -165,7 +169,7 @@ export function HeroSection() {
           <div className="relative mx-auto max-w-6xl">
             {/* Glow Effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-theme-primary to-pink-400 rounded-3xl blur-3xl opacity-20" />
-            
+
             {/* Main Container */}
             <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-theme-primary/10 to-pink-100 p-1">
               <div className="rounded-3xl bg-white p-2">
@@ -193,7 +197,7 @@ export function HeroSection() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Mock Learning Cards */}
                       <div className="grid grid-cols-3 gap-4">
                         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
@@ -217,7 +221,7 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-            
+
             {/* Floating Feature Cards */}
             <motion.div
               animate={{ y: [0, -10, 0] }}
@@ -256,9 +260,13 @@ export function HeroSection() {
 
       {/* Video Modal */}
       {isVideoOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" 
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
           onClick={() => setIsVideoOpen(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setIsVideoOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
         >
           <div className="relative max-w-4xl w-full aspect-video bg-black rounded-2xl overflow-hidden">
             <button
@@ -270,6 +278,7 @@ export function HeroSection() {
             <iframe
               src="https://www.youtube.com/embed/demo-video-id"
               className="w-full h-full"
+              title="AIVO Demo Video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -277,5 +286,5 @@ export function HeroSection() {
         </div>
       )}
     </section>
-  )
+  );
 }

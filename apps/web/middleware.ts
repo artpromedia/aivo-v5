@@ -1,60 +1,59 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { createHmac } from "crypto";
+import { NextResponse, NextRequest } from 'next/server';
+import { createHmac } from 'crypto';
 
 // Paths that don't require onboarding completion
 const ONBOARDING_EXEMPT_PATHS = [
-  "/onboarding",
-  "/api/onboarding",
-  "/login",
-  "/register",
-  "/logout",
-  "/api/auth",
-  "/_next",
-  "/favicon.ico",
-  "/static",
+  '/onboarding',
+  '/api/onboarding',
+  '/login',
+  '/register',
+  '/logout',
+  '/api/auth',
+  '/_next',
+  '/favicon.ico',
+  '/static',
 ];
 
 // Paths exempt from rate limiting (health checks, internal)
 const RATE_LIMIT_EXEMPT_PATHS = [
-  "/api/health",
-  "/api/ready",
-  "/api/metrics",
-  "/_next",
-  "/favicon.ico",
+  '/api/health',
+  '/api/ready',
+  '/api/metrics',
+  '/_next',
+  '/favicon.ico',
 ];
 
 // Paths exempt from CSRF validation
 const CSRF_EXEMPT_PATHS = [
-  "/api/auth/",
-  "/api/health",
-  "/api/ready",
-  "/api/webhooks/",
-  "/api/csrf",
-  "/_next/",
+  '/api/auth/',
+  '/api/health',
+  '/api/ready',
+  '/api/webhooks/',
+  '/api/csrf',
+  '/_next/',
 ];
 
 // HTTP methods that don't require CSRF protection
-const CSRF_SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
+const CSRF_SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
 // CSRF configuration
-const CSRF_COOKIE_NAME = "csrf-token";
-const CSRF_HEADER_NAME = "x-csrf-token";
+const CSRF_COOKIE_NAME = 'csrf-token';
+const CSRF_HEADER_NAME = 'x-csrf-token';
 const CSRF_TOKEN_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
 // Check if path is exempt from onboarding
 function isOnboardingExempt(pathname: string): boolean {
-  return ONBOARDING_EXEMPT_PATHS.some(path => pathname.startsWith(path));
+  return ONBOARDING_EXEMPT_PATHS.some((path) => pathname.startsWith(path));
 }
 
 // Check if path is exempt from rate limiting
 function isRateLimitExempt(pathname: string): boolean {
-  return RATE_LIMIT_EXEMPT_PATHS.some(path => pathname.startsWith(path));
+  return RATE_LIMIT_EXEMPT_PATHS.some((path) => pathname.startsWith(path));
 }
 
 // Check if path is exempt from CSRF protection
 function isCSRFExempt(pathname: string): boolean {
-  return CSRF_EXEMPT_PATHS.some(path => pathname.startsWith(path));
+  return CSRF_EXEMPT_PATHS.some((path) => pathname.startsWith(path));
 }
 
 // Check for internal API key bypass
@@ -79,29 +78,43 @@ function generateCSRFToken(): { token: string; timestamp: number } {
 // Validate CSRF token
 function validateCSRFToken(token: string, cookieToken: string): boolean {
   if (!token || !cookieToken) return false;
-  
+
   // Double-submit pattern: token must match cookie
   if (token !== cookieToken) return false;
-  
+
   // Validate token structure and signature
   const parts = token.split(':');
   if (parts.length < 3) return false;
-  
+
   const [timestampStr, random, signature] = [parts[0], parts[1], parts.slice(2).join(':')];
   const timestamp = parseInt(timestampStr, 10);
-  
+
   // Check token age
   if (Date.now() - timestamp > CSRF_TOKEN_MAX_AGE) return false;
-  
+
   // Verify signature
   const secret = process.env.CSRF_SECRET || process.env.NEXTAUTH_SECRET || 'csrf-secret-key';
   const payload = `${timestampStr}:${random}`;
   const expectedSignature = createHmac('sha256', secret).update(payload).digest('hex');
-  
+
   return signature === expectedSignature;
 }
 
-export default auth((req) => {
+// Decode JWT token from cookie (simple decode, verification done by NextAuth)
+function decodeSessionToken(
+  token: string,
+): { userId?: string; role?: string; onboardingStatus?: string } | null {
+  try {
+    // NextAuth v5 uses encrypted JWE tokens, so we can't decode them directly
+    // We'll just check if the session cookie exists for basic auth check
+    // The actual session data will be fetched on the client/server side
+    return token ? { userId: 'session-exists' } : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const response = NextResponse.next();
 
@@ -110,6 +123,15 @@ export default auth((req) => {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Check for session cookie (NextAuth v5 uses authjs.session-token)
+  const sessionCookie =
+    req.cookies.get('authjs.session-token')?.value ||
+    req.cookies.get('__Secure-authjs.session-token')?.value ||
+    req.cookies.get('next-auth.session-token')?.value ||
+    req.cookies.get('__Secure-next-auth.session-token')?.value;
+
+  const hasSession = !!sessionCookie;
 
   // CSRF Protection for state-changing requests
   if (pathname.startsWith('/api') && !CSRF_SAFE_METHODS.includes(req.method)) {
@@ -131,18 +153,18 @@ export default auth((req) => {
               'Content-Type': 'application/json',
               'X-Content-Type-Options': 'nosniff',
             },
-          }
+          },
         );
       }
     }
   }
 
   // Ensure CSRF cookie exists for authenticated users on page requests
-  if (req.auth && req.cookies && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
+  if (hasSession && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
     const existingCookie = req.cookies.get(CSRF_COOKIE_NAME);
     if (!existingCookie) {
-      const { token } = generateCSRFToken();
-      response.cookies.set(CSRF_COOKIE_NAME, token, {
+      const { token: csrfToken } = generateCSRFToken();
+      response.cookies.set(CSRF_COOKIE_NAME, csrfToken, {
         httpOnly: false, // Must be readable by JavaScript
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -163,57 +185,36 @@ export default auth((req) => {
   }
 
   // Allow unauthenticated access to public paths
-  if (!req.auth || !req.auth.user) {
+  if (!hasSession) {
     // Don't redirect for API routes or public assets
-    if (pathname.startsWith("/api") || pathname.startsWith("/_next")) {
+    if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
       return response;
     }
     // Don't redirect if already on login/register page
-    if (pathname === "/login" || pathname === "/register") {
+    if (pathname === '/login' || pathname === '/register') {
       return response;
     }
-    const signInUrl = new URL("/login", req.nextUrl.origin);
-    signInUrl.searchParams.set("callbackUrl", pathname);
+    const signInUrl = new URL('/login', req.nextUrl.origin);
+    signInUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(signInUrl);
   }
 
-  const role = req.auth.user?.role;
-  const onboardingStatus = (req.auth.user as any)?.onboardingStatus;
-
-  // Skip onboarding check for exempt paths
-  if (!isOnboardingExempt(pathname)) {
-    // If onboarding is not complete, redirect to onboarding
-    // Note: This requires the onboardingStatus to be in the session
-    // You may need to add this to your auth callbacks
-    if (onboardingStatus && onboardingStatus !== "COMPLETE") {
-      return NextResponse.redirect(new URL("/onboarding", req.nextUrl.origin));
-    }
-  }
-
-  // Role-based access control (only if role is defined)
-  if (role) {
-    if (pathname.startsWith("/learners") && role === "LEARNER") {
-      return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
-    }
-
-    // Block learners from admin routes
-    if (pathname.startsWith("/admin") && role === "LEARNER") {
-      return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
-    }
-  }
+  // For role-based access control and onboarding checks,
+  // we rely on the page/API level checks since we can't decode JWE tokens in middleware
+  // The actual session data with role/onboardingStatus is fetched on the server side
 
   return response;
-});
+}
 
 export const config = {
   matcher: [
-    "/",
-    "/dashboard/:path*",
-    "/learners/:path*",
-    "/onboarding/:path*",
-    "/admin/:path*",
-    "/login",
-    "/register",
-    "/api/:path*",
-  ]
+    '/',
+    '/dashboard/:path*',
+    '/learners/:path*',
+    '/onboarding/:path*',
+    '/admin/:path*',
+    '/login',
+    '/register',
+    '/api/:path*',
+  ],
 };

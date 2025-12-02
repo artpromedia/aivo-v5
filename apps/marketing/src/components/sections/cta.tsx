@@ -1,8 +1,9 @@
-'use client'
+'use client';
 
-import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export function CTA() {
   return (
@@ -21,27 +22,31 @@ export function CTA() {
           viewport={{ once: true }}
         >
           <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Ready to Transform Your Child's Learning Journey?
+            Ready to Transform Your Child&apos;s Learning Journey?
           </h2>
           <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Join thousands of families who have discovered the power of personalized, 
-            AI-driven education. Start your free 30-day trial today.
+            Join thousands of families who have discovered the power of personalized, AI-driven
+            education. Start your free 30-day trial today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-coral-600 hover:bg-gray-100 rounded-2xl px-8 py-6 text-lg font-semibold shadow-xl"
-            >
-              Start Free Trial
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-2xl px-8 py-6 text-lg font-semibold border-2 border-white text-white hover:bg-white/10"
-            >
-              Schedule a Demo
-            </Button>
+            <Link href="http://localhost:3000/register">
+              <Button
+                size="lg"
+                className="bg-white text-coral-600 hover:bg-gray-100 rounded-2xl px-8 py-6 text-lg font-semibold shadow-xl"
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/demo">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-2xl px-8 py-6 text-lg font-semibold border-2 border-white text-white hover:bg-white/10"
+              >
+                Schedule a Demo
+              </Button>
+            </Link>
           </div>
           <p className="mt-6 text-sm text-white/80">
             No credit card required • Cancel anytime • Full access to all features
@@ -49,5 +54,5 @@ export function CTA() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

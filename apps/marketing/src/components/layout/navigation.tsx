@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Menu, X, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Menu, X, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -21,27 +21,25 @@ const navigation = [
   { name: 'Pricing', href: '/pricing' },
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
-]
+];
 
 export function Navigation() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
-    }
+      setScrolled(window.scrollY > 20);
+    };
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-soft'
-          : 'bg-transparent'
+        scrolled ? 'bg-white/95 backdrop-blur-md shadow-soft' : 'bg-transparent'
       }`}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Top">
@@ -71,7 +69,7 @@ export function Navigation() {
                   {item.name}
                   {item.children && <ChevronDown className="w-4 h-4" />}
                 </Link>
-                
+
                 {/* Dropdown */}
                 {item.children && (
                   <div className="absolute top-full left-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -94,15 +92,16 @@ export function Navigation() {
 
           {/* Desktop CTAs */}
           <div className="hidden lg:flex lg:items-center lg:gap-4">
-            <Button
-              variant="ghost"
-              className="text-gray-700 hover:text-coral-500"
-            >
-              Sign In
-            </Button>
-            <Button className="bg-gradient-to-r from-coral-500 to-salmon-500 hover:from-coral-600 hover:to-salmon-600 text-white rounded-xl px-6 shadow-coral">
-              Get Started
-            </Button>
+            <Link href="http://localhost:3000/login">
+              <Button variant="ghost" className="text-gray-700 hover:text-coral-500">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="http://localhost:3000/register">
+              <Button className="bg-gradient-to-r from-coral-500 to-salmon-500 hover:from-coral-600 hover:to-salmon-600 text-white rounded-xl px-6 shadow-coral">
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -112,11 +111,7 @@ export function Navigation() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <span className="sr-only">Open main menu</span>
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </nav>
@@ -157,20 +152,21 @@ export function Navigation() {
                 </div>
               ))}
               <div className="mt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full rounded-xl"
-                >
-                  Sign In
-                </Button>
-                <Button className="w-full bg-gradient-to-r from-coral-500 to-salmon-500 hover:from-coral-600 hover:to-salmon-600 text-white rounded-xl">
-                  Get Started
-                </Button>
+                <Link href="http://localhost:3000/login">
+                  <Button variant="outline" className="w-full rounded-xl">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="http://localhost:3000/register">
+                  <Button className="w-full bg-gradient-to-r from-coral-500 to-salmon-500 hover:from-coral-600 hover:to-salmon-600 text-white rounded-xl">
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </header>
-  )
+  );
 }
