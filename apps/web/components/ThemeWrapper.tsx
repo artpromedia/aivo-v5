@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useSession } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
-import { GradeAwareThemeProvider, GradeThemeInitScript } from "@aivo/ui";
+import { useSession } from 'next-auth/react';
+import { useEffect, useState, useCallback } from 'react';
+import { GradeAwareThemeProvider, GradeThemeInitScript } from '@aivo/ui';
 
 interface LearnerData {
   id: string;
@@ -20,12 +20,12 @@ export function ThemeWrapper({ children }: { children: React.ReactNode }) {
   // Fetch learner data when session is available
   const fetchLearner = useCallback(async (): Promise<LearnerData | null> => {
     if (!session?.user?.email) return null;
-    
+
     try {
       // Fetch learner profile from API
-      const res = await fetch("/api/learner/me");
+      const res = await fetch('/api/learner/me');
       if (!res.ok) return null;
-      
+
       const data = await res.json();
       return data?.learner || null;
     } catch {
@@ -34,16 +34,16 @@ export function ThemeWrapper({ children }: { children: React.ReactNode }) {
   }, [session?.user?.email]);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === 'authenticated') {
       fetchLearner().then(setLearner);
     }
   }, [status, fetchLearner]);
 
   return (
     <GradeAwareThemeProvider
-      defaultGradeBand="k_5"
+      defaultGradeBand="9_12"
       learner={learner}
-      disableAutoDetection={status === "loading"}
+      disableAutoDetection={status === 'loading'}
     >
       <>{children}</>
     </GradeAwareThemeProvider>

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Users, Star, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -24,32 +24,49 @@ export function CTA() {
           <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
             Ready to Transform Your Child&apos;s Learning Journey?
           </h2>
-          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Join thousands of families who have discovered the power of personalized, AI-driven
-            education. Start your free 30-day trial today.
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            Join the families who have discovered the power of personalized, AI-driven education.
+            Our pilot program proved it works—now it&apos;s your turn.
           </p>
+
+          {/* Pilot Proof Points */}
+          <div className="flex flex-wrap justify-center gap-6 mb-10">
+            <div className="flex items-center gap-2 text-white/90">
+              <Users className="w-5 h-5" />
+              <span className="font-medium">150 pilot students</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/90">
+              <Star className="w-5 h-5 fill-current" />
+              <span className="font-medium">4.9/5 parent rating</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/90">
+              <TrendingUp className="w-5 h-5" />
+              <span className="font-medium">Results in 3 months</span>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="http://localhost:3000/register">
               <Button
                 size="lg"
                 className="bg-white text-coral-600 hover:bg-gray-100 rounded-2xl px-8 py-6 text-lg font-semibold shadow-xl"
               >
-                Start Free Trial
+                Join Early Access
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Link href="/demo">
+            <Link href="/about#pilot-results">
               <Button
                 size="lg"
                 variant="outline"
                 className="rounded-2xl px-8 py-6 text-lg font-semibold border-2 border-white text-white hover:bg-white/10"
               >
-                Schedule a Demo
+                See Pilot Results
               </Button>
             </Link>
           </div>
           <p className="mt-6 text-sm text-white/80">
-            No credit card required • Cancel anytime • Full access to all features
+            No credit card required • 30-day free trial • Cancel anytime
           </p>
         </motion.div>
       </div>

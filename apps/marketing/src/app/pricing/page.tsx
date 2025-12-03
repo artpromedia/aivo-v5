@@ -2,7 +2,20 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, HelpCircle, ArrowRight, Zap, Users, Building2, GraduationCap } from 'lucide-react';
+import {
+  Check,
+  HelpCircle,
+  ArrowRight,
+  Zap,
+  Users,
+  Crown,
+  Shield,
+  Clock,
+  UserCheck,
+  ClipboardList,
+  Star,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Navigation } from '@/components/layout/navigation';
 import { Footer } from '@/components/layout/footer';
@@ -20,76 +33,93 @@ interface PricingTier {
   };
   features: string[];
   highlighted?: boolean;
+  badge?: string;
   cta: string;
-  ctaVariant: 'default' | 'coral' | 'outline';
+  ctaLink: string;
 }
 
 const pricingTiers: PricingTier[] = [
   {
-    name: 'Family',
-    description: 'Perfect for homeschool families or parents wanting to supplement education',
+    name: 'Free',
+    description: 'Start your learning journey with essential tools',
     icon: Users,
-    price: {
-      monthly: 29,
-      annual: 24,
-    },
-    features: [
-      'Up to 3 learner profiles',
-      'AI Virtual Brain tutor',
-      'K-12 curriculum access',
-      'Progress tracking dashboard',
-      'Parent mobile app',
-      'Email support',
-      'Weekly progress reports',
-    ],
-    cta: 'Start Free Trial',
-    ctaVariant: 'coral',
-  },
-  {
-    name: 'School',
-    description: 'Ideal for individual schools and small learning centers',
-    icon: GraduationCap,
-    price: {
-      monthly: 8,
-      annual: 6,
-    },
-    features: [
-      'Per student pricing (min 50)',
-      'Unlimited teacher accounts',
-      'Advanced analytics dashboard',
-      'IEP/504 accommodation tools',
-      'Classroom management',
-      'LMS integration (Canvas, Google)',
-      'Priority email & chat support',
-      'Professional development training',
-      'Custom branding options',
-    ],
-    highlighted: true,
-    cta: 'Schedule Demo',
-    ctaVariant: 'coral',
-  },
-  {
-    name: 'District',
-    description: 'Enterprise solution for school districts and large organizations',
-    icon: Building2,
     price: {
       monthly: 0,
       annual: 0,
     },
     features: [
-      'Volume-based pricing',
-      'Unlimited schools & students',
-      'District-wide analytics',
-      'SSO & rostering integration',
-      'Data privacy compliance (FERPA, COPPA)',
-      'Dedicated success manager',
-      '24/7 premium support',
-      'Custom implementation',
-      'API access',
-      'SLA guarantees',
+      'Access to Basic Lessons',
+      'Core Subject Coverage',
+      'Basic Progress Tracking',
+      'Community Support',
     ],
-    cta: 'Contact Sales',
-    ctaVariant: 'outline',
+    cta: 'Get Started Free',
+    ctaLink: 'http://localhost:3000/register',
+  },
+  {
+    name: 'Pro',
+    description: 'Full access to personalized AI learning',
+    icon: Zap,
+    price: {
+      monthly: 29.99,
+      annual: 24.99,
+    },
+    features: [
+      'Access to All Lessons',
+      'Personalized AI Tutor (Virtual Brain)',
+      'IEP Goal Integration',
+      'Progress Tracking (Spider, Graph Charts)',
+      'Parent Dashboard Access',
+      'Priority Support',
+      'Live Chat with Tutors (Limited)',
+    ],
+    highlighted: true,
+    badge: 'Early Access',
+    cta: 'Start Free Trial',
+    ctaLink: 'http://localhost:3000/register',
+  },
+  {
+    name: 'Premium',
+    description: 'Complete solution for families with multiple learners',
+    icon: Crown,
+    price: {
+      monthly: 49.99,
+      annual: 41.99,
+    },
+    features: [
+      'Access to All Lessons and Features',
+      'Advanced AI Learning Agent',
+      'Multiple Student Profiles',
+      'Teacher Collaboration Tools',
+      'Unlimited Live Chat with Tutors',
+      '24/7 Priority Support',
+      'Custom Learning Plans',
+    ],
+    cta: 'Start Free Trial',
+    ctaLink: 'http://localhost:3000/register',
+  },
+];
+
+const trustBadges = [
+  {
+    icon: Shield,
+    title: 'FERPA & COPPA Compliant',
+    description: 'Complete data protection',
+  },
+  {
+    icon: Clock,
+    title: '24/7 Support',
+    description: 'Round-the-clock assistance',
+  },
+  {
+    icon: UserCheck,
+    title: 'Family Dashboard',
+    description: 'Parent-teacher collaboration',
+  },
+  {
+    icon: ClipboardList,
+    title: 'IEP Integration',
+    description: 'Goal tracking and reporting',
   },
 ];
 
@@ -97,7 +127,7 @@ const faqs = [
   {
     question: 'Is there a free trial?',
     answer:
-      'Yes! All Family plans come with a 14-day free trial. School and District plans can request a demo to explore the platform before committing.',
+      'Yes! All Pro and Premium plans come with a 14-day free trial. No credit card required to start.',
   },
   {
     question: 'Can I switch plans later?',
@@ -107,7 +137,7 @@ const faqs = [
   {
     question: 'What payment methods do you accept?',
     answer:
-      'We accept all major credit cards, PayPal, and for School/District plans, we can arrange invoicing and PO-based payments.',
+      'We accept all major credit cards and PayPal. Annual plans can also be paid via invoice.',
   },
   {
     question: 'Is AIVO FERPA and COPPA compliant?',
@@ -115,9 +145,9 @@ const faqs = [
       'Yes, AIVO is fully compliant with FERPA, COPPA, and other education data privacy regulations. We take student data protection seriously.',
   },
   {
-    question: 'Do you offer discounts for non-profits?',
+    question: 'What age groups is AIVO designed for?',
     answer:
-      'Yes, we offer special pricing for non-profit educational organizations. Contact our sales team to learn more.',
+      'AIVO supports K-12 and college learners, with specialized features for neurodiverse students including those with ADHD, Autism, and Dyslexia.',
   },
   {
     question: 'What accessibility features are included?',
@@ -139,10 +169,10 @@ export default function PricingPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-100 to-pink-100 text-violet-700 text-sm font-medium mb-6"
           >
-            <Zap className="w-4 h-4" />
-            Simple, transparent pricing
+            <Sparkles className="w-4 h-4" />
+            Early Access Pricing
           </motion.div>
 
           <motion.h1
@@ -151,7 +181,7 @@ export default function PricingPage() {
             transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-gray-900 mb-6"
           >
-            Invest in Every Learner&apos;s Future
+            Simple, Transparent Pricing
           </motion.h1>
 
           <motion.p
@@ -160,8 +190,8 @@ export default function PricingPage() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-600 mb-10"
           >
-            Choose the plan that fits your needs. All plans include our AI Virtual Brain tutor and
-            comprehensive accessibility features.
+            Join the families who helped shape AIVO during our pilot. Early access members get
+            special founding member benefits.
           </motion.p>
 
           {/* Billing Toggle */}
@@ -191,7 +221,7 @@ export default function PricingPage() {
             >
               Annual
               <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                Save 20%
+                Save 17%
               </span>
             </button>
           </motion.div>
@@ -215,8 +245,15 @@ export default function PricingPage() {
                 }`}
               >
                 {tier.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full text-sm font-bold text-gray-900">
-                    Most Popular
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full text-xs font-bold text-gray-900">
+                      Most Popular
+                    </span>
+                    {tier.badge && (
+                      <span className="px-3 py-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full text-xs font-bold text-gray-900">
+                        {tier.badge}
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -245,9 +282,14 @@ export default function PricingPage() {
                 <div className="mb-6">
                   {tier.price.monthly === 0 ? (
                     <div
-                      className={`text-3xl font-bold ${tier.highlighted ? 'text-white' : 'text-gray-900'}`}
+                      className={`text-5xl font-bold ${tier.highlighted ? 'text-white' : 'text-gray-900'}`}
                     >
-                      Custom Pricing
+                      $0
+                      <span
+                        className={`text-lg font-normal ${tier.highlighted ? 'text-violet-200' : 'text-gray-500'}`}
+                      >
+                        /mo
+                      </span>
                     </div>
                   ) : (
                     <>
@@ -257,8 +299,15 @@ export default function PricingPage() {
                         ${billingPeriod === 'monthly' ? tier.price.monthly : tier.price.annual}
                       </span>
                       <span className={tier.highlighted ? 'text-violet-200' : 'text-gray-500'}>
-                        /{tier.name === 'School' ? 'student/mo' : 'mo'}
+                        /mo
                       </span>
+                      {billingPeriod === 'annual' && (
+                        <p
+                          className={`text-sm mt-1 ${tier.highlighted ? 'text-violet-200' : 'text-gray-500'}`}
+                        >
+                          billed annually
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -280,16 +329,15 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
-                <Link href={tier.name === 'District' ? '/contact' : '/demo'}>
+                <Link href={tier.ctaLink}>
                   <Button
-                    variant={
-                      tier.highlighted
-                        ? 'default'
-                        : (tier.ctaVariant as 'default' | 'coral' | 'outline')
-                    }
                     size="lg"
                     className={`w-full ${
-                      tier.highlighted ? 'bg-white text-violet-700 hover:bg-gray-100' : ''
+                      tier.highlighted
+                        ? 'bg-white text-violet-700 hover:bg-gray-100'
+                        : tier.name === 'Free'
+                          ? 'bg-gray-900 text-white hover:bg-gray-800'
+                          : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700'
                     }`}
                   >
                     {tier.cta}
@@ -304,14 +352,71 @@ export default function PricingPage() {
 
       {/* Trust Badges */}
       <section className="py-12 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-gray-600 mb-6">Trusted by educators and families nationwide</p>
-          <div className="flex flex-wrap justify-center gap-8 items-center opacity-60">
-            <span className="text-xl font-semibold text-gray-400">FERPA Compliant</span>
-            <span className="text-xl font-semibold text-gray-400">COPPA Certified</span>
-            <span className="text-xl font-semibold text-gray-400">SOC 2 Type II</span>
-            <span className="text-xl font-semibold text-gray-400">WCAG 2.1 AA</span>
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {trustBadges.map((badge, index) => (
+              <motion.div
+                key={badge.title}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 * index }}
+                className="flex flex-col items-center text-center p-4"
+              >
+                <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center mb-3">
+                  <badge.icon className="w-6 h-6 text-violet-600" />
+                </div>
+                <h4 className="font-semibold text-gray-900 text-sm">{badge.title}</h4>
+                <p className="text-xs text-gray-500 mt-1">{badge.description}</p>
+              </motion.div>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pilot Success Testimonial */}
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-br from-violet-50 to-pink-50 rounded-3xl p-8 md:p-12 text-center"
+          >
+            <div className="flex justify-center gap-1 mb-6">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
+              ))}
+            </div>
+            <blockquote className="text-xl md:text-2xl text-gray-700 mb-6 leading-relaxed">
+              &quot;AIVO has transformed how my child approaches learning. Being part of the pilot
+              program, I&apos;ve seen firsthand how the personalized approach makes such a
+              difference for children with ADHD.&quot;
+            </blockquote>
+            <div className="flex items-center justify-center gap-2">
+              <span className="px-2 py-1 bg-violet-100 text-violet-700 text-xs rounded-full font-medium">
+                Pilot Program Parent
+              </span>
+              <span className="text-sm text-gray-500">• Child with ADHD, Grade 4</span>
+            </div>
+          </motion.div>
+
+          {/* Pilot Callout Box */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 text-center"
+          >
+            <div className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl">
+              <span className="text-2xl">🎉</span>
+              <p className="text-green-800">
+                <strong>From Pilot to Launch:</strong> 150 families helped us build AIVO. Now
+                we&apos;re ready to help yours.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -353,25 +458,25 @@ export default function PricingPage() {
       <section className="py-20 px-4 bg-gradient-to-br from-violet-600 to-purple-700">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Transform Learning?
+            Ready to Join Early Access?
           </h2>
           <p className="text-xl text-violet-100 mb-8">
-            Start your free trial today and see how AIVO can help every learner thrive.
+            Be among the first families to experience AIVO after our successful pilot program.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="http://localhost:3000/register">
               <Button size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
-                Start Free Trial
+                Join Early Access
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
-            <Link href="/demo">
+            <Link href="/about#pilot-results">
               <Button
                 size="lg"
                 variant="outline"
                 className="border-white text-white hover:bg-white/10"
               >
-                Schedule Demo
+                See Pilot Results
               </Button>
             </Link>
           </div>

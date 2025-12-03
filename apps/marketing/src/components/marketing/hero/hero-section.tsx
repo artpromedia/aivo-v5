@@ -1,7 +1,20 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, PlayCircle, Brain, Users, Award, BookOpen, Star, X } from 'lucide-react';
+import {
+  ArrowRight,
+  PlayCircle,
+  Brain,
+  Users,
+  Award,
+  BookOpen,
+  Star,
+  X,
+  Shield,
+  TrendingUp,
+  Calendar,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -50,9 +63,9 @@ export function HeroSection() {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-theme-primary/10 to-pink-100 border border-theme-primary/20 mb-8"
           >
-            <Brain className="w-5 h-5 text-theme-primary animate-pulse" />
+            <Sparkles className="w-5 h-5 text-theme-primary animate-pulse" />
             <span className="text-sm font-semibold text-theme-primary">
-              Introducing Virtual Brain AI - A personalized learning companion for every child
+              Introducing Virtual Brain AI — Now accepting early access families
             </span>
           </motion.div>
 
@@ -78,12 +91,13 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto mb-10 leading-relaxed"
           >
-            Revolutionary AI-powered learning platform that creates a personalized &quot;Virtual
-            Brain&quot; for each student. Supporting neurodiverse learners including those with
-            ADHD, Autism, Dyslexia, and all learning differences.
+            Revolutionary AI-powered learning that creates a personalized &quot;Virtual Brain&quot;
+            for each student. Built specifically for neurodiverse K-12 and college learners
+            including those with ADHD, Autism, Dyslexia—with real-time IEP goal tracking and
+            adaptive lesson plans.
           </motion.p>
 
-          {/* Trust Badges */}
+          {/* Trust Badges - Accurate Pilot Metrics */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -92,15 +106,47 @@ export function HeroSection() {
           >
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
               <Star className="w-5 h-5 text-yellow-500 fill-current" />
-              <span className="text-sm font-medium">4.9/5 Rating</span>
+              <div className="text-left">
+                <span className="text-sm font-medium block">4.9/5 Parent Rating</span>
+                <span className="text-xs text-gray-500">From our pilot program</span>
+              </div>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
-              <Award className="w-5 h-5 text-theme-primary" />
-              <span className="text-sm font-medium">EdTech Award 2024</span>
+              <Users className="w-5 h-5 text-theme-primary" />
+              <div className="text-left">
+                <span className="text-sm font-medium block">150 Students</span>
+                <span className="text-xs text-gray-500">Improved outcomes in pilot</span>
+              </div>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
-              <Users className="w-5 h-5 text-blue-500" />
-              <span className="text-sm font-medium">50K+ Active Learners</span>
+              <Calendar className="w-5 h-5 text-green-500" />
+              <div className="text-left">
+                <span className="text-sm font-medium block">3 Months</span>
+                <span className="text-xs text-gray-500">To see measurable results</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm">
+              <Shield className="w-5 h-5 text-blue-500" />
+              <div className="text-left">
+                <span className="text-sm font-medium block">FERPA & COPPA</span>
+                <span className="text-xs text-gray-500">Fully compliant</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Pilot Success Callout */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.28 }}
+            className="mb-10"
+          >
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <p className="text-sm text-green-800">
+                <strong>🎉 Pilot Success:</strong> 150 students showed improved learning outcomes
+                within just 3 months
+              </p>
             </div>
           </motion.div>
 
@@ -116,22 +162,39 @@ export function HeroSection() {
                 size="lg"
                 className="bg-gradient-to-r from-theme-primary to-pink-600 hover:from-theme-primary/90 hover:to-pink-700 text-white rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                Start Free Trial
+                Join Early Access
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => setIsVideoOpen(true)}
-              className="rounded-xl px-8 py-6 text-lg font-semibold border-2 border-theme-primary/30 text-theme-primary hover:bg-theme-primary/5 transition-all duration-300"
-            >
-              <PlayCircle className="mr-2 w-5 h-5" />
-              Watch Demo (2 min)
-            </Button>
+            <Link href="/about#pilot-results">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-xl px-8 py-6 text-lg font-semibold border-2 border-theme-primary/30 text-theme-primary hover:bg-theme-primary/5 transition-all duration-300"
+              >
+                <TrendingUp className="mr-2 w-5 h-5" />
+                See Pilot Results
+              </Button>
+            </Link>
           </motion.div>
 
-          {/* Social Proof */}
+          {/* Watch Demo - smaller secondary action */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+            className="mb-8"
+          >
+            <button
+              onClick={() => setIsVideoOpen(true)}
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-theme-primary transition-colors"
+            >
+              <PlayCircle className="w-5 h-5" />
+              <span className="text-sm font-medium">Watch 2-minute demo</span>
+            </button>
+          </motion.div>
+
+          {/* Social Proof - Accurate Metrics */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -141,19 +204,25 @@ export function HeroSection() {
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-theme-primary" />
               <span>
-                <strong className="text-gray-900">50,000+</strong> Active Learners
+                <strong className="text-gray-900">150 Students</strong> improved in pilot
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-green-500" />
+              <span>
+                <strong className="text-gray-900">3 Months</strong> to measurable outcomes
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500 fill-current" />
+              <span>
+                <strong className="text-gray-900">4.9/5</strong> pilot parent satisfaction
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-pink-500" />
               <span>
-                <strong className="text-gray-900">AI-Powered</strong> Virtual Brain
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-blue-500" />
-              <span>
-                <strong className="text-gray-900">K-12</strong> Full Curriculum
+                <strong className="text-gray-900">AI-Powered</strong> Virtual Brain Technology
               </span>
             </div>
           </motion.div>
@@ -190,10 +259,10 @@ export function HeroSection() {
                         </div>
                         <div className="flex gap-2">
                           <div className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
-                            Streak: 7 days
+                            Streak: 5 days
                           </div>
                           <div className="px-3 py-1 bg-theme-primary/10 text-theme-primary rounded-lg text-sm font-medium">
-                            Level 12
+                            Level 3
                           </div>
                         </div>
                       </div>
@@ -264,9 +333,9 @@ export function HeroSection() {
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
           onClick={() => setIsVideoOpen(false)}
           onKeyDown={(e) => e.key === 'Escape' && setIsVideoOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          tabIndex={-1}
+          role="button"
+          aria-label="Close video modal"
+          tabIndex={0}
         >
           <div className="relative max-w-4xl w-full aspect-video bg-black rounded-2xl overflow-hidden">
             <button

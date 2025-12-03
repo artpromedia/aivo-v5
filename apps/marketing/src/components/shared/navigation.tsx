@@ -11,7 +11,7 @@ import {
   Brain,
   Users,
   BookOpen,
-  BarChart3,
+  GraduationCap,
   LogIn,
   Sparkles,
 } from 'lucide-react';
@@ -30,7 +30,7 @@ export function Navigation() {
   }, []);
 
   const navigation = {
-    solutions: [
+    features: [
       {
         name: 'For Parents',
         href: '/features/parents',
@@ -38,42 +38,24 @@ export function Navigation() {
         description: "Support your child's unique learning journey",
       },
       {
+        name: 'For Students',
+        href: '/features/students',
+        icon: GraduationCap,
+        description: 'Fun, engaging learning experiences',
+      },
+      {
         name: 'For Teachers',
         href: '/features/teachers',
         icon: BookOpen,
         description: 'Personalized tools for every student',
       },
-      {
-        name: 'For Schools',
-        href: '/features/schools',
-        icon: BarChart3,
-        description: 'Transform your special education program',
-      },
     ],
-    product: [
-      {
-        name: 'AI Tutoring',
-        href: '/features/ai-tutoring',
-        description: 'Personalized AI tutor for each learner',
-      },
-      {
-        name: 'All Features',
-        href: '/features',
-        description: 'Explore all AIVO capabilities',
-      },
-      {
-        name: 'Accessibility',
-        href: '/features/accessibility',
-        description: 'Built for neurodiversity',
-      },
-      {
-        name: 'Progress Tracking',
-        href: '/features/progress',
-        description: 'Detailed insights and analytics',
-      },
-    ],
-    resources: [
-      { name: 'Blog', href: '/blog' },
+    mainLinks: [
+      { name: 'Features', href: '/features', hasDropdown: true },
+      { name: 'AIVO Pad', href: '/aivo-pad', badge: 'New' },
+      { name: 'How It Works', href: '/how-it-works' },
+      { name: 'Pricing', href: '/pricing' },
+      { name: 'About', href: '/about' },
       { name: 'Contact', href: '/contact' },
     ],
   };
@@ -104,28 +86,60 @@ export function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex lg:items-center lg:gap-8">
-            <DropdownMenu title="Solutions" items={navigation.solutions} />
-            <DropdownMenu title="Product" items={navigation.product} />
-            <Link
-              href="/pricing"
-              className={cn(
-                'text-gray-700 hover:text-violet-600 font-medium transition-colors',
-                pathname === '/pricing' && 'text-violet-600',
-              )}
-            >
-              Pricing
-            </Link>
-            <DropdownMenu title="Resources" items={navigation.resources} simple />
-            <Link
-              href="/demo"
-              className={cn(
-                'text-gray-700 hover:text-violet-600 font-medium transition-colors',
-                pathname === '/demo' && 'text-violet-600',
-              )}
-            >
-              Demo
-            </Link>
+          <div className="hidden lg:flex lg:items-center lg:gap-6">
+            {navigation.mainLinks.map((item) => (
+              <div key={item.name} className="relative group">
+                {item.hasDropdown ? (
+                  <>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-1 text-gray-700 hover:text-violet-600 font-medium transition-colors',
+                        pathname === item.href && 'text-violet-600',
+                      )}
+                    >
+                      {item.name}
+                      <ChevronDown className="h-4 w-4" />
+                    </Link>
+                    {/* Features Dropdown */}
+                    <div className="absolute top-full left-0 mt-3 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2">
+                        {navigation.features.map((feature) => (
+                          <Link
+                            key={feature.name}
+                            href={feature.href}
+                            className="flex items-start gap-3 px-4 py-3 rounded-xl hover:bg-violet-50 transition-colors"
+                          >
+                            <div className="p-2 bg-violet-100 rounded-lg">
+                              <feature.icon className="w-4 h-4 text-violet-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{feature.name}</p>
+                              <p className="text-sm text-gray-600">{feature.description}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-1 text-gray-700 hover:text-violet-600 font-medium transition-colors',
+                      pathname === item.href && 'text-violet-600',
+                    )}
+                  >
+                    {item.name}
+                    {item.badge && (
+                      <span className="ml-1 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* Desktop CTAs */}
@@ -133,7 +147,7 @@ export function Navigation() {
             <Link href="http://localhost:3000/login">
               <Button variant="ghost" className="text-gray-700 hover:text-violet-600">
                 <LogIn className="mr-2 h-4 w-4" />
-                Sign In
+                Login
               </Button>
             </Link>
             <Link href="http://localhost:3000/register">
@@ -156,145 +170,63 @@ export function Navigation() {
       </nav>
 
       {/* Mobile menu */}
-      <AnimatePresence>{mobileMenuOpen && <MobileMenu navigation={navigation} />}</AnimatePresence>
-    </header>
-  );
-}
-
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon?: React.ElementType;
-  description?: string;
-}
-
-function DropdownMenu({
-  title,
-  items,
-  simple = false,
-}: {
-  title: string;
-  items: NavigationItem[];
-  simple?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-      role="navigation"
-    >
-      <button
-        className="flex items-center gap-1 text-gray-700 hover:text-violet-600 font-medium transition-colors"
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        {title}
-        <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-      </button>
-
       <AnimatePresence>
-        {isOpen && (
+        {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden bg-white border-t border-gray-100"
           >
-            <div className="p-2">
-              {items.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="block px-4 py-3 rounded-xl hover:bg-violet-50 transition-colors group"
-                >
-                  {!simple && (
-                    <div className="flex items-start gap-3">
-                      {item.icon && (
-                        <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
-                          <item.icon className="w-4 h-4 text-violet-600" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900 group-hover:text-violet-600 transition-colors">
-                          {item.name}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-0.5">{item.description}</p>
-                      </div>
+            <div className="px-4 py-6 space-y-4">
+              {/* Main navigation items */}
+              {navigation.mainLinks.map((item) => (
+                <div key={item.name}>
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                    {item.badge && (
+                      <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                  {item.hasDropdown && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      {navigation.features.map((feature) => (
+                        <Link
+                          key={feature.name}
+                          href={feature.href}
+                          className="block px-3 py-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors text-sm"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {feature.name}
+                        </Link>
+                      ))}
                     </div>
                   )}
-                  {simple && (
-                    <p className="font-medium text-gray-700 hover:text-violet-600 transition-colors">
-                      {item.name}
-                    </p>
-                  )}
-                </Link>
+                </div>
               ))}
+
+              <div className="pt-4 space-y-2 border-t border-gray-100">
+                <Link href="http://localhost:3000/login">
+                  <Button variant="outline" className="w-full">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="http://localhost:3000/register">
+                  <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-interface MobileNavigationProps {
-  solutions: NavigationItem[];
-  product: NavigationItem[];
-  resources: NavigationItem[];
-}
-
-function MobileMenu({ navigation }: { navigation: MobileNavigationProps }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      className="lg:hidden bg-white border-t border-gray-100"
-    >
-      <div className="px-4 py-6 space-y-4">
-        {/* Mobile navigation items */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Solutions</p>
-          {navigation.solutions.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="block px-3 py-2 text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</p>
-          {navigation.product.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="block px-3 py-2 text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
-
-        <div className="pt-4 space-y-2">
-          <Link href="http://localhost:3000/login">
-            <Button variant="outline" className="w-full">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="http://localhost:3000/register">
-            <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white">
-              Start Free Trial
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </motion.div>
+    </header>
   );
 }

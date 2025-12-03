@@ -1,13 +1,23 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { AivoApiClient } from "@aivo/api-client";
-import { useAivoTheme } from "@aivo/ui";
-import type { SubjectCode, SubjectLevel } from "@aivo/types";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { AivoApiClient } from '@aivo/api-client';
+import type { SubjectCode, SubjectLevel } from '@aivo/types';
+import { EmotionCheckInModal } from '../components/EmotionCheckInModal';
+import { BreakReminderBanner } from '../components/BreakReminderBanner';
+import { useEmotionCheckIn } from '../hooks/useEmotionCheckIn';
+import { useBreakReminder } from '../hooks/useBreakReminder';
+import {
+  ProgressCard,
+  QuickStatsRow,
+  QuickActions,
+  SubjectCards,
+  StartSessionCard,
+  sampleSubjects,
+} from '../components/home';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
 const client = new AivoApiClient(API_BASE_URL);
 
 type LearnerOverview = {
@@ -17,60 +27,52 @@ type LearnerOverview = {
 };
 
 function gradeLabel(grade?: number) {
-  if (!grade) return "grade";
-  const suffix = grade % 10 === 1 && grade !== 11
-    ? "st"
-    : grade % 10 === 2 && grade !== 12
-    ? "nd"
-    : grade % 10 === 3 && grade !== 13
-    ? "rd"
-    : "th";
+  if (!grade) return 'grade';
+  const suffix =
+    grade % 10 === 1 && grade !== 11
+      ? 'st'
+      : grade % 10 === 2 && grade !== 12
+        ? 'nd'
+        : grade % 10 === 3 && grade !== 13
+          ? 'rd'
+          : 'th';
   return `${grade}${suffix} grade`;
 }
 
 const SUBJECT_LABELS: Record<string, string> = {
-  math: "Math",
-  ela: "English Language Arts",
-  reading: "Reading",
-  writing: "Writing",
-  science: "Science",
-  social_studies: "Social Studies",
-  sel: "Social-Emotional Learning",
-  speech: "Speech",
-  other: "Learning"
-};
-
-const SUBJECT_EMOJIS: Record<string, string> = {
-  math: "🔢",
-  ela: "📝",
-  reading: "📖",
-  writing: "✏️",
-  science: "🔬",
-  social_studies: "🌍",
-  sel: "💚",
-  speech: "🗣️",
-  other: "📚"
+  math: 'Math',
+  ela: 'English Language Arts',
+  reading: 'Reading',
+  writing: 'Writing',
+  science: 'Science',
+  social_studies: 'Social Studies',
+  sel: 'Social-Emotional Learning',
+  speech: 'Speech',
+  other: 'Learning',
 };
 
 function subjectLabel(subject?: SubjectCode) {
-  if (!subject) return "learning";
+  if (!subject) return 'learning';
   return SUBJECT_LABELS[subject] ?? subject.toUpperCase();
-}
-
-function subjectEmoji(subject?: SubjectCode) {
-  if (!subject) return "🌟";
-  return SUBJECT_EMOJIS[subject] ?? "📚";
 }
 
 type LearnerHomeProps = {
   overview: LearnerOverview | null;
   loading: boolean;
   error: string | null;
+  showBreakReminder: boolean;
+  onTakeBreak: () => void;
+  onDismissBreakReminder: () => void;
 };
 
-function LearnerHome({ overview, loading, error }: LearnerHomeProps) {
-  const theme = useAivoTheme();
-
+function LearnerHome({
+  overview,
+  loading,
+  error,
+  showBreakReminder,
+  onTakeBreak,
+  onDismissBreakReminder,
+}: LearnerHomeProps) {
   const badgeText = useMemo(() => {
     if (overview?.focusSubject) {
       const assessed = gradeLabel(overview.focusSubject.assessedGradeLevel);
@@ -79,110 +81,106 @@ function LearnerHome({ overview, loading, error }: LearnerHomeProps) {
     if (overview) {
       return gradeLabel(overview.currentGrade);
     }
-    return "Preparing your learner profile";
+    return 'Preparing your learner profile';
   }, [overview]);
 
-  const heroCopy = useMemo(() => {
-    if (loading) return "Getting everything ready for you…";
-    if (error) return "Hmm, we couldn't load your details. Let's try again!";
-    if (!overview) {
-      return "Let's set up your learning space together! 🌈";
-    }
-    if (overview.focusSubject) {
-      return `Today we'll explore ${subjectLabel(overview.focusSubject.subject)} at your pace. No rush! ${subjectEmoji(overview.focusSubject.subject)}`;
-    }
-    return `Ready to learn something amazing today? Let's go! ✨`;
-  }, [overview, loading, error]);
+  const firstName = overview?.displayName?.split(' ')[0] ?? 'Friend';
+  const focusSubjectName = overview?.focusSubject
+    ? subjectLabel(overview.focusSubject.subject)
+    : undefined;
 
-  const firstName = overview?.displayName?.split(" ")[0] ?? "Friend";
+  // Mock data for visualization (would be replaced with real API data)
+  const weekProgress = 67;
+  const streakDays = 5;
+  const totalScore = 1240;
+  const lessonsCompleted = 12;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-b from-lavender-100 via-white to-slate-50">
-      {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-24 h-24 bg-primary-100 rounded-full opacity-60 blur-2xl" />
-      <div className="absolute bottom-20 right-10 w-32 h-32 bg-mint/30 rounded-full opacity-60 blur-2xl" />
-      
-      <section
-        className="max-w-xl w-full bg-white rounded-3xl shadow-card p-8 relative"
-        aria-label="Learner dashboard"
-      >
-        {/* Avatar header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-400 rounded-2xl flex items-center justify-center shadow-soft-primary">
-            <span className="text-white text-2xl font-bold">
-              {firstName.charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {loading ? "Welcome back!" : `Hi, ${firstName}! 👋`}
-            </h1>
-            <div className="inline-flex items-center gap-2 mt-1 px-3 py-1 bg-primary-50 text-primary-600 rounded-full text-xs font-medium">
-              <span>📚</span>
-              <span>{badgeText}</span>
+    <main className="min-h-screen bg-gradient-to-b from-violet-50 via-white to-slate-50 pb-24">
+      {/* Break Reminder Banner */}
+      <div className="fixed top-0 left-0 right-0 z-40">
+        <BreakReminderBanner
+          isVisible={showBreakReminder}
+          onTakeBreak={onTakeBreak}
+          onDismiss={onDismissBreakReminder}
+        />
+      </div>
+
+      {/* Header Section */}
+      <header className="bg-gradient-to-br from-[var(--color-primary)] via-violet-600 to-purple-700 pt-8 pb-16 px-4 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
+        <div className="absolute bottom-0 -left-10 w-32 h-32 bg-white/10 rounded-full" />
+
+        <div className="max-w-xl mx-auto relative z-10">
+          {/* Avatar and greeting */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30">
+              <span className="text-white text-xl font-bold">
+                {firstName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1">
+              <p className="text-white/80 text-sm">Welcome back,</p>
+              <h1 className="text-2xl font-bold text-white">
+                {loading ? 'Loading...' : `${firstName}! 👋`}
+              </h1>
+            </div>
+            {/* Badge */}
+            <div className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
+              <span className="text-white text-xs font-medium">{badgeText}</span>
             </div>
           </div>
         </div>
+      </header>
 
-        {/* Hero message */}
-        <div className="bg-lavender-100 rounded-2xl p-5 mb-6">
-          <p className="text-slate-700 text-base leading-relaxed">
-            {heroCopy}
-          </p>
-        </div>
+      {/* Main Content - Overlapping Cards */}
+      <div className="max-w-xl mx-auto px-4 -mt-10 space-y-6">
+        {/* Progress Card */}
+        <ProgressCard percentage={weekProgress} loading={loading} streakDays={streakDays} />
 
+        {/* Quick Stats Row */}
+        <QuickStatsRow
+          score={totalScore}
+          lessonsCompleted={lessonsCompleted}
+          streak={streakDays}
+          loading={loading}
+        />
+
+        {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-coral-light rounded-xl flex items-center gap-3">
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
             <span className="text-xl">😅</span>
-            <p className="text-sm text-coral-dark">
-              Don't worry! Just refresh the page or check if everything's connected.
-            </p>
-          </div>
-        )}
-
-        {/* Quick stats */}
-        {overview && !error && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-mint/20 rounded-xl p-4 text-center">
-              <span className="text-2xl">🎯</span>
-              <p className="text-xs text-mint-dark font-medium mt-1">On Track</p>
-            </div>
-            <div className="bg-sunshine/20 rounded-xl p-4 text-center">
-              <span className="text-2xl">⭐</span>
-              <p className="text-xs text-sunshine-dark font-medium mt-1">Great Job</p>
-            </div>
-            <div className="bg-sky/20 rounded-xl p-4 text-center">
-              <span className="text-2xl">🌟</span>
-              <p className="text-xs text-sky-dark font-medium mt-1">Keep Going</p>
+            <div>
+              <p className="text-sm font-medium text-red-800">Oops! Something went wrong</p>
+              <p className="text-xs text-red-600">
+                Don&apos;t worry! Just refresh the page or check your connection.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Start button */}
-        <Link
-          href="/session"
-          aria-disabled={loading || !!error}
-          className={`block w-full text-center rounded-2xl px-6 py-4 text-base font-semibold text-white shadow-soft-primary transition-all duration-200 ${
-            loading || error 
-              ? "bg-primary-300 cursor-not-allowed" 
-              : "bg-gradient-to-r from-primary-600 to-primary-500 hover:-translate-y-1 hover:shadow-lg active:translate-y-0"
-          }`}
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Preparing…
-            </span>
-          ) : (
-            <span>🚀 Start Learning</span>
-          )}
-        </Link>
+        {/* Start Session Card */}
+        <StartSessionCard
+          ready={!loading && !error}
+          focusSubject={focusSubjectName}
+          estimatedMinutes={15}
+          activitiesCount={3}
+          hasStreak={streakDays >= 3}
+          loading={loading}
+        />
 
-        {/* Friendly footer */}
-        <p className="text-center text-sm text-slate-400 mt-4">
-          Take your time. You've got this! 💪
-        </p>
-      </section>
+        {/* Subject Cards */}
+        <SubjectCards subjects={sampleSubjects} loading={loading} layout="scroll" />
+
+        {/* Quick Actions Grid */}
+        <QuickActions columns={2} />
+
+        {/* Encouragement Footer */}
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-500">Take your time. You&apos;ve got this! 💪</p>
+        </div>
+      </div>
     </main>
   );
 }
@@ -192,6 +190,57 @@ export default function Page() {
   const [overview, setOverview] = useState<LearnerOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEmotionModal, setShowEmotionModal] = useState(false);
+
+  // Emotion check-in hook
+  const { shouldShowCheckIn, logEmotionCheckIn, skipCheckIn } = useEmotionCheckIn({
+    context: 'home_launch',
+    isInSession: false,
+  });
+
+  // Break reminder hook
+  const { shouldShowReminder, takeBreak, dismissReminder } = useBreakReminder({
+    breakIntervalMinutes: 20,
+    defaultSnoozeDurationMinutes: 10,
+    onBreakTaken: () => {
+      console.log('[HomePage] Break taken');
+    },
+    onReminderDismissed: () => {
+      console.log('[HomePage] Break reminder dismissed');
+    },
+  });
+
+  // Show emotion check-in modal after page loads (if needed)
+  useEffect(() => {
+    if (!loading && !error && shouldShowCheckIn) {
+      // Small delay to let the page render first
+      const timer = setTimeout(() => {
+        setShowEmotionModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, error, shouldShowCheckIn]);
+
+  const handleEmotionComplete = useCallback(
+    (emotion: Parameters<typeof logEmotionCheckIn>[0], intensity: number) => {
+      logEmotionCheckIn(emotion, intensity, 'home_launch');
+      setShowEmotionModal(false);
+    },
+    [logEmotionCheckIn],
+  );
+
+  const handleEmotionSkip = useCallback(() => {
+    skipCheckIn();
+    setShowEmotionModal(false);
+  }, [skipCheckIn]);
+
+  const handleTakeBreak = useCallback(() => {
+    takeBreak();
+  }, [takeBreak]);
+
+  const handleDismissBreakReminder = useCallback(() => {
+    dismissReminder();
+  }, [dismissReminder]);
 
   useEffect(() => {
     let active = true;
@@ -201,26 +250,27 @@ export default function Page() {
       try {
         const meRes = await client.me();
         if (!meRes.learner) {
-          router.replace("/baseline");
+          router.replace('/baseline');
           return;
         }
         const learnerRes = await client.getLearner(meRes.learner.id);
         if (!learnerRes.brainProfile) {
-          router.replace("/baseline");
+          router.replace('/baseline');
           return;
         }
 
         if (!active) return;
 
         const preferredSubject = meRes.learner.subjects?.[0] as SubjectCode | undefined;
-        const subjectLevel = learnerRes.brainProfile.subjectLevels.find(
-          (level) => level.subject === preferredSubject
-        ) ?? learnerRes.brainProfile.subjectLevels[0];
+        const subjectLevel =
+          learnerRes.brainProfile.subjectLevels.find(
+            (level) => level.subject === preferredSubject,
+          ) ?? learnerRes.brainProfile.subjectLevels[0];
 
         setOverview({
           displayName: meRes.learner.displayName,
           currentGrade: learnerRes.learner.currentGrade,
-          focusSubject: subjectLevel
+          focusSubject: subjectLevel,
         });
       } catch (e) {
         if (!active) return;
@@ -238,5 +288,24 @@ export default function Page() {
     };
   }, [router]);
 
-  return <LearnerHome overview={overview} loading={loading} error={error} />;
+  return (
+    <>
+      <LearnerHome
+        overview={overview}
+        loading={loading}
+        error={error}
+        showBreakReminder={shouldShowReminder}
+        onTakeBreak={handleTakeBreak}
+        onDismissBreakReminder={handleDismissBreakReminder}
+      />
+
+      {/* Emotion Check-In Modal */}
+      <EmotionCheckInModal
+        isOpen={showEmotionModal}
+        onComplete={handleEmotionComplete}
+        onSkip={handleEmotionSkip}
+        onClose={handleEmotionSkip}
+      />
+    </>
+  );
 }

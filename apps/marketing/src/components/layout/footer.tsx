@@ -1,6 +1,6 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { Mail, Phone, MapPin } from 'lucide-react'
+import Link from 'next/link';
+import Image from 'next/image';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 const navigation = {
   product: [
@@ -10,10 +10,9 @@ const navigation = {
     { name: 'For Teachers', href: '/features/teachers' },
   ],
   company: [
-    { name: 'About', href: '/about' },
+    { name: 'About Us', href: '/about' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Press', href: '/press' },
+    { name: 'Contact', href: '/contact' },
   ],
   support: [
     { name: 'Help Center', href: '/help' },
@@ -21,7 +20,7 @@ const navigation = {
     { name: 'Privacy', href: '/privacy' },
     { name: 'Terms', href: '/terms' },
   ],
-}
+};
 
 export function Footer() {
   return (
@@ -39,9 +38,7 @@ export function Footer() {
                 className="h-10 w-auto"
               />
             </div>
-            <p className="text-sm mb-4">
-              Personalized AI-powered learning for every child.
-            </p>
+            <p className="text-sm mb-4">Personalized AI-powered learning for every child.</p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
@@ -108,5 +105,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }
