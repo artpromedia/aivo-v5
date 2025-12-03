@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { AivoApiClient } from "@aivo/api-client";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { AivoApiClient } from '@aivo/api-client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
-const DEMO_TENANT_ID = "tenant-1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+const DEMO_TENANT_ID = 'tenant-1';
 
 const client = new AivoApiClient(API_BASE_URL, async () => null);
 
@@ -20,19 +20,27 @@ export default function AdminAnalyticsPage() {
   } | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
     client
       .getTenantAnalytics(DEMO_TENANT_ID)
-      .then((res) => setData(res))
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (!cancelled) setData(res);
+      })
+      .catch((e) => {
+        if (!cancelled) setError((e as Error).message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 p-6">
       {/* Back Navigation */}
-      <Link 
+      <Link
         href="/"
         className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary-dark font-medium mb-6"
       >
@@ -74,25 +82,35 @@ export default function AdminAnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="bg-white rounded-3xl shadow-lg p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-12 h-12 bg-theme-primary/10 rounded-xl flex items-center justify-center text-2xl">👧</span>
+                  <span className="w-12 h-12 bg-theme-primary/10 rounded-xl flex items-center justify-center text-2xl">
+                    👧
+                  </span>
                 </div>
                 <p className="text-4xl font-bold text-slate-900">{data.learnersCount}</p>
                 <p className="text-slate-500 mt-1">Active Learners</p>
               </div>
-              
+
               <div className="bg-white rounded-3xl shadow-lg p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center text-2xl">⏱️</span>
+                  <span className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center text-2xl">
+                    ⏱️
+                  </span>
                 </div>
-                <p className="text-4xl font-bold text-slate-900">{data.avgMinutesPracticed.toFixed(1)}</p>
+                <p className="text-4xl font-bold text-slate-900">
+                  {data.avgMinutesPracticed.toFixed(1)}
+                </p>
                 <p className="text-slate-500 mt-1">Avg Minutes Practiced</p>
               </div>
-              
+
               <div className="bg-white rounded-3xl shadow-lg p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-2xl">🎯</span>
+                  <span className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-2xl">
+                    🎯
+                  </span>
                 </div>
-                <p className="text-4xl font-bold text-emerald-600">{(data.avgMasteryScore * 100).toFixed(0)}%</p>
+                <p className="text-4xl font-bold text-emerald-600">
+                  {(data.avgMasteryScore * 100).toFixed(0)}%
+                </p>
                 <p className="text-slate-500 mt-1">Avg Mastery Score</p>
               </div>
             </div>
@@ -110,7 +128,8 @@ export default function AdminAnalyticsPage() {
                     <span className="font-medium text-slate-900">Growth Opportunity</span>
                   </div>
                   <p className="text-sm text-slate-600">
-                    Consider increasing practice time goals to boost mastery scores. Learners with 20+ minutes daily show 15% higher mastery.
+                    Consider increasing practice time goals to boost mastery scores. Learners with
+                    20+ minutes daily show 15% higher mastery.
                   </p>
                 </div>
                 <div className="bg-mint-50 rounded-2xl p-4">
@@ -119,7 +138,8 @@ export default function AdminAnalyticsPage() {
                     <span className="font-medium text-slate-900">Celebration</span>
                   </div>
                   <p className="text-sm text-slate-600">
-                    Your learners are making great progress! The average mastery score indicates strong engagement with the curriculum.
+                    Your learners are making great progress! The average mastery score indicates
+                    strong engagement with the curriculum.
                   </p>
                 </div>
               </div>

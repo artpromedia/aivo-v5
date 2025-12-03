@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useAuth } from "../../AuthProvider";
-import type { LearnerAnalyticsOverview } from "@aivo/types";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '../../AuthProvider';
+import type { LearnerAnalyticsOverview } from '@aivo/types';
 import {
   Loader2,
   Lock,
@@ -15,9 +15,9 @@ import {
   Heart,
   ArrowLeft,
   FileText,
-} from "lucide-react";
+} from 'lucide-react';
 
-const MOCK_LEARNER_ID = "demo-learner";
+const MOCK_LEARNER_ID = 'demo-learner';
 
 export default function LearnerAnalyticsPage() {
   const { apiClient, state } = useAuth();
@@ -27,13 +27,21 @@ export default function LearnerAnalyticsPage() {
 
   useEffect(() => {
     if (!state.user) return;
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
     apiClient
       .getLearnerAnalytics(MOCK_LEARNER_ID)
-      .then((res) => setAnalytics(res.analytics))
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (!cancelled) setAnalytics(res.analytics);
+      })
+      .catch((e) => {
+        if (!cancelled) setError((e as Error).message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [apiClient, state.user]);
 
   if (!state.user) {
@@ -44,9 +52,7 @@ export default function LearnerAnalyticsPage() {
             <Lock className="w-8 h-8 text-violet-600" />
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Sign In Required</h2>
-          <p className="text-slate-600 mb-4">
-            Please sign in to view learner progress
-          </p>
+          <p className="text-slate-600 mb-4">Please sign in to view learner progress</p>
           <Link
             href="/login"
             className="block w-full py-3 bg-theme-primary hover:bg-theme-primary/90 text-white font-semibold rounded-2xl shadow-lg transition-all"
@@ -61,7 +67,7 @@ export default function LearnerAnalyticsPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 p-6">
       {/* Back Navigation */}
-      <Link 
+      <Link
         href="/learner"
         className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-medium mb-6 transition-colors"
       >
@@ -78,7 +84,8 @@ export default function LearnerAnalyticsPage() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Progress & Insights</h1>
               <p className="text-slate-500 mt-1">
-                Understand how AIVO sees your learner&apos;s progress and why it suggests certain difficulty levels
+                Understand how AIVO sees your learner&apos;s progress and why it suggests certain
+                difficulty levels
               </p>
             </div>
           </div>
@@ -122,7 +129,8 @@ export default function LearnerAnalyticsPage() {
                           {s.subject}
                         </p>
                         <p className="text-xs text-slate-600 mt-1">
-                          Enrolled: Grade {s.enrolledGrade} • Working at: Grade {s.currentAssessedGradeLevel}
+                          Enrolled: Grade {s.enrolledGrade} • Working at: Grade{' '}
+                          {s.currentAssessedGradeLevel}
                         </p>
                       </div>
                     </div>
@@ -136,8 +144,8 @@ export default function LearnerAnalyticsPage() {
                     ) : (
                       <div className="space-y-2">
                         {s.timeseries.map((pt) => (
-                          <div 
-                            key={`${s.subject}-${pt.date}`} 
+                          <div
+                            key={`${s.subject}-${pt.date}`}
                             className="bg-white rounded-xl p-3 flex justify-between items-center"
                           >
                             <span className="text-xs font-medium text-slate-700">{pt.date}</span>
@@ -167,10 +175,13 @@ export default function LearnerAnalyticsPage() {
                 <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
                   <Brain className="w-5 h-5 text-violet-600" />
                 </div>
-                <h2 className="text-lg font-semibold text-slate-900">Why AIVO Chooses This Difficulty</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Why AIVO Chooses This Difficulty
+                </h2>
               </div>
               <p className="text-sm text-slate-500 mb-4">
-                AIVO tries to be gentle and predictable. Here&apos;s how it explains its difficulty choices.
+                AIVO tries to be gentle and predictable. Here&apos;s how it explains its difficulty
+                choices.
               </p>
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                 {analytics.difficultySummaries.map((d) => (
@@ -185,10 +196,12 @@ export default function LearnerAnalyticsPage() {
                         </p>
                         <div className="flex gap-2 mt-2">
                           <span className="inline-flex items-center px-2 py-1 bg-white text-slate-700 rounded-full text-xs">
-                            Current: Grade <span className="font-bold ml-1">{d.currentDifficultyLevel}</span>
+                            Current: Grade{' '}
+                            <span className="font-bold ml-1">{d.currentDifficultyLevel}</span>
                           </span>
                           <span className="inline-flex items-center px-2 py-1 bg-theme-primary/10 text-theme-primary rounded-full text-xs">
-                            Target: Grade <span className="font-bold ml-1">{d.targetDifficultyLevel}</span>
+                            Target: Grade{' '}
+                            <span className="font-bold ml-1">{d.targetDifficultyLevel}</span>
                           </span>
                         </div>
                       </div>
@@ -206,7 +219,9 @@ export default function LearnerAnalyticsPage() {
                             className="bg-white rounded-xl p-3 flex justify-between items-center gap-2"
                           >
                             <span className="text-xs font-semibold text-slate-700">{f.label}</span>
-                            <span className="text-xs text-slate-500 text-right">{f.description}</span>
+                            <span className="text-xs text-slate-500 text-right">
+                              {f.description}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -217,7 +232,8 @@ export default function LearnerAnalyticsPage() {
                   <div className="bg-lavender-50 rounded-2xl p-6 text-center">
                     <FileText className="w-8 h-8 text-violet-400 mx-auto mb-3" />
                     <p className="text-slate-600 text-sm">
-                      AIVO doesn&apos;t have enough data yet to explain difficulty choices. Once baseline and sessions are recorded, you&apos;ll see detailed reasons here.
+                      AIVO doesn&apos;t have enough data yet to explain difficulty choices. Once
+                      baseline and sessions are recorded, you&apos;ll see detailed reasons here.
                     </p>
                   </div>
                 )}

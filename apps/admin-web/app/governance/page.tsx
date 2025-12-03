@@ -1,33 +1,30 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { AivoApiClient } from "@aivo/api-client";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { AivoApiClient } from '@aivo/api-client';
 import type {
   GetTenantLimitsResponse,
   ListTenantUsageResponse,
   ListAuditLogsResponse,
-  UpdateTenantLimitsRequest
-} from "@aivo/api-client/src/governance-contracts";
+  UpdateTenantLimitsRequest,
+} from '@aivo/api-client/src/governance-contracts';
 
-type TenantLimits = GetTenantLimitsResponse["limits"];
-type TenantUsage = ListTenantUsageResponse["usage"][number];
-type AuditLogEntry = ListAuditLogsResponse["logs"][number];
+type TenantLimits = GetTenantLimitsResponse['limits'];
+type TenantUsage = ListTenantUsageResponse['usage'][number];
+type AuditLogEntry = ListAuditLogsResponse['logs'][number];
 
 type GovernanceClient = AivoApiClient & {
   getTenantLimits(tenantId: string): Promise<GetTenantLimitsResponse>;
-  updateTenantLimits(
-    tenantId: string,
-    body: UpdateTenantLimitsRequest
-  ): Promise<unknown>;
+  updateTenantLimits(tenantId: string, body: UpdateTenantLimitsRequest): Promise<unknown>;
   listAuditLogs(tenantId: string): Promise<ListAuditLogsResponse>;
   listTenantUsage(tenantId: string): Promise<ListTenantUsageResponse>;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 const client = new AivoApiClient(API_BASE_URL, async () => null) as GovernanceClient;
 
-const DEMO_TENANT_ID = "tenant-1";
+const DEMO_TENANT_ID = 'tenant-1';
 
 export default function GovernancePage() {
   const [limits, setLimits] = useState<TenantLimits | null>(null);
@@ -37,10 +34,10 @@ export default function GovernancePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [maxDailyLlmCalls, setMaxDailyLlmCalls] = useState("");
-  const [maxDailyTutorTurns, setMaxDailyTutorTurns] = useState("");
-  const [allowedProviders, setAllowedProviders] = useState("");
-  const [blockedProviders, setBlockedProviders] = useState("");
+  const [maxDailyLlmCalls, setMaxDailyLlmCalls] = useState('');
+  const [maxDailyTutorTurns, setMaxDailyTutorTurns] = useState('');
+  const [allowedProviders, setAllowedProviders] = useState('');
+  const [blockedProviders, setBlockedProviders] = useState('');
   const activeTenantId = limits?.tenantId ?? DEMO_TENANT_ID;
 
   async function loadAll() {
@@ -50,24 +47,22 @@ export default function GovernancePage() {
       const [limitsRes, usageRes, logsRes] = await Promise.all([
         client.getTenantLimits(DEMO_TENANT_ID),
         client.listTenantUsage(DEMO_TENANT_ID),
-        client.listAuditLogs(DEMO_TENANT_ID)
+        client.listAuditLogs(DEMO_TENANT_ID),
       ]);
       setLimits(limitsRes.limits);
       setUsage(usageRes.usage);
       setLogs(logsRes.logs);
 
       setMaxDailyLlmCalls(
-        limitsRes.limits.maxDailyLlmCalls != null
-          ? String(limitsRes.limits.maxDailyLlmCalls)
-          : ""
+        limitsRes.limits.maxDailyLlmCalls != null ? String(limitsRes.limits.maxDailyLlmCalls) : '',
       );
       setMaxDailyTutorTurns(
         limitsRes.limits.maxDailyTutorTurns != null
           ? String(limitsRes.limits.maxDailyTutorTurns)
-          : ""
+          : '',
       );
-      setAllowedProviders((limitsRes.limits.allowedProviders ?? []).join(","));
-      setBlockedProviders((limitsRes.limits.blockedProviders ?? []).join(","));
+      setAllowedProviders((limitsRes.limits.allowedProviders ?? []).join(','));
+      setBlockedProviders((limitsRes.limits.blockedProviders ?? []).join(','));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -84,11 +79,11 @@ export default function GovernancePage() {
     setError(null);
     try {
       const allowed = allowedProviders
-        .split(",")
+        .split(',')
         .map((token) => token.trim())
         .filter(Boolean);
       const blocked = blockedProviders
-        .split(",")
+        .split(',')
         .map((token) => token.trim())
         .filter(Boolean);
 
@@ -96,7 +91,7 @@ export default function GovernancePage() {
         maxDailyLlmCalls: maxDailyLlmCalls ? Number(maxDailyLlmCalls) : null,
         maxDailyTutorTurns: maxDailyTutorTurns ? Number(maxDailyTutorTurns) : null,
         allowedProviders: allowed.length ? allowed : null,
-        blockedProviders: blocked.length ? blocked : null
+        blockedProviders: blocked.length ? blocked : null,
       });
 
       await loadAll();
@@ -112,7 +107,7 @@ export default function GovernancePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-lavender-50 to-lavender-100 p-6">
       {/* Back Navigation */}
-      <Link 
+      <Link
         href="/"
         className="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary-dark font-medium mb-6"
       >
@@ -171,11 +166,17 @@ export default function GovernancePage() {
                   </div>
                   <div className="bg-mint-50 rounded-2xl p-4">
                     <p className="text-xs text-slate-500 uppercase mb-1">Sessions Planned</p>
-                    <p className="text-2xl font-bold text-emerald-600">{latestUsage.sessionsPlanned}</p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {latestUsage.sessionsPlanned}
+                    </p>
                   </div>
-                  <div className={`rounded-2xl p-4 ${latestUsage.safetyIncidents > 0 ? 'bg-red-50' : 'bg-slate-50'}`}>
+                  <div
+                    className={`rounded-2xl p-4 ${latestUsage.safetyIncidents > 0 ? 'bg-red-50' : 'bg-slate-50'}`}
+                  >
                     <p className="text-xs text-slate-500 uppercase mb-1">Safety Incidents</p>
-                    <p className={`text-2xl font-bold ${latestUsage.safetyIncidents > 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                    <p
+                      className={`text-2xl font-bold ${latestUsage.safetyIncidents > 0 ? 'text-red-600' : 'text-slate-400'}`}
+                    >
                       {latestUsage.safetyIncidents}
                     </p>
                   </div>
@@ -198,10 +199,14 @@ export default function GovernancePage() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                  <label
+                    htmlFor="max-daily-llm-calls"
+                    className="block text-xs text-slate-500 uppercase tracking-wide mb-1"
+                  >
                     Max Daily LLM Calls
                   </label>
                   <input
+                    id="max-daily-llm-calls"
                     className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={maxDailyLlmCalls}
                     onChange={(e) => setMaxDailyLlmCalls(e.target.value)}
@@ -209,10 +214,14 @@ export default function GovernancePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                  <label
+                    htmlFor="max-daily-tutor-turns"
+                    className="block text-xs text-slate-500 uppercase tracking-wide mb-1"
+                  >
                     Max Daily Tutor Turns
                   </label>
                   <input
+                    id="max-daily-tutor-turns"
                     className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={maxDailyTutorTurns}
                     onChange={(e) => setMaxDailyTutorTurns(e.target.value)}
@@ -220,10 +229,14 @@ export default function GovernancePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                  <label
+                    htmlFor="allowed-providers"
+                    className="block text-xs text-slate-500 uppercase tracking-wide mb-1"
+                  >
                     Allowed Providers
                   </label>
                   <input
+                    id="allowed-providers"
                     className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={allowedProviders}
                     onChange={(e) => setAllowedProviders(e.target.value)}
@@ -231,10 +244,14 @@ export default function GovernancePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1">
+                  <label
+                    htmlFor="blocked-providers"
+                    className="block text-xs text-slate-500 uppercase tracking-wide mb-1"
+                  >
                     Blocked Providers
                   </label>
                   <input
+                    id="blocked-providers"
                     className="w-full rounded-xl bg-theme-background-elevated border border-theme-surface-border px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     value={blockedProviders}
                     onChange={(e) => setBlockedProviders(e.target.value)}
@@ -247,7 +264,7 @@ export default function GovernancePage() {
                   disabled={saving}
                   className="w-full py-3 bg-gradient-to-r from-theme-primary to-theme-primary-dark text-theme-primary-contrast font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : "💾 Save Limits"}
+                  {saving ? 'Saving...' : '💾 Save Limits'}
                 </button>
               </div>
             </section>

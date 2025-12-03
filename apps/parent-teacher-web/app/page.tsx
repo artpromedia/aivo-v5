@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { AivoApiClient } from "@aivo/api-client";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { AivoApiClient } from '@aivo/api-client';
 
-type RoleView = "parent" | "teacher";
+type RoleView = 'parent' | 'teacher';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
 const client = new AivoApiClient(API_BASE_URL, async () => null);
 
 export default function ParentTeacherPage() {
-  const [role, setRole] = useState<RoleView>("parent");
-  const [learnerLabel, setLearnerLabel] = useState<string>("Loading learner…");
+  const [role, setRole] = useState<RoleView>('parent');
+  const [learnerLabel, setLearnerLabel] = useState<string>('Loading learner…');
   const [learnerId, setLearnerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +28,13 @@ export default function ParentTeacherPage() {
           setLearnerLabel(me.learner.displayName);
           setLearnerId(me.learner.id);
         } else {
-          setLearnerLabel("Demo learner");
-          setLearnerId("demo-learner");
+          setLearnerLabel('Demo learner');
+          setLearnerId('demo-learner');
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
-          setLearnerLabel("Demo learner");
-          setLearnerId("demo-learner");
+          setLearnerLabel('Demo learner');
+          setLearnerId('demo-learner');
         }
       } finally {
         if (!cancelled) {
@@ -58,15 +58,15 @@ export default function ParentTeacherPage() {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">{role === "parent" ? "👨‍👩‍👧" : "👩‍🏫"}</span>
+                <span className="text-3xl">{role === 'parent' ? '👨‍👩‍👧' : '👩‍🏫'}</span>
                 <h1 className="text-2xl font-bold text-slate-900">
-                  {role === "parent" ? "Parent Dashboard" : "Teacher Dashboard"}
+                  {role === 'parent' ? 'Parent Dashboard' : 'Teacher Dashboard'}
                 </h1>
               </div>
               <p className="text-slate-600 max-w-lg">
-                {role === "parent"
+                {role === 'parent'
                   ? "View your child's progress, approve difficulty changes, and stay connected with their learning journey."
-                  : "Monitor learner progress, assign scaffolds, and coordinate with parents and administrators."}
+                  : 'Monitor learner progress, assign scaffolds, and coordinate with parents and administrators.'}
               </p>
               {!loading && (
                 <div className="mt-3 inline-flex items-center gap-2 bg-lavender-100 text-theme-primary px-3 py-1.5 rounded-full text-sm">
@@ -75,7 +75,7 @@ export default function ParentTeacherPage() {
                 </div>
               )}
             </div>
-            
+
             {/* Role Toggle */}
             <div
               className="inline-flex rounded-full bg-lavender-100 p-1"
@@ -84,25 +84,25 @@ export default function ParentTeacherPage() {
             >
               <button
                 role="tab"
-                aria-selected={role === "parent"}
+                aria-selected={role === 'parent'}
                 className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
-                  role === "parent" 
-                    ? "bg-theme-primary text-white shadow-lg" 
-                    : "text-slate-600 hover:text-theme-primary"
+                  role === 'parent'
+                    ? 'bg-theme-primary text-white shadow-lg'
+                    : 'text-slate-600 hover:text-theme-primary'
                 }`}
-                onClick={() => setRole("parent")}
+                onClick={() => setRole('parent')}
               >
                 🏠 Parent
               </button>
               <button
                 role="tab"
-                aria-selected={role === "teacher"}
+                aria-selected={role === 'teacher'}
                 className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all ${
-                  role === "teacher" 
-                    ? "bg-theme-primary text-white shadow-lg" 
-                    : "text-slate-600 hover:text-theme-primary"
+                  role === 'teacher'
+                    ? 'bg-theme-primary text-white shadow-lg'
+                    : 'text-slate-600 hover:text-theme-primary'
                 }`}
-                onClick={() => setRole("teacher")}
+                onClick={() => setRole('teacher')}
               >
                 📚 Teacher
               </button>
@@ -115,7 +115,7 @@ export default function ParentTeacherPage() {
           <QuickActionCard
             title="Learner Overview"
             description={`View ${learnerLabel}'s subject levels, baseline summary, and recent session activity.`}
-            href={learnerId ? `/learner?learnerId=${learnerId}` : "/learner"}
+            href={learnerId ? `/learner?learnerId=${learnerId}` : '/learner'}
             buttonLabel="Open Overview"
             icon="📊"
             color="violet"
@@ -124,7 +124,7 @@ export default function ParentTeacherPage() {
           <QuickActionCard
             title="Difficulty Approvals"
             description="Review and approve any pending requests to adjust learning difficulty."
-            href={learnerId ? `/difficulty?learnerId=${learnerId}` : "/difficulty"}
+            href={learnerId ? `/difficulty?learnerId=${learnerId}` : '/difficulty'}
             buttonLabel="Review Approvals"
             icon="✅"
             color="mint"
@@ -151,14 +151,15 @@ export default function ParentTeacherPage() {
         </section>
 
         {/* Teacher Tools Section */}
-        {role === "teacher" && (
+        {role === 'teacher' && (
           <section className="bg-white rounded-3xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl">🛠️</span>
               <h2 className="text-lg font-semibold text-slate-900">Teacher Tools</h2>
             </div>
             <p className="text-slate-600 text-sm">
-              Additional features for classroom management, IEP coordination, and parent communication will be available in future iterations.
+              Additional features for classroom management, IEP coordination, and parent
+              communication will be available in future iterations.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-lavender-100 text-theme-primary rounded-full text-xs font-medium">
@@ -177,9 +178,7 @@ export default function ParentTeacherPage() {
         {/* Encouragement Banner */}
         <div className="bg-gradient-to-r from-theme-primary to-theme-primary rounded-3xl p-6 text-white text-center">
           <div className="text-3xl mb-2">🌟</div>
-          <p className="font-medium">
-            Thank you for supporting your learner&apos;s journey!
-          </p>
+          <p className="font-medium">Thank you for supporting your learner&apos;s journey!</p>
           <p className="text-white/80 text-sm mt-1">
             Together, we&apos;re making learning joyful and accessible.
           </p>
@@ -196,25 +195,25 @@ export default function ParentTeacherPage() {
 
 const colorClasses = {
   violet: {
-    bg: "bg-lavender-100",
-    icon: "bg-theme-primary/10 text-theme-primary",
-    button: "bg-theme-primary hover:bg-theme-primary"
+    bg: 'bg-lavender-100',
+    icon: 'bg-theme-primary/10 text-theme-primary',
+    button: 'bg-theme-primary hover:bg-theme-primary',
   },
   mint: {
-    bg: "bg-mint-50",
-    icon: "bg-emerald-100 text-emerald-600",
-    button: "bg-emerald-500 hover:bg-emerald-600"
+    bg: 'bg-mint-50',
+    icon: 'bg-emerald-100 text-emerald-600',
+    button: 'bg-emerald-500 hover:bg-emerald-600',
   },
   sky: {
-    bg: "bg-sky-50",
-    icon: "bg-sky-100 text-sky-600",
-    button: "bg-sky-500 hover:bg-sky-600"
+    bg: 'bg-sky-50',
+    icon: 'bg-sky-100 text-sky-600',
+    button: 'bg-sky-500 hover:bg-sky-600',
   },
   sunshine: {
-    bg: "bg-sunshine-50",
-    icon: "bg-amber-100 text-amber-600",
-    button: "bg-amber-500 hover:bg-amber-600"
-  }
+    bg: 'bg-sunshine-50',
+    icon: 'bg-amber-100 text-amber-600',
+    button: 'bg-amber-500 hover:bg-amber-600',
+  },
 };
 
 function QuickActionCard({
@@ -224,7 +223,7 @@ function QuickActionCard({
   buttonLabel,
   icon,
   color,
-  disabled
+  disabled,
 }: {
   title: string;
   description: string;
@@ -235,11 +234,15 @@ function QuickActionCard({
   disabled?: boolean;
 }) {
   const colors = colorClasses[color];
-  
+
   return (
-    <div className={`rounded-3xl bg-white shadow-lg p-6 transition-all hover:shadow-xl ${disabled ? 'opacity-60' : ''}`}>
+    <div
+      className={`rounded-3xl bg-white shadow-lg p-6 transition-all hover:shadow-xl ${disabled ? 'opacity-60' : ''}`}
+    >
       <div className="flex items-start gap-4">
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${colors.icon}`}>
+        <div
+          className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${colors.icon}`}
+        >
           {icon}
         </div>
         <div className="flex-1">

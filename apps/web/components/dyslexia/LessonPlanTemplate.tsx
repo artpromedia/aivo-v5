@@ -1,15 +1,14 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { 
-  BookOpen, 
-  Clock, 
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import {
+  BookOpen,
+  Clock,
   Target,
   CheckCircle2,
   Circle,
@@ -19,22 +18,22 @@ import {
   Hand,
   Volume2,
   Sparkles,
-  Printer
-} from "lucide-react";
+  Printer,
+} from 'lucide-react';
 
 // Types matching Prisma enums
 type DyslexiaLessonType =
-  | "PHONEMIC_AWARENESS"
-  | "PHONICS_DECODING"
-  | "SIGHT_WORDS"
-  | "FLUENCY"
-  | "VOCABULARY"
-  | "COMPREHENSION"
-  | "SPELLING"
-  | "WRITING"
-  | "MULTISENSORY_REVIEW";
+  | 'PHONEMIC_AWARENESS'
+  | 'PHONICS_DECODING'
+  | 'SIGHT_WORDS'
+  | 'FLUENCY'
+  | 'VOCABULARY'
+  | 'COMPREHENSION'
+  | 'SPELLING'
+  | 'WRITING'
+  | 'MULTISENSORY_REVIEW';
 
-type SensoryModality = "VISUAL" | "AUDITORY" | "KINESTHETIC" | "TACTILE" | "MULTISENSORY_VAKT";
+type SensoryModality = 'VISUAL' | 'AUDITORY' | 'KINESTHETIC' | 'TACTILE' | 'MULTISENSORY_VAKT';
 
 interface LessonPlan {
   id?: string;
@@ -57,101 +56,126 @@ interface LessonPlan {
 }
 
 interface LessonPlanTemplateProps {
-  profileId: string;
+  profileId?: string;
   initialLesson?: Partial<LessonPlan>;
   onSave: (lesson: LessonPlan) => void;
   onExport?: (lesson: LessonPlan) => void;
 }
 
-const LESSON_TYPE_CONFIG: Record<DyslexiaLessonType, { label: string; color: string; defaultDuration: number }> = {
-  PHONEMIC_AWARENESS: { label: "Phonemic Awareness", color: "bg-theme-primary/10 text-theme-primary", defaultDuration: 15 },
-  PHONICS_DECODING: { label: "Phonics & Decoding", color: "bg-blue-100 text-blue-700", defaultDuration: 20 },
-  SIGHT_WORDS: { label: "Sight Words", color: "bg-green-100 text-green-700", defaultDuration: 10 },
-  FLUENCY: { label: "Fluency Practice", color: "bg-orange-100 text-orange-700", defaultDuration: 15 },
-  VOCABULARY: { label: "Vocabulary", color: "bg-teal-100 text-teal-700", defaultDuration: 15 },
-  COMPREHENSION: { label: "Comprehension", color: "bg-indigo-100 text-indigo-700", defaultDuration: 20 },
-  SPELLING: { label: "Spelling", color: "bg-pink-100 text-pink-700", defaultDuration: 15 },
-  WRITING: { label: "Writing", color: "bg-amber-100 text-amber-700", defaultDuration: 20 },
-  MULTISENSORY_REVIEW: { label: "Multisensory Review", color: "bg-rose-100 text-rose-700", defaultDuration: 30 },
+const LESSON_TYPE_CONFIG: Record<
+  DyslexiaLessonType,
+  { label: string; color: string; defaultDuration: number }
+> = {
+  PHONEMIC_AWARENESS: {
+    label: 'Phonemic Awareness',
+    color: 'bg-theme-primary/10 text-theme-primary',
+    defaultDuration: 15,
+  },
+  PHONICS_DECODING: {
+    label: 'Phonics & Decoding',
+    color: 'bg-blue-100 text-blue-700',
+    defaultDuration: 20,
+  },
+  SIGHT_WORDS: { label: 'Sight Words', color: 'bg-green-100 text-green-700', defaultDuration: 10 },
+  FLUENCY: {
+    label: 'Fluency Practice',
+    color: 'bg-orange-100 text-orange-700',
+    defaultDuration: 15,
+  },
+  VOCABULARY: { label: 'Vocabulary', color: 'bg-teal-100 text-teal-700', defaultDuration: 15 },
+  COMPREHENSION: {
+    label: 'Comprehension',
+    color: 'bg-indigo-100 text-indigo-700',
+    defaultDuration: 20,
+  },
+  SPELLING: { label: 'Spelling', color: 'bg-pink-100 text-pink-700', defaultDuration: 15 },
+  WRITING: { label: 'Writing', color: 'bg-amber-100 text-amber-700', defaultDuration: 20 },
+  MULTISENSORY_REVIEW: {
+    label: 'Multisensory Review',
+    color: 'bg-rose-100 text-rose-700',
+    defaultDuration: 30,
+  },
 };
 
 const MODALITY_CONFIG: Record<SensoryModality, { icon: React.ReactNode; label: string }> = {
-  VISUAL: { icon: <Eye className="h-4 w-4" />, label: "Visual" },
-  AUDITORY: { icon: <Volume2 className="h-4 w-4" />, label: "Auditory" },
-  KINESTHETIC: { icon: <Hand className="h-4 w-4" />, label: "Kinesthetic" },
-  TACTILE: { icon: <Hand className="h-4 w-4" />, label: "Tactile" },
-  MULTISENSORY_VAKT: { icon: <Sparkles className="h-4 w-4" />, label: "VAKT Combined" },
+  VISUAL: { icon: <Eye className="h-4 w-4" />, label: 'Visual' },
+  AUDITORY: { icon: <Volume2 className="h-4 w-4" />, label: 'Auditory' },
+  KINESTHETIC: { icon: <Hand className="h-4 w-4" />, label: 'Kinesthetic' },
+  TACTILE: { icon: <Hand className="h-4 w-4" />, label: 'Tactile' },
+  MULTISENSORY_VAKT: { icon: <Sparkles className="h-4 w-4" />, label: 'VAKT Combined' },
 };
 
 // Orton-Gillingham lesson structure template
 const OG_LESSON_TEMPLATE: Partial<LessonPlan> = {
-  warmUp: "Review previously learned concepts with quick drill (2-3 minutes)",
-  introduction: "Introduce new concept with explicit instruction using visual, auditory, and kinesthetic channels",
-  guidedPractice: "Practice new skill with teacher support, immediate corrective feedback",
-  independentPractice: "Student practices independently while teacher observes",
+  warmUp: 'Review previously learned concepts with quick drill (2-3 minutes)',
+  introduction:
+    'Introduce new concept with explicit instruction using visual, auditory, and kinesthetic channels',
+  guidedPractice: 'Practice new skill with teacher support, immediate corrective feedback',
+  independentPractice: 'Student practices independently while teacher observes',
   multisensoryActivities: [
-    "Sky writing - trace letters in the air while saying the sound",
-    "Sand/salt tray - write letters while saying the sound",
-    "Arm tapping - tap syllables on arm while saying word",
-    "Sound boxes - push tokens into boxes for each sound"
+    'Sky writing - trace letters in the air while saying the sound',
+    'Sand/salt tray - write letters while saying the sound',
+    'Arm tapping - tap syllables on arm while saying word',
+    'Sound boxes - push tokens into boxes for each sound',
   ],
-  review: "Review all concepts covered in the lesson",
-  assessment: "Quick check for understanding - have student demonstrate skill independently",
-  differentiation: "Adjust pacing, provide additional multisensory supports, reduce number of new concepts if needed"
+  review: 'Review all concepts covered in the lesson',
+  assessment: 'Quick check for understanding - have student demonstrate skill independently',
+  differentiation:
+    'Adjust pacing, provide additional multisensory supports, reduce number of new concepts if needed',
 };
 
 const DEFAULT_LESSON: LessonPlan = {
-  title: "",
-  lessonType: "PHONICS_DECODING",
+  title: '',
+  lessonType: 'PHONICS_DECODING',
   targetSkills: [],
   duration: 20,
-  objectives: [""],
-  materials: ["Whiteboard", "Letter tiles", "Decodable text"],
-  modalitiesUsed: ["VISUAL", "AUDITORY", "KINESTHETIC"],
-  warmUp: OG_LESSON_TEMPLATE.warmUp || "",
-  introduction: OG_LESSON_TEMPLATE.introduction || "",
-  guidedPractice: OG_LESSON_TEMPLATE.guidedPractice || "",
-  independentPractice: OG_LESSON_TEMPLATE.independentPractice || "",
+  objectives: [''],
+  materials: ['Whiteboard', 'Letter tiles', 'Decodable text'],
+  modalitiesUsed: ['VISUAL', 'AUDITORY', 'KINESTHETIC'],
+  warmUp: OG_LESSON_TEMPLATE.warmUp || '',
+  introduction: OG_LESSON_TEMPLATE.introduction || '',
+  guidedPractice: OG_LESSON_TEMPLATE.guidedPractice || '',
+  independentPractice: OG_LESSON_TEMPLATE.independentPractice || '',
   multisensoryActivities: OG_LESSON_TEMPLATE.multisensoryActivities || [],
-  review: OG_LESSON_TEMPLATE.review || "",
-  assessment: OG_LESSON_TEMPLATE.assessment || "",
-  differentiation: OG_LESSON_TEMPLATE.differentiation || "",
-  notes: ""
+  review: OG_LESSON_TEMPLATE.review || '',
+  assessment: OG_LESSON_TEMPLATE.assessment || '',
+  differentiation: OG_LESSON_TEMPLATE.differentiation || '',
+  notes: '',
 };
 
 export function LessonPlanTemplate({
-  profileId,
+  profileId: _profileId,
   initialLesson,
   onSave,
-  onExport
+  onExport,
 }: LessonPlanTemplateProps) {
   const [lesson, setLesson] = useState<LessonPlan>({
     ...DEFAULT_LESSON,
-    ...initialLesson
+    ...initialLesson,
   });
-  const [newObjective, setNewObjective] = useState("");
-  const [newSkill, setNewSkill] = useState("");
-  const [newMaterial, setNewMaterial] = useState("");
-  const [newActivity, setNewActivity] = useState("");
+  const [newObjective, setNewObjective] = useState('');
+  const [newSkill, setNewSkill] = useState('');
+  const [newMaterial, setNewMaterial] = useState('');
+  const [newActivity, setNewActivity] = useState('');
 
   const updateLesson = (updates: Partial<LessonPlan>) => {
-    setLesson(prev => ({ ...prev, ...updates }));
+    setLesson((prev) => ({ ...prev, ...updates }));
   };
 
   const addToList = (
-    field: "objectives" | "targetSkills" | "materials" | "multisensoryActivities",
+    field: 'objectives' | 'targetSkills' | 'materials' | 'multisensoryActivities',
     value: string,
-    clearFn: (val: string) => void
+    clearFn: (val: string) => void,
   ) => {
     if (value.trim()) {
       updateLesson({ [field]: [...lesson[field], value.trim()] });
-      clearFn("");
+      clearFn('');
     }
   };
 
   const removeFromList = (
-    field: "objectives" | "targetSkills" | "materials" | "multisensoryActivities",
-    index: number
+    field: 'objectives' | 'targetSkills' | 'materials' | 'multisensoryActivities',
+    index: number,
   ) => {
     updateLesson({ [field]: lesson[field].filter((_, i) => i !== index) });
   };
@@ -159,7 +183,7 @@ export function LessonPlanTemplate({
   const toggleModality = (modality: SensoryModality) => {
     const current = lesson.modalitiesUsed;
     if (current.includes(modality)) {
-      updateLesson({ modalitiesUsed: current.filter(m => m !== modality) });
+      updateLesson({ modalitiesUsed: current.filter((m) => m !== modality) });
     } else {
       updateLesson({ modalitiesUsed: [...current, modality] });
     }
@@ -180,9 +204,7 @@ export function LessonPlanTemplate({
                 <BookOpen className="h-5 w-5 text-blue-600" />
                 Orton-Gillingham Lesson Plan
               </CardTitle>
-              <CardDescription>
-                Create structured, multisensory literacy lessons
-              </CardDescription>
+              <CardDescription>Create structured, multisensory literacy lessons</CardDescription>
             </div>
             <div className="flex gap-2">
               {onExport && (
@@ -212,18 +234,24 @@ export function LessonPlanTemplate({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Lesson Title</label>
+              <label htmlFor="lesson-title" className="text-sm font-medium mb-2 block">
+                Lesson Title
+              </label>
               <Input
+                id="lesson-title"
                 placeholder="e.g., Introduction to Long A Vowel Teams"
                 value={lesson.title}
                 onChange={(e) => updateLesson({ title: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Duration (minutes)</label>
+              <label htmlFor="lesson-duration" className="text-sm font-medium mb-2 block">
+                Duration (minutes)
+              </label>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <Input
+                  id="lesson-duration"
                   type="number"
                   min={5}
                   max={120}
@@ -236,17 +264,19 @@ export function LessonPlanTemplate({
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Lesson Type</label>
+            <span className="text-sm font-medium mb-2 block">Lesson Type</span>
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(LESSON_TYPE_CONFIG) as DyslexiaLessonType[]).map(type => (
+              {(Object.keys(LESSON_TYPE_CONFIG) as DyslexiaLessonType[]).map((type) => (
                 <Badge
                   key={type}
-                  variant={lesson.lessonType === type ? "default" : "outline"}
-                  className={`cursor-pointer ${lesson.lessonType === type ? LESSON_TYPE_CONFIG[type].color : ""}`}
-                  onClick={() => updateLesson({ 
-                    lessonType: type,
-                    duration: LESSON_TYPE_CONFIG[type].defaultDuration
-                  })}
+                  variant={lesson.lessonType === type ? 'default' : 'outline'}
+                  className={`cursor-pointer ${lesson.lessonType === type ? LESSON_TYPE_CONFIG[type].color : ''}`}
+                  onClick={() =>
+                    updateLesson({
+                      lessonType: type,
+                      duration: LESSON_TYPE_CONFIG[type].defaultDuration,
+                    })
+                  }
                 >
                   {LESSON_TYPE_CONFIG[type].label}
                 </Badge>
@@ -255,25 +285,27 @@ export function LessonPlanTemplate({
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Modalities Used</label>
+            <span className="text-sm font-medium mb-2 block">Modalities Used</span>
             <div className="flex flex-wrap gap-3">
-              {(Object.keys(MODALITY_CONFIG) as SensoryModality[]).map(modality => (
-                <div 
+              {(Object.keys(MODALITY_CONFIG) as SensoryModality[]).map((modality) => (
+                <button
+                  type="button"
                   key={modality}
                   className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                    lesson.modalitiesUsed.includes(modality) 
-                      ? "bg-blue-50 border-blue-300" 
-                      : "hover:bg-muted"
+                    lesson.modalitiesUsed.includes(modality)
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'hover:bg-muted'
                   }`}
                   onClick={() => toggleModality(modality)}
                 >
-                  {lesson.modalitiesUsed.includes(modality) 
-                    ? <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                    : <Circle className="h-4 w-4 text-muted-foreground" />
-                  }
+                  {lesson.modalitiesUsed.includes(modality) ? (
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground" />
+                  )}
                   {MODALITY_CONFIG[modality].icon}
                   <span className="text-sm">{MODALITY_CONFIG[modality].label}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -295,29 +327,33 @@ export function LessonPlanTemplate({
                 placeholder="Add objective..."
                 value={newObjective}
                 onChange={(e) => setNewObjective(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addToList("objectives", newObjective, setNewObjective)}
+                onKeyPress={(e) =>
+                  e.key === 'Enter' && addToList('objectives', newObjective, setNewObjective)
+                }
               />
-              <Button 
+              <Button
                 size="sm"
-                onClick={() => addToList("objectives", newObjective, setNewObjective)}
+                onClick={() => addToList('objectives', newObjective, setNewObjective)}
               >
                 Add
               </Button>
             </div>
             <ul className="space-y-2">
-              {lesson.objectives.filter(o => o).map((objective, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
-                  <span className="flex-1">{objective}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => removeFromList("objectives", idx)}
-                  >
-                    ×
-                  </Button>
-                </li>
-              ))}
+              {lesson.objectives
+                .filter((o) => o)
+                .map((objective, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+                    <span className="flex-1">{objective}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromList('objectives', idx)}
+                    >
+                      ×
+                    </Button>
+                  </li>
+                ))}
             </ul>
           </CardContent>
         </Card>
@@ -332,12 +368,11 @@ export function LessonPlanTemplate({
                 placeholder="Add skill..."
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addToList("targetSkills", newSkill, setNewSkill)}
+                onKeyPress={(e) =>
+                  e.key === 'Enter' && addToList('targetSkills', newSkill, setNewSkill)
+                }
               />
-              <Button 
-                size="sm"
-                onClick={() => addToList("targetSkills", newSkill, setNewSkill)}
-              >
+              <Button size="sm" onClick={() => addToList('targetSkills', newSkill, setNewSkill)}>
                 Add
               </Button>
             </div>
@@ -345,11 +380,11 @@ export function LessonPlanTemplate({
               {lesson.targetSkills.map((skill, idx) => (
                 <Badge key={idx} variant="outline" className="pr-1">
                   {skill}
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     className="h-4 w-4 p-0 ml-1"
-                    onClick={() => removeFromList("targetSkills", idx)}
+                    onClick={() => removeFromList('targetSkills', idx)}
                   >
                     ×
                   </Button>
@@ -371,12 +406,11 @@ export function LessonPlanTemplate({
               placeholder="Add material..."
               value={newMaterial}
               onChange={(e) => setNewMaterial(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addToList("materials", newMaterial, setNewMaterial)}
+              onKeyPress={(e) =>
+                e.key === 'Enter' && addToList('materials', newMaterial, setNewMaterial)
+              }
             />
-            <Button 
-              size="sm"
-              onClick={() => addToList("materials", newMaterial, setNewMaterial)}
-            >
+            <Button size="sm" onClick={() => addToList('materials', newMaterial, setNewMaterial)}>
               Add
             </Button>
           </div>
@@ -384,11 +418,11 @@ export function LessonPlanTemplate({
             {lesson.materials.map((material, idx) => (
               <Badge key={idx} variant="outline" className="pr-1">
                 {material}
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 ml-1"
-                  onClick={() => removeFromList("materials", idx)}
+                  onClick={() => removeFromList('materials', idx)}
                 >
                   ×
                 </Button>
@@ -409,10 +443,12 @@ export function LessonPlanTemplate({
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-theme-primary/10 text-theme-primary text-xs flex items-center justify-center">1</span>
+              <span className="text-sm font-medium mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-theme-primary/10 text-theme-primary text-xs flex items-center justify-center">
+                  1
+                </span>
                 Warm-Up / Review (2-3 min)
-              </label>
+              </span>
               <Textarea
                 placeholder="Quick review of previously learned concepts..."
                 value={lesson.warmUp}
@@ -422,10 +458,12 @@ export function LessonPlanTemplate({
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center">2</span>
+              <span className="text-sm font-medium mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center">
+                  2
+                </span>
                 Introduction / Direct Instruction
-              </label>
+              </span>
               <Textarea
                 placeholder="Introduce new concept with explicit instruction..."
                 value={lesson.introduction}
@@ -435,10 +473,12 @@ export function LessonPlanTemplate({
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-green-100 text-green-700 text-xs flex items-center justify-center">3</span>
+              <span className="text-sm font-medium mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-green-100 text-green-700 text-xs flex items-center justify-center">
+                  3
+                </span>
                 Guided Practice
-              </label>
+              </span>
               <Textarea
                 placeholder="Practice with teacher support and feedback..."
                 value={lesson.guidedPractice}
@@ -448,10 +488,12 @@ export function LessonPlanTemplate({
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs flex items-center justify-center">4</span>
+              <span className="text-sm font-medium mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs flex items-center justify-center">
+                  4
+                </span>
                 Independent Practice
-              </label>
+              </span>
               <Textarea
                 placeholder="Student practices independently..."
                 value={lesson.independentPractice}
@@ -461,10 +503,12 @@ export function LessonPlanTemplate({
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-pink-100 text-pink-700 text-xs flex items-center justify-center">5</span>
+              <span className="text-sm font-medium mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-pink-100 text-pink-700 text-xs flex items-center justify-center">
+                  5
+                </span>
                 Review / Closure
-              </label>
+              </span>
               <Textarea
                 placeholder="Review all concepts covered..."
                 value={lesson.review}
@@ -493,11 +537,14 @@ export function LessonPlanTemplate({
               placeholder="Add multisensory activity..."
               value={newActivity}
               onChange={(e) => setNewActivity(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addToList("multisensoryActivities", newActivity, setNewActivity)}
+              onKeyPress={(e) =>
+                e.key === 'Enter' &&
+                addToList('multisensoryActivities', newActivity, setNewActivity)
+              }
             />
-            <Button 
+            <Button
               size="sm"
-              onClick={() => addToList("multisensoryActivities", newActivity, setNewActivity)}
+              onClick={() => addToList('multisensoryActivities', newActivity, setNewActivity)}
             >
               Add
             </Button>
@@ -507,10 +554,10 @@ export function LessonPlanTemplate({
               <li key={idx} className="flex items-start gap-2 p-2 bg-muted rounded-lg text-sm">
                 <Sparkles className="h-4 w-4 mt-0.5 text-pink-600 flex-shrink-0" />
                 <span className="flex-1">{activity}</span>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
-                  onClick={() => removeFromList("multisensoryActivities", idx)}
+                  onClick={() => removeFromList('multisensoryActivities', idx)}
                 >
                   ×
                 </Button>

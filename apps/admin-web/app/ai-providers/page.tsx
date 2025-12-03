@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   Cpu,
   Plus,
@@ -17,11 +17,11 @@ import {
   Activity,
   DollarSign,
   TrendingUp,
-} from "lucide-react";
-import { AdminCard, AdminCardHeader, AdminCardTitle } from "../../components/AdminCard";
-import { AdminTabs, TabItem } from "../../components/AdminTabs";
-import { AdminButton } from "../../components/AdminButton";
-import { AdminBadge, StatusBadge } from "../../components/AdminBadge";
+} from 'lucide-react';
+import { AdminCard, AdminCardHeader, AdminCardTitle } from '../../components/AdminCard';
+import { AdminTabs, TabItem } from '../../components/AdminTabs';
+import { AdminButton } from '../../components/AdminButton';
+import { AdminBadge, StatusBadge } from '../../components/AdminBadge';
 
 // Types for the AI Provider system
 interface AIProvider {
@@ -121,9 +121,20 @@ interface UsageAnalytics {
 }
 
 const PROVIDER_TYPES = [
-  "OPENAI", "ANTHROPIC", "GOOGLE", "META", "COHERE", "MISTRAL",
-  "HUGGINGFACE", "GROQ", "TOGETHER", "REPLICATE", "AZURE_OPENAI",
-  "AWS_BEDROCK", "CUSTOM", "AIVO_BRAIN"
+  'OPENAI',
+  'ANTHROPIC',
+  'GOOGLE',
+  'META',
+  'COHERE',
+  'MISTRAL',
+  'HUGGINGFACE',
+  'GROQ',
+  'TOGETHER',
+  'REPLICATE',
+  'AZURE_OPENAI',
+  'AWS_BEDROCK',
+  'CUSTOM',
+  'AIVO_BRAIN',
 ];
 
 // Provider Card component
@@ -140,10 +151,14 @@ function ProviderCard({
     <AdminCard className="hover:shadow-xl transition-shadow hover:border-violet-200">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-            provider.isActive ? "bg-violet-100" : "bg-slate-100"
-          }`}>
-            <Cpu className={`w-6 h-6 ${provider.isActive ? "text-violet-600" : "text-slate-400"}`} />
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+              provider.isActive ? 'bg-violet-100' : 'bg-slate-100'
+            }`}
+          >
+            <Cpu
+              className={`w-6 h-6 ${provider.isActive ? 'text-violet-600' : 'text-slate-400'}`}
+            />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900">{provider.name}</h3>
@@ -152,7 +167,7 @@ function ProviderCard({
         </div>
         <StatusBadge status={provider.healthStatus} />
       </div>
-      
+
       <div className="mt-5 grid grid-cols-2 gap-4">
         <div className="bg-lavender-50 rounded-xl p-3">
           <p className="text-xs text-slate-500 mb-1">Priority</p>
@@ -164,7 +179,7 @@ function ProviderCard({
         </div>
         <div className="bg-lavender-50 rounded-xl p-3">
           <p className="text-xs text-slate-500 mb-1">Rate Limit</p>
-          <p className="font-semibold text-slate-900">{provider.rateLimitRpm || "∞"} RPM</p>
+          <p className="font-semibold text-slate-900">{provider.rateLimitRpm || '∞'} RPM</p>
         </div>
         <div className="bg-lavender-50 rounded-xl p-3">
           <p className="text-xs text-slate-500 mb-1">Cost/1k</p>
@@ -173,15 +188,21 @@ function ProviderCard({
           </p>
         </div>
       </div>
-      
+
       <div className="mt-5 flex items-center justify-between gap-3">
         <AdminButton
-          variant={provider.isActive ? "danger" : "success"}
+          variant={provider.isActive ? 'danger' : 'success'}
           size="sm"
           onClick={onToggle}
-          icon={provider.isActive ? <PauseCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+          icon={
+            provider.isActive ? (
+              <PauseCircle className="w-4 h-4" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" />
+            )
+          }
         >
-          {provider.isActive ? "Disable" : "Enable"}
+          {provider.isActive ? 'Disable' : 'Enable'}
         </AdminButton>
         <AdminButton
           variant="secondary"
@@ -198,7 +219,7 @@ function ProviderCard({
 
 // Main Admin Page Component
 export default function AIProvidersPage() {
-  const [activeTab, setActiveTab] = useState<string>("providers");
+  const [activeTab, setActiveTab] = useState<string>('providers');
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [chains, setChains] = useState<AIFallbackChain[]>([]);
   const [health, setHealth] = useState<HealthDashboard | null>(null);
@@ -209,10 +230,10 @@ export default function AIProvidersPage() {
 
   // Form state for new provider
   const [newProvider, setNewProvider] = useState({
-    providerType: "OPENAI",
-    name: "",
-    apiKey: "",
-    apiEndpoint: "",
+    providerType: 'OPENAI',
+    name: '',
+    apiKey: '',
+    apiEndpoint: '',
     priority: 100,
     rateLimitRpm: 60,
     rateLimitTpm: 90000,
@@ -221,28 +242,23 @@ export default function AIProvidersPage() {
   });
 
   const tabs: TabItem[] = [
-    { id: "providers", label: "Providers", icon: <Cpu className="w-4 h-4" /> },
-    { id: "models", label: "Models", icon: <Layers className="w-4 h-4" /> },
-    { id: "chains", label: "Fallback Chains", icon: <LinkIcon className="w-4 h-4" /> },
-    { id: "analytics", label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'providers', label: 'Providers', icon: <Cpu className="w-4 h-4" /> },
+    { id: 'models', label: 'Models', icon: <Layers className="w-4 h-4" /> },
+    { id: 'chains', label: 'Fallback Chains', icon: <LinkIcon className="w-4 h-4" /> },
+    { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
   ];
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   async function fetchData() {
-    setLoading(true);
     try {
       // Mock data for demonstration
       setProviders([
         {
-          id: "1",
-          providerType: "OPENAI",
-          name: "OpenAI",
+          id: '1',
+          providerType: 'OPENAI',
+          name: 'OpenAI',
           isActive: true,
           priority: 10,
-          healthStatus: "HEALTHY",
+          healthStatus: 'HEALTHY',
           lastHealthCheck: new Date().toISOString(),
           rateLimitRpm: 60,
           rateLimitTpm: 90000,
@@ -250,70 +266,70 @@ export default function AIProvidersPage() {
           costPer1kOutput: 0.03,
           models: [
             {
-              id: "m1",
-              providerId: "1",
-              modelIdentifier: "gpt-4-turbo",
-              displayName: "GPT-4 Turbo",
-              capabilities: ["chat", "function_calling", "vision"],
+              id: 'm1',
+              providerId: '1',
+              modelIdentifier: 'gpt-4-turbo',
+              displayName: 'GPT-4 Turbo',
+              capabilities: ['chat', 'function_calling', 'vision'],
               maxTokens: 4096,
               contextWindow: 128000,
               costPer1kInput: 0.01,
               costPer1kOutput: 0.03,
               isActive: true,
               isDefault: true,
-              useCases: ["homework_help", "tutoring", "general"],
-              qualityTier: "PREMIUM",
+              useCases: ['homework_help', 'tutoring', 'general'],
+              qualityTier: 'PREMIUM',
             },
           ],
         },
         {
-          id: "2",
-          providerType: "ANTHROPIC",
-          name: "Anthropic",
+          id: '2',
+          providerType: 'ANTHROPIC',
+          name: 'Anthropic',
           isActive: true,
           priority: 20,
-          healthStatus: "HEALTHY",
+          healthStatus: 'HEALTHY',
           lastHealthCheck: new Date().toISOString(),
           rateLimitRpm: 50,
           costPer1kInput: 0.008,
           costPer1kOutput: 0.024,
           models: [
             {
-              id: "m2",
-              providerId: "2",
-              modelIdentifier: "claude-3-sonnet-20240229",
-              displayName: "Claude 3 Sonnet",
-              capabilities: ["chat", "vision"],
+              id: 'm2',
+              providerId: '2',
+              modelIdentifier: 'claude-3-sonnet-20240229',
+              displayName: 'Claude 3 Sonnet',
+              capabilities: ['chat', 'vision'],
               maxTokens: 4096,
               contextWindow: 200000,
               costPer1kInput: 0.003,
               costPer1kOutput: 0.015,
               isActive: true,
               isDefault: true,
-              useCases: ["assessment", "iep_analysis", "general"],
-              qualityTier: "STANDARD",
+              useCases: ['assessment', 'iep_analysis', 'general'],
+              qualityTier: 'STANDARD',
             },
           ],
         },
         {
-          id: "3",
-          providerType: "GOOGLE",
-          name: "Google Gemini",
+          id: '3',
+          providerType: 'GOOGLE',
+          name: 'Google Gemini',
           isActive: true,
           priority: 30,
-          healthStatus: "DEGRADED",
+          healthStatus: 'DEGRADED',
           lastHealthCheck: new Date().toISOString(),
           costPer1kInput: 0.0005,
           costPer1kOutput: 0.0015,
           models: [],
         },
         {
-          id: "4",
-          providerType: "GROQ",
-          name: "Groq (Llama)",
+          id: '4',
+          providerType: 'GROQ',
+          name: 'Groq (Llama)',
           isActive: false,
           priority: 40,
-          healthStatus: "UNKNOWN",
+          healthStatus: 'UNKNOWN',
           costPer1kInput: 0.0001,
           costPer1kOutput: 0.0002,
           models: [],
@@ -322,63 +338,63 @@ export default function AIProvidersPage() {
 
       setChains([
         {
-          id: "c1",
-          name: "Homework Help Chain",
-          description: "Primary chain for homework assistance",
-          useCase: "homework_help",
+          id: 'c1',
+          name: 'Homework Help Chain',
+          description: 'Primary chain for homework assistance',
+          useCase: 'homework_help',
           isActive: true,
           isDefault: true,
           maxRetries: 3,
           timeoutMs: 30000,
           providers: [
-            { providerId: "1", priority: 1, provider: {} as AIProvider },
-            { providerId: "2", priority: 2, provider: {} as AIProvider },
+            { providerId: '1', priority: 1, provider: {} as AIProvider },
+            { providerId: '2', priority: 2, provider: {} as AIProvider },
           ],
         },
         {
-          id: "c2",
-          name: "Assessment Chain",
-          description: "Chain for assessments with high reliability",
-          useCase: "assessment",
+          id: 'c2',
+          name: 'Assessment Chain',
+          description: 'Chain for assessments with high reliability',
+          useCase: 'assessment',
           isActive: true,
           isDefault: true,
           maxRetries: 5,
           timeoutMs: 60000,
           providers: [
-            { providerId: "2", priority: 1, provider: {} as AIProvider },
-            { providerId: "1", priority: 2, provider: {} as AIProvider },
+            { providerId: '2', priority: 1, provider: {} as AIProvider },
+            { providerId: '1', priority: 2, provider: {} as AIProvider },
           ],
         },
       ]);
 
       setHealth({
-        overallStatus: "HEALTHY",
+        overallStatus: 'HEALTHY',
         providers: [
           {
-            id: "1",
-            name: "OpenAI",
-            providerType: "OPENAI",
-            healthStatus: "HEALTHY",
+            id: '1',
+            name: 'OpenAI',
+            providerType: 'OPENAI',
+            healthStatus: 'HEALTHY',
             isActive: true,
             errorRateLast24h: 0.5,
             requestsLast24h: 15432,
             recentLatencyMs: 450,
           },
           {
-            id: "2",
-            name: "Anthropic",
-            providerType: "ANTHROPIC",
-            healthStatus: "HEALTHY",
+            id: '2',
+            name: 'Anthropic',
+            providerType: 'ANTHROPIC',
+            healthStatus: 'HEALTHY',
             isActive: true,
             errorRateLast24h: 0.2,
             requestsLast24h: 8921,
             recentLatencyMs: 520,
           },
           {
-            id: "3",
-            name: "Google Gemini",
-            providerType: "GOOGLE",
-            healthStatus: "DEGRADED",
+            id: '3',
+            name: 'Google Gemini',
+            providerType: 'GOOGLE',
+            healthStatus: 'DEGRADED',
             isActive: true,
             errorRateLast24h: 5.2,
             requestsLast24h: 3201,
@@ -389,11 +405,11 @@ export default function AIProvidersPage() {
         avgResponseTime24h: 485,
         recentIncidents: [
           {
-            providerId: "3",
-            providerName: "Google Gemini",
+            providerId: '3',
+            providerName: 'Google Gemini',
             timestamp: new Date(Date.now() - 3600000).toISOString(),
-            status: "DEGRADED",
-            errorMessage: "Rate limit exceeded",
+            status: 'DEGRADED',
+            errorMessage: 'Rate limit exceeded',
           },
         ],
       });
@@ -410,31 +426,60 @@ export default function AIProvidersPage() {
         totalCost: 1523.45,
         averageLatencyMs: 485,
         byProvider: [
-          { providerId: "1", providerName: "OpenAI", requests: 150000, tokens: 75000000, cost: 950.00 },
-          { providerId: "2", providerName: "Anthropic", requests: 80000, tokens: 40000000, cost: 450.00 },
-          { providerId: "3", providerName: "Google Gemini", requests: 15678, tokens: 10000000, cost: 123.45 },
+          {
+            providerId: '1',
+            providerName: 'OpenAI',
+            requests: 150000,
+            tokens: 75000000,
+            cost: 950.0,
+          },
+          {
+            providerId: '2',
+            providerName: 'Anthropic',
+            requests: 80000,
+            tokens: 40000000,
+            cost: 450.0,
+          },
+          {
+            providerId: '3',
+            providerName: 'Google Gemini',
+            requests: 15678,
+            tokens: 10000000,
+            cost: 123.45,
+          },
         ],
         byUseCase: [
-          { useCase: "homework_help", requests: 120000, cost: 750.00 },
-          { useCase: "tutoring", requests: 80000, cost: 500.00 },
-          { useCase: "assessment", requests: 30000, cost: 200.00 },
-          { useCase: "general", requests: 15678, cost: 73.45 },
+          { useCase: 'homework_help', requests: 120000, cost: 750.0 },
+          { useCase: 'tutoring', requests: 80000, cost: 500.0 },
+          { useCase: 'assessment', requests: 30000, cost: 200.0 },
+          { useCase: 'general', requests: 15678, cost: 73.45 },
         ],
       });
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      console.error('Failed to fetch data:', error);
     }
     setLoading(false);
   }
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await fetchData();
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function handleAddProvider() {
-    console.log("Adding provider:", newProvider);
+    console.log('Adding provider:', newProvider);
     setShowAddProvider(false);
     setNewProvider({
-      providerType: "OPENAI",
-      name: "",
-      apiKey: "",
-      apiEndpoint: "",
+      providerType: 'OPENAI',
+      name: '',
+      apiKey: '',
+      apiEndpoint: '',
       priority: 100,
       rateLimitRpm: 60,
       rateLimitTpm: 90000,
@@ -447,14 +492,12 @@ export default function AIProvidersPage() {
   async function handleToggleProvider(providerId: string) {
     const provider = providers.find((p) => p.id === providerId);
     if (!provider) return;
-    
-    setProviders(providers.map((p) => 
-      p.id === providerId ? { ...p, isActive: !p.isActive } : p
-    ));
+
+    setProviders(providers.map((p) => (p.id === providerId ? { ...p, isActive: !p.isActive } : p)));
   }
 
   async function runHealthCheck() {
-    console.log("Running health check...");
+    console.log('Running health check...');
     fetchData();
   }
 
@@ -481,7 +524,9 @@ export default function AIProvidersPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">AI Provider Management</h1>
-                <p className="text-slate-500">Configure and monitor AI providers, models, and fallback chains</p>
+                <p className="text-slate-500">
+                  Configure and monitor AI providers, models, and fallback chains
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -550,7 +595,7 @@ export default function AIProvidersPage() {
       {/* Tab Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Providers Tab */}
-        {activeTab === "providers" && (
+        {activeTab === 'providers' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {providers.map((provider) => (
               <ProviderCard
@@ -564,7 +609,7 @@ export default function AIProvidersPage() {
         )}
 
         {/* Models Tab */}
-        {activeTab === "models" && (
+        {activeTab === 'models' && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-slate-900">AI Models</h2>
@@ -577,12 +622,24 @@ export default function AIProvidersPage() {
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-lavender-200">
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Model</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Provider</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Capabilities</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Tier</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Cost/1k</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Model
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Provider
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Capabilities
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Tier
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Cost/1k
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-lavender-100">
@@ -615,11 +672,11 @@ export default function AIProvidersPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <AdminBadge
                               variant={
-                                model.qualityTier === "PREMIUM"
-                                  ? "violet"
-                                  : model.qualityTier === "STANDARD"
-                                    ? "info"
-                                    : "default"
+                                model.qualityTier === 'PREMIUM'
+                                  ? 'violet'
+                                  : model.qualityTier === 'STANDARD'
+                                    ? 'info'
+                                    : 'default'
                               }
                             >
                               {model.qualityTier}
@@ -629,12 +686,12 @@ export default function AIProvidersPage() {
                             ${(model.costPer1kInput + model.costPer1kOutput).toFixed(4)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <AdminBadge variant={model.isActive ? "success" : "default"}>
-                              {model.isActive ? "Active" : "Inactive"}
+                            <AdminBadge variant={model.isActive ? 'success' : 'default'}>
+                              {model.isActive ? 'Active' : 'Inactive'}
                             </AdminBadge>
                           </td>
                         </tr>
-                      ))
+                      )),
                     )}
                   </tbody>
                 </table>
@@ -644,7 +701,7 @@ export default function AIProvidersPage() {
         )}
 
         {/* Fallback Chains Tab */}
-        {activeTab === "chains" && (
+        {activeTab === 'chains' && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-slate-900">Fallback Chains</h2>
@@ -661,20 +718,18 @@ export default function AIProvidersPage() {
                       <p className="text-sm text-slate-500">{chain.description}</p>
                     </div>
                     <div className="flex gap-2">
-                      {chain.isDefault && (
-                        <AdminBadge variant="violet">Default</AdminBadge>
-                      )}
-                      <AdminBadge variant={chain.isActive ? "success" : "default"}>
-                        {chain.isActive ? "Active" : "Inactive"}
+                      {chain.isDefault && <AdminBadge variant="violet">Default</AdminBadge>}
+                      <AdminBadge variant={chain.isActive ? 'success' : 'default'}>
+                        {chain.isActive ? 'Active' : 'Inactive'}
                       </AdminBadge>
                     </div>
                   </div>
-                  
+
                   <div className="mb-4">
                     <p className="text-sm text-slate-500 mb-2">Use Case</p>
                     <AdminBadge variant="info">{chain.useCase}</AdminBadge>
                   </div>
-                  
+
                   <div className="mb-4">
                     <p className="text-sm text-slate-500 mb-2">Provider Chain</p>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -693,7 +748,7 @@ export default function AIProvidersPage() {
                         })}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-6 text-sm text-slate-500 pt-4 border-t border-lavender-100">
                     <span className="flex items-center gap-1">
                       <RefreshCw className="w-4 h-4" /> {chain.maxRetries} retries
@@ -709,7 +764,7 @@ export default function AIProvidersPage() {
         )}
 
         {/* Analytics Tab */}
-        {activeTab === "analytics" && analytics && (
+        {activeTab === 'analytics' && analytics && (
           <div className="space-y-6">
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -723,7 +778,8 @@ export default function AIProvidersPage() {
                 </p>
                 <p className="text-sm text-emerald-600 mt-1 flex items-center gap-1">
                   <TrendingUp className="w-4 h-4" />
-                  {((analytics.successfulRequests / analytics.totalRequests) * 100).toFixed(1)}% success
+                  {((analytics.successfulRequests / analytics.totalRequests) * 100).toFixed(1)}%
+                  success
                 </p>
               </AdminCard>
               <AdminCard>
@@ -749,9 +805,7 @@ export default function AIProvidersPage() {
                   <Clock className="w-5 h-5 text-violet-500" />
                   <p className="text-slate-500 text-sm">Avg Latency</p>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">
-                  {analytics.averageLatencyMs}ms
-                </p>
+                <p className="text-2xl font-bold text-slate-900">{analytics.averageLatencyMs}ms</p>
               </AdminCard>
             </div>
 
@@ -768,7 +822,8 @@ export default function AIProvidersPage() {
                     <div className="flex items-center justify-between text-sm mb-2">
                       <span className="font-medium text-slate-700">{item.providerName}</span>
                       <span className="text-slate-500">
-                        ${item.cost.toFixed(2)} ({((item.cost / analytics.totalCost) * 100).toFixed(1)}%)
+                        ${item.cost.toFixed(2)} (
+                        {((item.cost / analytics.totalCost) * 100).toFixed(1)}%)
                       </span>
                     </div>
                     <div className="w-full bg-lavender-100 rounded-full h-3">
@@ -791,14 +846,19 @@ export default function AIProvidersPage() {
               </AdminCardHeader>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {analytics.byUseCase.map((item) => (
-                  <div key={item.useCase} className="text-center p-5 bg-lavender-50 rounded-2xl border border-lavender-100">
+                  <div
+                    key={item.useCase}
+                    className="text-center p-5 bg-lavender-50 rounded-2xl border border-lavender-100"
+                  >
                     <p className="text-2xl font-bold text-slate-900">
                       {(item.requests / 1000).toFixed(1)}k
                     </p>
                     <p className="text-sm text-slate-600 capitalize mt-1">
-                      {item.useCase.replace(/_/g, " ")}
+                      {item.useCase.replace(/_/g, ' ')}
                     </p>
-                    <p className="text-xs text-violet-600 mt-2 font-semibold">${item.cost.toFixed(2)}</p>
+                    <p className="text-xs text-violet-600 mt-2 font-semibold">
+                      ${item.cost.toFixed(2)}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -818,26 +878,36 @@ export default function AIProvidersPage() {
                 </div>
                 <h2 className="text-xl font-bold text-slate-900">Add AI Provider</h2>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="providerType" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="providerType"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     Provider Type
                   </label>
                   <select
                     id="providerType"
                     value={newProvider.providerType}
-                    onChange={(e) => setNewProvider({ ...newProvider, providerType: e.target.value })}
+                    onChange={(e) =>
+                      setNewProvider({ ...newProvider, providerType: e.target.value })
+                    }
                     className="w-full border border-lavender-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-lavender-50"
                   >
                     {PROVIDER_TYPES.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="displayName"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     Display Name
                   </label>
                   <input
@@ -849,7 +919,7 @@ export default function AIProvidersPage() {
                     placeholder="e.g., OpenAI Production"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="apiKey" className="block text-sm font-medium text-slate-700 mb-2">
                     API Key
@@ -863,51 +933,69 @@ export default function AIProvidersPage() {
                     placeholder="sk-..."
                   />
                 </div>
-                
+
                 <div>
-                  <label htmlFor="apiEndpoint" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="apiEndpoint"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     API Endpoint (optional)
                   </label>
                   <input
                     id="apiEndpoint"
                     type="text"
                     value={newProvider.apiEndpoint}
-                    onChange={(e) => setNewProvider({ ...newProvider, apiEndpoint: e.target.value })}
+                    onChange={(e) =>
+                      setNewProvider({ ...newProvider, apiEndpoint: e.target.value })
+                    }
                     className="w-full border border-lavender-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                     placeholder="https://api.openai.com/v1"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="priority" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label
+                      htmlFor="priority"
+                      className="block text-sm font-medium text-slate-700 mb-2"
+                    >
                       Priority
                     </label>
                     <input
                       id="priority"
                       type="number"
                       value={newProvider.priority}
-                      onChange={(e) => setNewProvider({ ...newProvider, priority: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setNewProvider({ ...newProvider, priority: parseInt(e.target.value) })
+                      }
                       className="w-full border border-lavender-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
                   <div>
-                    <label htmlFor="rateLimitRpm" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label
+                      htmlFor="rateLimitRpm"
+                      className="block text-sm font-medium text-slate-700 mb-2"
+                    >
                       Rate Limit (RPM)
                     </label>
                     <input
                       id="rateLimitRpm"
                       type="number"
                       value={newProvider.rateLimitRpm}
-                      onChange={(e) => setNewProvider({ ...newProvider, rateLimitRpm: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setNewProvider({ ...newProvider, rateLimitRpm: parseInt(e.target.value) })
+                      }
                       className="w-full border border-lavender-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="costPer1kInput" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label
+                      htmlFor="costPer1kInput"
+                      className="block text-sm font-medium text-slate-700 mb-2"
+                    >
                       Cost/1k Input
                     </label>
                     <input
@@ -915,12 +1003,20 @@ export default function AIProvidersPage() {
                       type="number"
                       step="0.001"
                       value={newProvider.costPer1kInput}
-                      onChange={(e) => setNewProvider({ ...newProvider, costPer1kInput: parseFloat(e.target.value) })}
+                      onChange={(e) =>
+                        setNewProvider({
+                          ...newProvider,
+                          costPer1kInput: parseFloat(e.target.value),
+                        })
+                      }
                       className="w-full border border-lavender-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
                   <div>
-                    <label htmlFor="costPer1kOutput" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label
+                      htmlFor="costPer1kOutput"
+                      className="block text-sm font-medium text-slate-700 mb-2"
+                    >
                       Cost/1k Output
                     </label>
                     <input
@@ -928,18 +1024,20 @@ export default function AIProvidersPage() {
                       type="number"
                       step="0.001"
                       value={newProvider.costPer1kOutput}
-                      onChange={(e) => setNewProvider({ ...newProvider, costPer1kOutput: parseFloat(e.target.value) })}
+                      onChange={(e) =>
+                        setNewProvider({
+                          ...newProvider,
+                          costPer1kOutput: parseFloat(e.target.value),
+                        })
+                      }
                       className="w-full border border-lavender-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-8 flex justify-end gap-3">
-                <AdminButton
-                  variant="secondary"
-                  onClick={() => setShowAddProvider(false)}
-                >
+                <AdminButton variant="secondary" onClick={() => setShowAddProvider(false)}>
                   Cancel
                 </AdminButton>
                 <AdminButton
