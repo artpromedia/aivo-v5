@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aivo Learning - Executive Summary</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.5in;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #1a1a2e;
+      max-width: 8.5in;
+      margin: 0 auto;
+      padding: 0.4in;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #7C3AED;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+      color: #7C3AED;
+      letter-spacing: -1px;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    h2 {
+      font-size: 13px;
+      color: #7C3AED;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      border-left: 3px solid #7C3AED;
+      padding-left: 8px;
+    }
+
+    .section {
+      margin-bottom: 14px;
+    }
+
+    p {
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .three-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .feature-box {
+      background: #f8f7ff;
+      border-radius: 6px;
+      padding: 10px;
+      border: 1px solid #e9e5ff;
+    }
+
+    .feature-box h3 {
+      font-size: 11px;
+      color: #7C3AED;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .feature-box ul {
+      list-style: none;
+      font-size: 10px;
+    }
+
+    .feature-box li {
+      padding: 2px 0;
+      padding-left: 12px;
+      position: relative;
+    }
+
+    .feature-box li::before {
+      content: "•";
+      color: #7C3AED;
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+
+    .how-it-works {
+      background: linear-gradient(135deg, #7C3AED 0%, #9333ea 100%);
+      color: white;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .how-it-works h2 {
+      color: white;
+      border-left-color: white;
+    }
+
+    .flow-diagram {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .flow-item {
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 8px 4px;
+    }
+
+    .flow-item strong {
+      display: block;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .flow-item span {
+      font-size: 9px;
+      opacity: 0.9;
+    }
+
+    .benefits-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .benefits-table th {
+      background: #7C3AED;
+      color: white;
+      padding: 6px 8px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .benefits-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .benefits-table tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .compliance {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 10px;
+    }
+
+    .compliance span {
+      background: #ecfdf5;
+      color: #065f46;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .cta-section {
+      background: #1a1a2e;
+      color: white;
+      border-radius: 8px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .cta-section h2 {
+      color: #a78bfa;
+      border-left-color: #a78bfa;
+    }
+
+    .cta-options {
+      display: flex;
+      gap: 12px;
+    }
+
+    .cta-box {
+      background: rgba(255,255,255,0.1);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 10px;
+    }
+
+    .cta-box strong {
+      color: #a78bfa;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .contact-info {
+      text-align: right;
+      font-size: 10px;
+    }
+
+    .contact-info strong {
+      color: #a78bfa;
+    }
+
+    .modules {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      font-size: 10px;
+    }
+
+    .module {
+      background: #fef3c7;
+      padding: 6px 8px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .module strong {
+      color: #92400e;
+      display: block;
+      font-size: 9px;
+      margin-bottom: 2px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 10px;
+      color: #6b7280;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="logo">AIVO</div>
+      <div class="tagline">AI-Powered Adaptive Learning for Neurodiverse Learners</div>
+    </div>
+  </div>
+
+  <div class="two-column section">
+    <div>
+      <h2>The Challenge</h2>
+      <p>Autism centers struggle to deliver truly individualized interventions while managing documentation, parent communication, and limited staff hours. Generic educational software fails autistic learners—lacking visual supports, sensory considerations, and evidence-based interventions.</p>
+    </div>
+    <div>
+      <h2>The Solution</h2>
+      <p><strong>Aivo</strong> is an adaptive learning platform built from the ground up for neurodiverse learners. Our AI personalizes every interaction based on each learner's profile, interests, sensory needs, and communication style—delivering consistent, evidence-based support at scale.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Autism-Specific Features</h2>
+    <div class="three-column">
+      <div class="feature-box">
+        <h3>Visual Supports</h3>
+        <ul>
+          <li>Visual schedules</li>
+          <li>First-then boards</li>
+          <li>Token boards</li>
+          <li>Transition warnings</li>
+          <li>Sensory-friendly UI</li>
+        </ul>
+      </div>
+      <div class="feature-box">
+        <h3>Behavior & Data</h3>
+        <ul>
+          <li>ABC data collection</li>
+          <li>Function analysis</li>
+          <li>Pattern detection</li>
+          <li>IEP goal tracking</li>
+          <li>Progress visualization</li>
+        </ul>
+      </div>
+      <div class="feature-box">
+        <h3>Communication</h3>
+        <ul>
+          <li>AAC integration</li>
+          <li>Communication profiles</li>
+          <li>Social stories (Carol Gray)</li>
+          <li>Processing time adjust</li>
+          <li>Expressive/receptive mapping</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="flow-diagram">
+      <div class="flow-item">
+        <strong>LEARNER APP</strong>
+        <span>Adaptive lessons, visual supports, token rewards, calm corners</span>
+      </div>
+      <div class="flow-item">
+        <strong>AI BRAIN</strong>
+        <span>Learns pace, tracks needs, adjusts real-time, alerts staff</span>
+      </div>
+      <div class="flow-item">
+        <strong>THERAPIST APP</strong>
+        <span>IEP tracking, behavior data, social story library, reports</span>
+      </div>
+      <div class="flow-item">
+        <strong>PARENT APP</strong>
+        <span>Real-time updates, shared supports, approval workflow</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Additional Modules</h2>
+    <div class="modules">
+      <div class="module">
+        <strong>SLP</strong>
+        Articulation, fluency, phonological awareness
+      </div>
+      <div class="module">
+        <strong>ADHD</strong>
+        Executive function, planners, project breakdown
+      </div>
+      <div class="module">
+        <strong>DYSLEXIA</strong>
+        Phonics, Orton-Gillingham aligned
+      </div>
+      <div class="module">
+        <strong>ILS</strong>
+        Independent living skills, task analysis
+      </div>
+    </div>
+  </div>
+
+  <div class="two-column section">
+    <div>
+      <h2>Why Centers Choose Aivo</h2>
+      <table class="benefits-table">
+        <tr>
+          <th>Benefit</th>
+          <th>Impact</th>
+        </tr>
+        <tr>
+          <td><strong>Reduces documentation</strong></td>
+          <td>Auto-tracks IEP goals & behavior data</td>
+        </tr>
+        <tr>
+          <td><strong>Extends therapy</strong></td>
+          <td>Personalized practice between sessions</td>
+        </tr>
+        <tr>
+          <td><strong>Engages families</strong></td>
+          <td>Parents see progress, no extra staff effort</td>
+        </tr>
+        <tr>
+          <td><strong>Scales quality</strong></td>
+          <td>1:1 personalization without 1:1 staffing</td>
+        </tr>
+        <tr>
+          <td><strong>Evidence-based</strong></td>
+          <td>Grounded in ABA, TEACCH approaches</td>
+        </tr>
+      </table>
+    </div>
+    <div>
+      <h2>Compliance & Security</h2>
+      <div class="compliance">
+        <span>✓ IDEA Compliant</span>
+        <span>✓ FERPA Compliant</span>
+        <span>✓ COPPA Compliant</span>
+        <span>✓ HIPAA Ready</span>
+        <span>✓ WCAG 2.1 AA</span>
+      </div>
+      <br>
+      <p style="font-size: 10px; color: #6b7280;">Full IEP documentation support, educational data privacy, parental consent for minors, healthcare-grade security, and complete accessibility compliance.</p>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <div>
+      <h2>Get Started</h2>
+      <div class="cta-options">
+        <div class="cta-box">
+          <strong>30-Day Pilot</strong>
+          Full-feature evaluation with your learners, no risk
+        </div>
+        <div class="cta-box">
+          <strong>Live Demo</strong>
+          See Aivo in action with a personalized walkthrough
+        </div>
+      </div>
+    </div>
+    <div class="contact-info">
+      <strong>Contact</strong><br>
+      [Your Name]<br>
+      [email@company.com]<br>
+      [phone number]<br><br>
+      <strong>aivo.com</strong>
+    </div>
+  </div>
+
+  <div class="footer">
+    Aivo Learning — Personalized Education for Every Mind
+  </div>
+
+</body>
+</html>
