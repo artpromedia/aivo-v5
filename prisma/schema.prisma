@@ -6622,3 +6622,125 @@ model ParentDyslexiaSupport {
   @@index([practiceDate])
   @@index([practiceType])
 }
+
+// ============================================================================
+// GDPR & DATA RETENTION - Compliance with data protection regulations
+// ============================================================================
+
+model DataDeletionRequest {
+  id            String                      @id @default(cuid())
+  userId        String
+  requestedBy   String // User ID or "system" for automated
+  requestType   DataDeletionRequestType     @default(USER_INITIATED)
+  status        DataDeletionRequestStatus   @default(PENDING)
+  reason        String?                     @db.Text
+  scheduledFor  DateTime // When deletion should execute (30-day retention)
+  processedAt   DateTime?
+  completedAt   DateTime?
+  deletedData   Json? // Summary of what was deleted
+  errorMessage  String?                     @db.Text
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([createdAt])
+}
+
+enum DataDeletionRequestType {
+  USER_INITIATED // Right to be forgotten request
+  ACCOUNT_CLOSURE // User closed their account
+  RETENTION_POLICY // Automated based on retention policy
+  LEGAL_REQUEST // Legal/compliance request
+}
+
+enum DataDeletionRequestStatus {
+  PENDING // Waiting for 30-day period
+  PROCESSING // Currently being processed
+  COMPLETED // Successfully completed
+  CANCELLED // User cancelled the request
+  FAILED // Error during processing
+}
+
+model ConsentRecord {
+  id            String        @id @default(cuid())
+  userId        String
+  consentType   ConsentType
+  granted       Boolean       @default(false)
+  version       String        @default("1.0") // Policy version consented to
+  ipAddress     String?
+  userAgent     String?       @db.Text
+  grantedAt     DateTime?
+  revokedAt     DateTime?
+  expiresAt     DateTime? // Some consents may expire
+  metadata      Json? // Additional context
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([userId, consentType])
+  @@index([userId])
+  @@index([consentType])
+  @@index([granted])
+}
+
+enum ConsentType {
+  TERMS_OF_SERVICE // Acceptance of ToS
+  PRIVACY_POLICY // Acceptance of privacy policy
+  DATA_PROCESSING // Consent for data processing
+  MARKETING_EMAIL // Marketing email consent
+  MARKETING_SMS // Marketing SMS consent
+  ANALYTICS // Analytics and tracking consent
+  AI_TRAINING // Consent for AI model training
+  DATA_SHARING // Third-party data sharing
+  BIOMETRIC_DATA // Voice/face recognition data
+  CHILD_DATA // COPPA consent for child data (parent must grant)
+}
+
+model DataExportRequest {
+  id            String                  @id @default(cuid())
+  userId        String
+  requestedBy   String
+  status        DataExportRequestStatus @default(PENDING)
+  format        DataExportFormat        @default(JSON)
+  downloadUrl   String? // Signed URL for download
+  expiresAt     DateTime? // When download link expires
+  completedAt   DateTime?
+  errorMessage  String?                 @db.Text
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum DataExportRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum DataExportFormat {
+  JSON
+  CSV
+  PDF
+}
+
+model RetentionPolicy {
+  id              String   @id @default(cuid())
+  dataType        String   @unique // e.g., "telemetry", "audit_logs", "session_recordings"
+  retentionDays   Int // Number of days to retain
+  description     String?  @db.Text
+  isActive        Boolean  @default(true)
+  lastExecutedAt  DateTime?
+  nextExecutionAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([dataType])
+  @@index([isActive])
+}
+

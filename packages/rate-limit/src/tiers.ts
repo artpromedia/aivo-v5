@@ -1,6 +1,6 @@
 /**
  * Rate Limit Tiers
- * 
+ *
  * Different rate limit configurations for different endpoint types.
  */
 
@@ -81,6 +81,18 @@ export const RATE_LIMIT_TIERS: Record<RateLimitTier, RateLimitConfig> = {
     keyPrefix: 'rl:internal',
     message: 'Internal rate limit exceeded.',
   },
+
+  /**
+   * Webhook endpoints (Stripe, etc.)
+   * Moderate limits to prevent abuse while allowing legitimate traffic
+   * 100 requests per minute per source IP
+   */
+  webhook: {
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 100,
+    keyPrefix: 'rl:webhook',
+    message: 'Webhook rate limit exceeded.',
+  },
 };
 
 /**
@@ -94,7 +106,7 @@ export function getRateLimitConfig(tier: RateLimitTier): RateLimitConfig {
  * Create custom rate limit config with defaults
  */
 export function createRateLimitConfig(
-  partial: Partial<RateLimitConfig> & Pick<RateLimitConfig, 'windowMs' | 'maxRequests'>
+  partial: Partial<RateLimitConfig> & Pick<RateLimitConfig, 'windowMs' | 'maxRequests'>,
 ): RateLimitConfig {
   return {
     keyPrefix: 'rl:custom',
@@ -109,6 +121,11 @@ export function createRateLimitConfig(
  * Determine rate limit tier based on request path
  */
 export function getTierFromPath(pathname: string): RateLimitTier {
+  // Webhook endpoints
+  if (pathname.includes('/webhooks/')) {
+    return 'webhook';
+  }
+
   // Auth endpoints
   if (
     pathname.includes('/auth/') ||
@@ -132,11 +149,7 @@ export function getTierFromPath(pathname: string): RateLimitTier {
   }
 
   // Upload endpoints
-  if (
-    pathname.includes('/upload') ||
-    pathname.includes('/file') ||
-    pathname.includes('/media')
-  ) {
+  if (pathname.includes('/upload') || pathname.includes('/file') || pathname.includes('/media')) {
     return 'upload';
   }
 

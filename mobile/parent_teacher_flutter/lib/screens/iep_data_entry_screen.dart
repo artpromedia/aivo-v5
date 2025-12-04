@@ -302,24 +302,156 @@ class _IEPDataEntryScreenState extends State<IEPDataEntryScreen> {
   }
 
   Widget _buildQuickValueButtons() {
-    // Get unique recent values
-    final recentValues = widget.goal.dataPoints
+    // Get unique recent values sorted by recency
+    final dataPointsSorted = [...widget.goal.dataPoints]
+      ..sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
+    
+    final recentValues = dataPointsSorted
         .map((dp) => dp.value)
         .toSet()
-        .take(4)
+        .take(5)
         .toList();
 
-    return Wrap(
-      spacing: 8,
-      children: recentValues.map((value) {
-        return ActionChip(
-          label: Text(value.toStringAsFixed(1)),
-          onPressed: () {
-            _valueController.text = value.toStringAsFixed(1);
-          },
-          backgroundColor: Colors.white,
-        );
-      }).toList(),
+    // Calculate common reference values
+    final values = widget.goal.dataPoints.map((dp) => dp.value).toList();
+    double? avgValue;
+    double? lastValue;
+    
+    if (values.isNotEmpty) {
+      avgValue = values.reduce((a, b) => a + b) / values.length;
+      lastValue = dataPointsSorted.first.value;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AivoTheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history, size: 16, color: AivoTheme.textMuted),
+              const SizedBox(width: 6),
+              Text(
+                'Quick Select',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AivoTheme.textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          
+          // Reference values row
+          if (lastValue != null || avgValue != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  if (lastValue != null)
+                    _buildQuickValueChip(
+                      label: 'Last',
+                      value: lastValue,
+                      color: AivoTheme.mint,
+                      icon: Icons.schedule,
+                    ),
+                  if (lastValue != null && avgValue != null)
+                    const SizedBox(width: 8),
+                  if (avgValue != null)
+                    _buildQuickValueChip(
+                      label: 'Avg',
+                      value: avgValue,
+                      color: AivoTheme.sky,
+                      icon: Icons.trending_flat,
+                    ),
+                  const SizedBox(width: 8),
+                  _buildQuickValueChip(
+                    label: 'Target',
+                    value: widget.goal.targetLevel,
+                    color: AivoTheme.primary,
+                    icon: Icons.flag,
+                  ),
+                ],
+              ),
+            ),
+          
+          // Recent individual values
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: recentValues.map((value) {
+              return GestureDetector(
+                onTap: () {
+                  _valueController.text = value.toStringAsFixed(1);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    value.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickValueChip({
+    required String label,
+    required double value,
+    required Color color,
+    required IconData icon,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        _valueController.text = value.toStringAsFixed(1);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              '$label: ${value.toStringAsFixed(1)}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

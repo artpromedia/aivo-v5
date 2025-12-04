@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Calendar,
   MessageSquare,
+  BarChart2,
 } from 'lucide-react';
 import {
   IEPProgressChart,
@@ -20,6 +21,7 @@ import {
   IEPNotesList,
   IEPTimeline,
   IEPTimelineSkeleton,
+  IEPStatisticsTab,
 } from '../../../components/iep';
 import type { IEPGoal, IEPGoalStatus } from '../../../types/iep';
 import {
@@ -170,7 +172,7 @@ function generateMockGoal(goalId: string): IEPGoal {
 // Tab Types
 // ============================================================================
 
-type TabId = 'progress' | 'data' | 'notes';
+type TabId = 'progress' | 'data' | 'notes' | 'statistics';
 
 interface Tab {
   id: TabId;
@@ -182,6 +184,7 @@ const TABS: Tab[] = [
   { id: 'progress', label: 'Progress', icon: TrendingUp },
   { id: 'data', label: 'Data Points', icon: Calendar },
   { id: 'notes', label: 'Notes', icon: MessageSquare },
+  { id: 'statistics', label: 'Statistics', icon: BarChart2 },
 ];
 
 // ============================================================================
@@ -515,6 +518,8 @@ function GoalDetailContent() {
             {activeTab === 'notes' && (
               <IEPNotesList notes={goal.notes} isTeacher={isTeacher} onAddNote={handleAddNote} />
             )}
+
+            {activeTab === 'statistics' && <IEPStatisticsTab goal={goal} />}
           </div>
         </div>
       </div>

@@ -1,0 +1,28 @@
+{
+  "name": "@aivo/gdpr",
+  "version": "1.0.0",
+  "description": "GDPR compliance utilities for data deletion, export, and consent management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest --passWithNoTests",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@aivo/persistence": "workspace:*",
+    "@aivo/observability": "workspace:*",
+    "ioredis": "^5.3.2",
+    "archiver": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.2",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^5.0.0"
+  }
+}

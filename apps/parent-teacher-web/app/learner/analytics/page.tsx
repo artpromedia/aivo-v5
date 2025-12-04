@@ -15,7 +15,13 @@ import {
   Heart,
   ArrowLeft,
   FileText,
+  Clock,
 } from 'lucide-react';
+import {
+  MasteryProgressChart,
+  PracticeTimeChart,
+  FactorWeightsBar,
+} from '../../../components/analytics';
 
 const MOCK_LEARNER_ID = 'demo-learner';
 
@@ -105,141 +111,162 @@ export default function LearnerAnalyticsPage() {
         )}
 
         {analytics && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Subject Progress */}
-            <section className="bg-white rounded-3xl shadow-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-violet-600" />
+          <>
+            {/* Chart Visualizations */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Mastery Progress Chart */}
+              <section className="bg-white rounded-3xl shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-900">Mastery Progression</h2>
                 </div>
-                <h2 className="text-lg font-semibold text-slate-900">Subject Progress</h2>
-              </div>
-              <p className="text-sm text-slate-500 mb-4">
-                Each subject shows how mastery and difficulty have changed over time.
-              </p>
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {analytics.subjects.map((s) => (
-                  <article
-                    key={s.subject}
-                    className="bg-lavender-50 rounded-2xl p-4 border border-lavender-200"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
-                          {s.subject}
-                        </p>
-                        <p className="text-xs text-slate-600 mt-1">
-                          Enrolled: Grade {s.enrolledGrade} • Working at: Grade{' '}
-                          {s.currentAssessedGradeLevel}
-                        </p>
-                      </div>
-                    </div>
-                    {s.timeseries.length === 0 ? (
-                      <div className="bg-white rounded-xl p-3 text-center">
-                        <Sprout className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
-                        <p className="text-xs text-slate-500 mt-1">
-                          No practice data yet. AIVO will build this view as your learner engages.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {s.timeseries.map((pt) => (
-                          <div
-                            key={`${s.subject}-${pt.date}`}
-                            className="bg-white rounded-xl p-3 flex justify-between items-center"
-                          >
-                            <span className="text-xs font-medium text-slate-700">{pt.date}</span>
-                            <div className="flex gap-3 text-xs">
-                              <span className="bg-theme-primary/10 text-theme-primary px-2 py-1 rounded-full">
-                                Mastery: {(pt.masteryScore * 100).toFixed(0)}%
-                              </span>
-                              <span className="bg-sky-100 text-sky-700 px-2 py-1 rounded-full">
-                                {pt.minutesPracticed} min
-                              </span>
-                              <span className="bg-mint-100 text-emerald-700 px-2 py-1 rounded-full">
-                                Level {pt.difficultyLevel}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </section>
+                <p className="text-sm text-slate-500 mb-4">
+                  Track mastery scores over time across all subjects.
+                </p>
+                <MasteryProgressChart subjects={analytics.subjects} />
+              </section>
 
-            {/* Difficulty Explanations */}
-            <section className="bg-white rounded-3xl shadow-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
-                  <Brain className="w-5 h-5 text-violet-600" />
+              {/* Practice Time Chart */}
+              <section className="bg-white rounded-3xl shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-900">Practice Time</h2>
                 </div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Why AIVO Chooses This Difficulty
-                </h2>
-              </div>
-              <p className="text-sm text-slate-500 mb-4">
-                AIVO tries to be gentle and predictable. Here&apos;s how it explains its difficulty
-                choices.
-              </p>
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {analytics.difficultySummaries.map((d) => (
-                  <article
-                    key={d.subject}
-                    className="bg-lavender-50 rounded-2xl p-4 border border-lavender-200"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
-                          {d.subject}
-                        </p>
-                        <div className="flex gap-2 mt-2">
-                          <span className="inline-flex items-center px-2 py-1 bg-white text-slate-700 rounded-full text-xs">
-                            Current: Grade{' '}
-                            <span className="font-bold ml-1">{d.currentDifficultyLevel}</span>
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 bg-theme-primary/10 text-theme-primary rounded-full text-xs">
-                            Target: Grade{' '}
-                            <span className="font-bold ml-1">{d.targetDifficultyLevel}</span>
-                          </span>
+                <p className="text-sm text-slate-500 mb-4">
+                  Minutes practiced by subject with period filtering.
+                </p>
+                <PracticeTimeChart subjects={analytics.subjects} />
+              </section>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Subject Progress */}
+              <section className="bg-white rounded-3xl shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-900">Subject Progress</h2>
+                </div>
+                <p className="text-sm text-slate-500 mb-4">
+                  Each subject shows how mastery and difficulty have changed over time.
+                </p>
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                  {analytics.subjects.map((s) => (
+                    <article
+                      key={s.subject}
+                      className="bg-lavender-50 rounded-2xl p-4 border border-lavender-200"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
+                            {s.subject}
+                          </p>
+                          <p className="text-xs text-slate-600 mt-1">
+                            Enrolled: Grade {s.enrolledGrade} • Working at: Grade{' '}
+                            {s.currentAssessedGradeLevel}
+                          </p>
                         </div>
                       </div>
-                    </div>
-                    <p className="text-sm text-slate-600 mb-3 bg-white rounded-xl p-3 flex items-start gap-2">
-                      <MessageCircle className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
-                      <span>{d.rationale}</span>
-                    </p>
-                    <div>
-                      <p className="text-xs font-medium text-slate-500 mb-2">AIVO considers:</p>
-                      <ul className="space-y-2">
-                        {d.factors.map((f) => (
-                          <li
-                            key={f.label}
-                            className="bg-white rounded-xl p-3 flex justify-between items-center gap-2"
-                          >
-                            <span className="text-xs font-semibold text-slate-700">{f.label}</span>
-                            <span className="text-xs text-slate-500 text-right">
-                              {f.description}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </article>
-                ))}
-                {analytics.difficultySummaries.length === 0 && (
-                  <div className="bg-lavender-50 rounded-2xl p-6 text-center">
-                    <FileText className="w-8 h-8 text-violet-400 mx-auto mb-3" />
-                    <p className="text-slate-600 text-sm">
-                      AIVO doesn&apos;t have enough data yet to explain difficulty choices. Once
-                      baseline and sessions are recorded, you&apos;ll see detailed reasons here.
-                    </p>
+                      {s.timeseries.length === 0 ? (
+                        <div className="bg-white rounded-xl p-3 text-center">
+                          <Sprout className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
+                          <p className="text-xs text-slate-500 mt-1">
+                            No practice data yet. AIVO will build this view as your learner engages.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {s.timeseries.map((pt) => (
+                            <div
+                              key={`${s.subject}-${pt.date}`}
+                              className="bg-white rounded-xl p-3 flex justify-between items-center"
+                            >
+                              <span className="text-xs font-medium text-slate-700">{pt.date}</span>
+                              <div className="flex gap-3 text-xs">
+                                <span className="bg-theme-primary/10 text-theme-primary px-2 py-1 rounded-full">
+                                  Mastery: {(pt.masteryScore * 100).toFixed(0)}%
+                                </span>
+                                <span className="bg-sky-100 text-sky-700 px-2 py-1 rounded-full">
+                                  {pt.minutesPracticed} min
+                                </span>
+                                <span className="bg-mint-100 text-emerald-700 px-2 py-1 rounded-full">
+                                  Level {pt.difficultyLevel}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              {/* Difficulty Explanations */}
+              <section className="bg-white rounded-3xl shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-violet-600" />
                   </div>
-                )}
-              </div>
-            </section>
-          </div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    Why AIVO Chooses This Difficulty
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-500 mb-4">
+                  AIVO tries to be gentle and predictable. Here&apos;s how it explains its
+                  difficulty choices.
+                </p>
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                  {analytics.difficultySummaries.map((d) => (
+                    <article
+                      key={d.subject}
+                      className="bg-lavender-50 rounded-2xl p-4 border border-lavender-200"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="text-sm font-bold text-theme-primary uppercase tracking-wide">
+                            {d.subject}
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <span className="inline-flex items-center px-2 py-1 bg-white text-slate-700 rounded-full text-xs">
+                              Current: Grade{' '}
+                              <span className="font-bold ml-1">{d.currentDifficultyLevel}</span>
+                            </span>
+                            <span className="inline-flex items-center px-2 py-1 bg-theme-primary/10 text-theme-primary rounded-full text-xs">
+                              Target: Grade{' '}
+                              <span className="font-bold ml-1">{d.targetDifficultyLevel}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-600 mb-3 bg-white rounded-xl p-3 flex items-start gap-2">
+                        <MessageCircle className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
+                        <span>{d.rationale}</span>
+                      </p>
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-2">Factor Weights:</p>
+                        <FactorWeightsBar factors={d.factors} />
+                      </div>
+                    </article>
+                  ))}
+                  {analytics.difficultySummaries.length === 0 && (
+                    <div className="bg-lavender-50 rounded-2xl p-6 text-center">
+                      <FileText className="w-8 h-8 text-violet-400 mx-auto mb-3" />
+                      <p className="text-slate-600 text-sm">
+                        AIVO doesn&apos;t have enough data yet to explain difficulty choices. Once
+                        baseline and sessions are recorded, you&apos;ll see detailed reasons here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          </>
         )}
 
         {/* Footer */}

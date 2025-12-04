@@ -418,15 +418,40 @@ jobs:
         run: pnpm prisma generate
 
       - name: Install OpenAPI validation tools
-        run: pnpm add -g @redocly/cli @stoplight/spectral-cli
+        run: npm install -g @redocly/cli @stoplight/spectral-cli
 
-      - name: Generate OpenAPI spec
+      - name: Start API Gateway and generate OpenAPI spec
         run: |
-          cd apps/web
-          # Start the app briefly to generate spec, or generate statically
-          pnpm build || true
-          # Try to generate spec file
-          pnpm tsx ../../scripts/generate-openapi-spec.ts || true
+          # Start API Gateway in background
+          pnpm --filter @aivo/api-gateway dev &
+          API_PID=$!
+          
+          # Wait for server to be ready (max 30 seconds)
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/docs/json > /dev/null 2>&1; then
+              echo "API Gateway is ready"
+              break
+            fi
+            echo "Waiting for API Gateway... ($i/30)"
+            sleep 1
+          done
+          
+          # Fetch OpenAPI spec
+          curl -s http://localhost:4000/docs/json > openapi.json
+          
+          # Stop the server
+          kill $API_PID 2>/dev/null || true
+          
+          # Verify we got a valid spec
+          if [ -f openapi.json ] && [ -s openapi.json ]; then
+            echo "✅ OpenAPI spec generated successfully"
+          else
+            echo "❌ Failed to generate OpenAPI spec"
+            exit 1
+          fi
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          JWT_SECRET: ci-test-secret
 
       - name: Validate OpenAPI spec with Spectral
         if: always()
@@ -434,7 +459,8 @@ jobs:
           if [ -f openapi.json ]; then
             spectral lint openapi.json --ruleset https://raw.githubusercontent.com/stoplightio/spectral/develop/rulesets/oas/index.json || true
           else
-            echo "No OpenAPI spec file found - will be validated at runtime"
+            echo "No OpenAPI spec file found"
+            exit 1
           fi
 
       - name: Validate with Redocly
@@ -456,7 +482,7 @@ jobs:
             cat openapi.json | jq '.info, {paths: (.paths | keys | length), schemas: (.components.schemas | keys | length)}' >> $GITHUB_STEP_SUMMARY || true
             echo '```' >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ OpenAPI spec validation deferred to runtime" >> $GITHUB_STEP_SUMMARY
+            echo "❌ OpenAPI spec generation failed" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Upload OpenAPI spec
@@ -466,7 +492,7 @@ jobs:
           name: openapi-spec
           path: openapi.json
           retention-days: 14
-          if-no-files-found: ignore
+          if-no-files-found: warn
 
   # License compliance check
   license-check:

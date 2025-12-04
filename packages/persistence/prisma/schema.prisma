@@ -33,6 +33,7 @@ model Tenant {
   config           TenantConfig?
   districts        District[]
   schools          School[]
+  subscription     Subscription?
 }
 
 model TenantConfig {
@@ -75,6 +76,13 @@ model User {
 
   tenant    Tenant      @relation(fields: [tenantId], references: [id])
   tenantId  String
+
+  // Email preferences for unsubscribe support
+  emailPreferences Json? // EmailPreferences object
+
+  // Password reset token
+  passwordResetToken     String?   @unique
+  passwordResetExpiresAt DateTime?
 
   roles     RoleAssignment[]
   learners  Learner[]   @relation("LearnerOwner")
@@ -395,4 +403,73 @@ model SafetyIncident {
   message          String
   rawModelResponse String?
   createdAt        DateTime @default(now())
+}
+
+// ============================================================================
+// Subscription & Payment Models
+// ============================================================================
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId             String   @unique
+
+  // Stripe identifiers
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+
+  // Subscription status and tier
+  status               String   // NONE, TRIAL_ACTIVE, TRIAL_EXPIRED, PILOT_ACTIVE, PILOT_EXPIRED, ACTIVE, PAST_DUE, CANCELLED, EXPIRED
+  tier                 String   // FREE, BASIC, PRO, ENTERPRISE
+
+  // Trial information
+  trialStartedAt       DateTime?
+  trialEndsAt          DateTime?
+  hasUsedTrial         Boolean  @default(false)
+
+  // Pilot information (for districts)
+  pilotStartedAt       DateTime?
+  pilotEndsAt          DateTime?
+  hasUsedPilot         Boolean  @default(false)
+  pilotMaxLearners     Int?
+  pilotMaxSchools      Int?
+
+  // Subscription dates
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelledAt          DateTime?
+  cancelAtPeriodEnd    Boolean  @default(false)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  payments             Payment[]
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  subscription          Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId        String
+
+  // Stripe identifiers
+  stripePaymentIntentId String?  @unique
+  stripeInvoiceId       String?  @unique
+
+  // Payment details
+  amount                Int      // Amount in cents
+  currency              String   // e.g., "usd"
+  status                String   // succeeded, pending, failed, refunded
+
+  // Invoice details
+  invoiceNumber         String?
+  invoicePdfUrl         String?
+  hostedInvoiceUrl      String?
+
+  // Metadata
+  description           String?
+  failureReason         String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

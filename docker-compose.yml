@@ -73,13 +73,50 @@ services:
       - DATABASE_URL=postgresql://aivo:aivopass@db:5432/aivo_v5
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - WS_PORT=3001
+      - BRAIN_SERVICE_URL=http://brain-service:5000
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
+      brain-service:
+        condition: service_healthy
     networks:
       - aivo-network
+    restart: unless-stopped
+
+  # Python FastAPI Brain Service (ML/Speech Analysis)
+  brain-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aivo-brain-service
+    ports:
+      - "5000:5000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://aivo:aivopass@db:5432/aivo_v5
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SPEECH_API_URL=${SPEECH_API_URL}
+      - SPEECH_API_KEY=${SPEECH_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend/models:/app/models
+    networks:
+      - aivo-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
     restart: unless-stopped
 
   # Nginx Reverse Proxy (optional)

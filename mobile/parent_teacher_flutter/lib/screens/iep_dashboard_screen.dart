@@ -25,11 +25,22 @@ class _IEPDashboardScreenState extends State<IEPDashboardScreen> {
   String? _error;
   IEPCategory? _selectedCategory;
   IEPGoalStatus? _selectedStatus;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _showSearch = false;
 
   @override
   void initState() {
     super.initState();
     _loadGoals();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadGoals() async {
@@ -60,9 +71,22 @@ class _IEPDashboardScreenState extends State<IEPDashboardScreen> {
 
   List<IEPGoal> get _filteredGoals {
     return _goals.where((goal) {
+      // Search filter
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final matchesName = goal.goalName.toLowerCase().contains(query);
+        final matchesDescription = goal.description.toLowerCase().contains(query);
+        final matchesSubject = goal.subject?.toLowerCase().contains(query) ?? false;
+        final matchesCategory = goal.category.displayName.toLowerCase().contains(query);
+        if (!matchesName && !matchesDescription && !matchesSubject && !matchesCategory) {
+          return false;
+        }
+      }
+      // Category filter
       if (_selectedCategory != null && goal.category != _selectedCategory) {
         return false;
       }
+      // Status filter
       if (_selectedStatus != null && goal.status != _selectedStatus) {
         return false;
       }
@@ -104,57 +128,157 @@ class _IEPDashboardScreenState extends State<IEPDashboardScreen> {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
+                  child: const Icon(Icons.arrow_back_rounded, color: AivoTheme.textPrimary),
+                ),
               ),
-              child: const Icon(Icons.arrow_back_rounded, color: AivoTheme.textPrimary),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'IEP Goals',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AivoTheme.textPrimary,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'IEP Goals',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AivoTheme.textPrimary,
+                      ),
+                    ),
+                    if (widget.learnerName != null)
+                      Text(
+                        widget.learnerName!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AivoTheme.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Search toggle button
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showSearch = !_showSearch;
+                    if (!_showSearch) {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    } else {
+                      // Focus on search field when opened
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        _searchFocusNode.requestFocus();
+                      });
+                    }
+                  });
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _showSearch ? AivoTheme.primary.withOpacity(0.1) : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _showSearch ? Icons.close_rounded : Icons.search_rounded,
+                    color: _showSearch ? AivoTheme.primary : AivoTheme.textMuted,
                   ),
                 ),
-                if (widget.learnerName != null)
-                  Text(
-                    widget.learnerName!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AivoTheme.textMuted,
-                    ),
-                  ),
-              ],
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _loadGoals,
+                icon: const Icon(Icons.refresh_rounded),
+                color: AivoTheme.textMuted,
+              ),
+            ],
+          ),
+          // Search bar (animated slide down)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            height: _showSearch ? 56 : 0,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              opacity: _showSearch ? 1 : 0,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _buildSearchBar(),
+              ),
             ),
           ),
-          IconButton(
-            onPressed: _loadGoals,
-            icon: const Icon(Icons.refresh_rounded),
-            color: AivoTheme.textMuted,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        focusNode: _searchFocusNode,
+        onChanged: (value) => setState(() => _searchQuery = value),
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Search goals by name, subject, or category...',
+          hintStyle: TextStyle(
+            color: AivoTheme.textMuted,
+            fontSize: 13,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: AivoTheme.textMuted,
+            size: 20,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, size: 18, color: AivoTheme.textMuted),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
       ),
     );
   }
@@ -424,16 +548,19 @@ class _IEPDashboardScreenState extends State<IEPDashboardScreen> {
           ),
           const SizedBox(width: 8),
           // Clear filters
-          if (_selectedCategory != null || _selectedStatus != null)
+          if (_selectedCategory != null || _selectedStatus != null || _searchQuery.isNotEmpty)
             TextButton.icon(
               onPressed: () {
                 setState(() {
                   _selectedCategory = null;
                   _selectedStatus = null;
+                  _searchQuery = '';
+                  _searchController.clear();
+                  _showSearch = false;
                 });
               },
               icon: const Icon(Icons.clear, size: 16),
-              label: const Text('Clear'),
+              label: const Text('Clear All'),
               style: TextButton.styleFrom(
                 foregroundColor: AivoTheme.textMuted,
               ),

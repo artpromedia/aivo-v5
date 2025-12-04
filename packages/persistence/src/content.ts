@@ -1,9 +1,9 @@
-import { prisma } from "./client";
+import { prisma } from './client';
 
 export async function listCurriculumTopicsForTenant(tenantId: string) {
   return prisma.curriculumTopic.findMany({
     where: { tenantId },
-    orderBy: [{ subject: "asc" }, { grade: "asc" }, { title: "asc" }]
+    orderBy: [{ subject: 'asc' }, { grade: 'asc' }, { title: 'asc' }],
   });
 }
 
@@ -26,8 +26,8 @@ export async function createCurriculumTopic(args: {
       standard: args.standard,
       code: args.code,
       title: args.title,
-      description: args.description
-    }
+      description: args.description,
+    },
   });
 }
 
@@ -37,21 +37,21 @@ export async function updateCurriculumTopic(
     title?: string;
     description?: string;
     code?: string | null;
-  }
+  },
 ) {
   return prisma.curriculumTopic.update({
     where: { id },
     data: {
       ...updates,
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    },
   });
 }
 
 export async function listContentItemsForTopic(topicId: string) {
   return prisma.contentItem.findMany({
     where: { topicId },
-    orderBy: [{ type: "asc" }, { createdAt: "desc" }]
+    orderBy: [{ type: 'asc' }, { createdAt: 'desc' }],
   });
 }
 
@@ -88,8 +88,8 @@ export async function createContentItem(args: {
       status: args.status,
       createdByUserId: args.createdByUserId,
       aiGenerated: args.aiGenerated ?? false,
-      aiModel: args.aiModel
-    }
+      aiModel: args.aiModel,
+    },
   });
 }
 
@@ -103,14 +103,19 @@ export async function updateContentItem(
     options?: Record<string, any>;
     correctAnswer?: string | null;
     accessibilityNotes?: string | null;
-  }
+  },
 ) {
   return prisma.contentItem.update({
     where: { id },
     data: {
-      ...updates,
+      title: updates.title,
+      body: updates.body,
+      status: updates.status,
+      questionFormat: updates.questionFormat,
       options: updates.options as any,
-      updatedAt: new Date()
-    }
+      correctAnswer: updates.correctAnswer,
+      accessibilityNotes: updates.accessibilityNotes,
+      updatedAt: new Date(),
+    },
   });
 }

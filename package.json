@@ -26,6 +26,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
+    "generate:openapi": "pnpm tsx scripts/generate-openapi-spec.ts",
     "seed": "ts-node --transpile-only scripts/seed-tenants-and-users.ts",
     "seed:dev-users": "ts-node --transpile-only scripts/seed-dev-users.ts",
     "clean:bom": "node scripts/strip-bom.js",

@@ -7,22 +7,19 @@ export { Button } from './Button';
 export type { ButtonProps } from './Button';
 
 // Card
-export { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
+export type {
+  CardProps,
+  CardHeaderProps,
+  CardTitleProps,
+  CardDescriptionProps,
+  CardContentProps,
+  CardFooterProps,
 } from './Card';
-export type { 
-  CardProps, 
-  CardHeaderProps, 
-  CardTitleProps, 
-  CardDescriptionProps, 
-  CardContentProps, 
-  CardFooterProps 
-} from './Card';
+
+// Citation
+export { Citation } from './Citation';
+export type { CitationProps, CitationSource } from './Citation';
 
 // Input
 export { Input } from './Input';
@@ -34,16 +31,21 @@ export type { BadgeProps, BadgeGroupProps, BadgeIntent, BadgeSize } from './Badg
 
 // Progress
 export { Progress, CircularProgress } from './Progress';
-export type { ProgressProps, CircularProgressProps, ProgressSize, ProgressIntent } from './Progress';
+export type {
+  ProgressProps,
+  CircularProgressProps,
+  ProgressSize,
+  ProgressIntent,
+} from './Progress';
 
 // Alert
 export { Alert, AlertTitle, AlertDescription } from './Alert';
-export type { 
-  AlertProps, 
-  AlertTitleProps, 
-  AlertDescriptionProps, 
-  AlertIntent, 
-  AlertVariant 
+export type {
+  AlertProps,
+  AlertTitleProps,
+  AlertDescriptionProps,
+  AlertIntent,
+  AlertVariant,
 } from './Alert';
 
 // Modal
@@ -55,16 +57,16 @@ export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 
 // LiveRegion & Announcer
-export { 
-  LiveRegion, 
-  useAnnounce, 
-  useAnnouncer, 
+export {
+  LiveRegion,
+  useAnnounce,
+  useAnnouncer,
   AnnouncerProvider,
   VisuallyHidden,
   LoadingAnnouncement,
 } from './LiveRegion';
-export type { 
-  LiveRegionProps, 
+export type {
+  LiveRegionProps,
   UseAnnounceReturn,
   AnnounceOptions,
   AnnouncerProviderProps,
@@ -78,7 +80,7 @@ export type { ThemeSwitcherProps } from './ThemeSwitcher';
 
 // ThemeDevTools (Development Only)
 // Zero bundle size in production
-export { 
+export {
   ThemeDevTools,
   ThemePreviewPanel,
   AccessibilityPanel,
@@ -87,7 +89,4 @@ export {
   CSSVariableInspector,
   useDevTools,
 } from './ThemeDevTools';
-export type { 
-  ThemeDevToolsProps,
-  DevToolsTab,
-} from './ThemeDevTools';
+export type { ThemeDevToolsProps, DevToolsTab } from './ThemeDevTools';

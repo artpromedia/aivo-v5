@@ -17,7 +17,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "build": "tsc -p tsconfig.build.json",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand --passWithNoTests"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0"

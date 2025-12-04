@@ -13,6 +13,7 @@ export { IEPMiniProgressChart, IEPMiniProgressChartSkeleton } from './IEPMiniPro
 export { IEPDataPointList, IEPDataPointListSkeleton } from './IEPDataPointList';
 export { IEPNotesList, IEPNotesListSkeleton } from './IEPNotesList';
 export { IEPTimeline, IEPTimelineCompact, IEPTimelineSkeleton } from './IEPTimeline';
+export { IEPStatisticsTab } from './IEPStatisticsTab';
 
 // Data Entry Components
 export { IEPDataEntryModal } from './IEPDataEntryModal';

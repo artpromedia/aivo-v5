@@ -1,0 +1,398 @@
+/**
+ * Email Persistence Layer
+ *
+ * Provides functions for managing email preferences and password reset tokens.
+ */
+
+import { prisma } from './client';
+import { randomBytes } from 'crypto';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface EmailPreferences {
+  marketing: boolean;
+  productUpdates: boolean;
+  trialReminders: boolean;
+  paymentNotifications: boolean;
+  securityAlerts: boolean;
+  weeklyDigest: boolean;
+}
+
+export const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
+  marketing: true,
+  productUpdates: true,
+  trialReminders: true,
+  paymentNotifications: true,
+  securityAlerts: true,
+  weeklyDigest: false,
+};
+
+// ============================================================================
+// Email Preferences
+// ============================================================================
+
+/**
+ * Get email preferences for a user
+ */
+export async function getEmailPreferences(userId: string): Promise<EmailPreferences> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { emailPreferences: true },
+  });
+
+  if (!user?.emailPreferences) {
+    return DEFAULT_EMAIL_PREFERENCES;
+  }
+
+  return {
+    ...DEFAULT_EMAIL_PREFERENCES,
+    ...(user.emailPreferences as Partial<EmailPreferences>),
+  };
+}
+
+/**
+ * Update email preferences for a user
+ */
+export async function updateEmailPreferences(
+  userId: string,
+  preferences: Partial<EmailPreferences>
+): Promise<EmailPreferences> {
+  const current = await getEmailPreferences(userId);
+  const updated = { ...current, ...preferences };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { emailPreferences: updated },
+  });
+
+  return updated;
+}
+
+/**
+ * Unsubscribe a user from all marketing emails
+ */
+export async function unsubscribeFromMarketing(userId: string): Promise<void> {
+  await updateEmailPreferences(userId, {
+    marketing: false,
+    productUpdates: false,
+    weeklyDigest: false,
+  });
+}
+
+/**
+ * Unsubscribe a user from all non-essential emails
+ */
+export async function unsubscribeFromAll(userId: string): Promise<void> {
+  await updateEmailPreferences(userId, {
+    marketing: false,
+    productUpdates: false,
+    trialReminders: false,
+    weeklyDigest: false,
+    // Keep payment and security enabled for important notifications
+  });
+}
+
+// ============================================================================
+// Password Reset
+// ============================================================================
+
+/**
+ * Generate a password reset token for a user
+ * @returns The reset token (to be sent via email)
+ */
+export async function createPasswordResetToken(
+  email: string,
+  expiresInMinutes: number = 60
+): Promise<{ token: string; userId: string; userName: string | null } | null> {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  // Generate a secure random token
+  const token = randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetToken: token,
+      passwordResetExpiresAt: expiresAt,
+    },
+  });
+
+  return {
+    token,
+    userId: user.id,
+    userName: user.name,
+  };
+}
+
+/**
+ * Verify a password reset token
+ */
+export async function verifyPasswordResetToken(
+  token: string
+): Promise<{ valid: boolean; userId?: string; email?: string; expired?: boolean }> {
+  const user = await prisma.user.findUnique({
+    where: { passwordResetToken: token },
+    select: {
+      id: true,
+      email: true,
+      passwordResetExpiresAt: true,
+    },
+  });
+
+  if (!user) {
+    return { valid: false };
+  }
+
+  if (!user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+    return { valid: false, expired: true };
+  }
+
+  return {
+    valid: true,
+    userId: user.id,
+    email: user.email,
+  };
+}
+
+/**
+ * Clear password reset token after successful reset
+ */
+export async function clearPasswordResetToken(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordResetToken: null,
+      passwordResetExpiresAt: null,
+    },
+  });
+}
+
+/**
+ * Reset password using token
+ * Note: This function doesn't actually set the password since
+ * password hashing should be handled by the auth layer
+ */
+export async function consumePasswordResetToken(
+  token: string
+): Promise<{ success: boolean; userId?: string; error?: string }> {
+  const verification = await verifyPasswordResetToken(token);
+
+  if (!verification.valid) {
+    return {
+      success: false,
+      error: verification.expired ? 'Token expired' : 'Invalid token',
+    };
+  }
+
+  // Clear the token
+  await clearPasswordResetToken(verification.userId!);
+
+  return {
+    success: true,
+    userId: verification.userId,
+  };
+}
+
+// ============================================================================
+// Trial/Subscription Email Queries
+// ============================================================================
+
+/**
+ * Find users with trials expiring in the given number of days
+ */
+export async function findUsersWithExpiringTrials(
+  daysFromNow: number
+): Promise<
+  Array<{
+    userId: string;
+    email: string;
+    name: string | null;
+    tenantId: string;
+    trialEndsAt: Date;
+    emailPreferences: EmailPreferences;
+  }>
+> {
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + daysFromNow);
+  
+  // Start of the target day
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  // End of the target day
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const subscriptions = await prisma.subscription.findMany({
+    where: {
+      status: 'TRIAL_ACTIVE',
+      trialEndsAt: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+    },
+    include: {
+      tenant: {
+        include: {
+          users: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              emailPreferences: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return subscriptions.flatMap((sub) =>
+    sub.tenant.users.map((user) => ({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      tenantId: sub.tenantId,
+      trialEndsAt: sub.trialEndsAt!,
+      emailPreferences: {
+        ...DEFAULT_EMAIL_PREFERENCES,
+        ...((user.emailPreferences as Partial<EmailPreferences>) || {}),
+      },
+    }))
+  );
+}
+
+/**
+ * Find users with trials that just expired
+ */
+export async function findUsersWithExpiredTrials(
+  expiredWithinHours: number = 24
+): Promise<
+  Array<{
+    userId: string;
+    email: string;
+    name: string | null;
+    tenantId: string;
+    trialEndedAt: Date;
+    emailPreferences: EmailPreferences;
+  }>
+> {
+  const now = new Date();
+  const lookbackTime = new Date(now.getTime() - expiredWithinHours * 60 * 60 * 1000);
+
+  const subscriptions = await prisma.subscription.findMany({
+    where: {
+      status: 'TRIAL_EXPIRED',
+      trialEndsAt: {
+        gte: lookbackTime,
+        lte: now,
+      },
+    },
+    include: {
+      tenant: {
+        include: {
+          users: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              emailPreferences: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return subscriptions.flatMap((sub) =>
+    sub.tenant.users.map((user) => ({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      tenantId: sub.tenantId,
+      trialEndedAt: sub.trialEndsAt!,
+      emailPreferences: {
+        ...DEFAULT_EMAIL_PREFERENCES,
+        ...((user.emailPreferences as Partial<EmailPreferences>) || {}),
+      },
+    }))
+  );
+}
+
+/**
+ * Get user info for sending email
+ */
+export async function getUserForEmail(
+  userId: string
+): Promise<{
+  id: string;
+  email: string;
+  name: string | null;
+  tenantId: string;
+  emailPreferences: EmailPreferences;
+} | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      tenantId: true,
+      emailPreferences: true,
+    },
+  });
+
+  if (!user) return null;
+
+  return {
+    ...user,
+    emailPreferences: {
+      ...DEFAULT_EMAIL_PREFERENCES,
+      ...((user.emailPreferences as Partial<EmailPreferences>) || {}),
+    },
+  };
+}
+
+/**
+ * Get user by email for email operations
+ */
+export async function getUserByEmailForEmail(
+  email: string
+): Promise<{
+  id: string;
+  email: string;
+  name: string | null;
+  tenantId: string;
+  emailPreferences: EmailPreferences;
+} | null> {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      tenantId: true,
+      emailPreferences: true,
+    },
+  });
+
+  if (!user) return null;
+
+  return {
+    ...user,
+    emailPreferences: {
+      ...DEFAULT_EMAIL_PREFERENCES,
+      ...((user.emailPreferences as Partial<EmailPreferences>) || {}),
+    },
+  };
+}

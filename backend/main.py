@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
     logger.info(f"Developer: {settings.APP_AUTHOR}")
     logger.info(f"Startup Time: {datetime.utcnow().isoformat()}")
     
+    # Store start time for uptime calculation
+    app.state.start_time = datetime.utcnow()
+    
     try:
         # Initialize database
         try:
@@ -171,12 +174,52 @@ app.include_router(websocket_router, tags=["WebSocket"])
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint for monitoring"""
+    from db.database import get_db_status
+    
+    # Check database status
+    db_status = "connected"
+    try:
+        db_info = await get_db_status()
+        db_status = "connected" if db_info.get("connected") else "disconnected"
+    except Exception:
+        db_status = "error"
+    
+    # Check Redis status
+    redis_status = "connected"
+    try:
+        # Redis check through socket manager if available
+        if hasattr(app.state, 'socket_manager') and app.state.socket_manager:
+            redis_status = "connected"
+        else:
+            redis_status = "disconnected"
+    except Exception:
+        redis_status = "error"
+    
+    # Check agents status
+    agents_status = "ready"
+    try:
+        if hasattr(app.state, 'agent_manager') and app.state.agent_manager:
+            agents_status = "ready"
+        else:
+            agents_status = "initializing"
+    except Exception:
+        agents_status = "error"
+    
+    # Calculate uptime
+    uptime_seconds = 0
+    if hasattr(app.state, 'start_time'):
+        uptime_seconds = int((datetime.utcnow() - app.state.start_time).total_seconds())
+    
     return {
         "status": "healthy",
-        "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "environment": settings.ENVIRONMENT,
         "timestamp": datetime.utcnow().isoformat(),
+        "uptime": uptime_seconds,
+        "services": {
+            "database": db_status,
+            "redis": redis_status,
+            "agents": agents_status,
+        },
         "features": {
             "virtual_brain": settings.ENABLE_VIRTUAL_BRAIN,
             "speech_analysis": settings.ENABLE_SPEECH_ANALYSIS,

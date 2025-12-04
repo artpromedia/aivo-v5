@@ -3,25 +3,38 @@
  * Multi-Provider AI system with automatic fallback, cost tracking, and admin management
  */
 
-import { randomUUID } from "crypto";
-import Fastify from "fastify";
-import { z } from "zod";
-import { callWithFailover } from "./index";
-import { multiProviderAIService } from "./multi-provider-service";
-import type { ModelDispatchConfig } from "@aivo/types";
+import { randomUUID } from 'crypto';
+import Fastify from 'fastify';
+import { z } from 'zod';
+import { callWithFailover } from './index';
+import { multiProviderAIService } from './multi-provider-service';
 import {
+  shouldRouteToPhython,
+  callBrainService,
+  checkBrainServiceHealth,
+  routeSpeechAnalysis,
+  routeMLInference,
+  routeFocusAnalytics,
+  type SpeechAnalysisPayload,
+  type MLInferencePayload,
+  type FocusAnalyticsPayload,
+} from './brain-router';
+import type { ModelDispatchConfig } from '@aivo/types';
+import {
+  initObservability,
+  observabilityPlugin,
   info,
   warn,
   error as logError,
   recordMetric,
+  recordLLMMetrics,
+  recordError,
   startSpan,
   endSpan,
-  drainMetrics
-} from "@aivo/observability";
-import {
-  applyToneGuidelines,
-  scanForSafetyConcerns
-} from "@aivo/guardrails";
+  drainMetrics,
+  withLLMTrace,
+} from '@aivo/observability';
+import { applyToneGuidelines, scanForSafetyConcerns } from '@aivo/guardrails';
 import {
   getOrCreateTenantLimits,
   getTenantUsageForDate,
@@ -50,9 +63,23 @@ import {
   createAIExperiment,
   updateAIExperiment,
   getExperimentResults,
-} from "@aivo/persistence";
+} from '@aivo/persistence';
+
+// Initialize observability before creating Fastify instance
+initObservability({
+  serviceName: 'model-dispatch',
+  serviceVersion: process.env.APP_VERSION || '1.0.0',
+  environment: process.env.NODE_ENV || 'development',
+});
 
 const fastify = Fastify({ logger: false });
+
+// Register observability plugin for automatic request tracking
+fastify.register(observabilityPlugin, {
+  ignorePaths: ['/health', '/ready', '/metrics'],
+  logRequests: true,
+  recordMetrics: true,
+});
 
 // ============================================================================
 // REQUEST SCHEMAS
@@ -63,13 +90,45 @@ const legacyBodySchema = z.object({
   system: z.string().optional(),
   config: z
     .object({
-      primary: z.enum(["openai", "anthropic", "google", "meta", "cohere", "mistral", "huggingface", "groq", "together", "replicate", "azure_openai", "aws_bedrock", "custom", "aivo_brain"]),
-      fallbacks: z.array(z.enum(["openai", "anthropic", "google", "meta", "cohere", "mistral", "huggingface", "groq", "together", "replicate", "azure_openai", "aws_bedrock", "custom", "aivo_brain"]))
+      primary: z.enum([
+        'openai',
+        'anthropic',
+        'google',
+        'meta',
+        'cohere',
+        'mistral',
+        'huggingface',
+        'groq',
+        'together',
+        'replicate',
+        'azure_openai',
+        'aws_bedrock',
+        'custom',
+        'aivo_brain',
+      ]),
+      fallbacks: z.array(
+        z.enum([
+          'openai',
+          'anthropic',
+          'google',
+          'meta',
+          'cohere',
+          'mistral',
+          'huggingface',
+          'groq',
+          'together',
+          'replicate',
+          'azure_openai',
+          'aws_bedrock',
+          'custom',
+          'aivo_brain',
+        ]),
+      ),
     })
     .optional(),
   learnerId: z.string().optional(),
   tenantId: z.string().optional(),
-  selProfile: z.any().optional()
+  selProfile: z.any().optional(),
 });
 
 const completionSchema = z.object({
@@ -82,20 +141,24 @@ const completionSchema = z.object({
   budget: z.number().optional(),
   maxTokens: z.number().optional(),
   temperature: z.number().optional(),
-  metadata: z.object({
-    tenantId: z.string().optional(),
-    learnerId: z.string().optional(),
-    userId: z.string().optional(),
-    requestId: z.string().optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      tenantId: z.string().optional(),
+      learnerId: z.string().optional(),
+      userId: z.string().optional(),
+      requestId: z.string().optional(),
+    })
+    .optional(),
 });
 
 const chatSchema = z.object({
-  messages: z.array(z.object({
-    role: z.enum(["system", "user", "assistant", "function"]),
-    content: z.string(),
-    name: z.string().optional(),
-  })),
+  messages: z.array(
+    z.object({
+      role: z.enum(['system', 'user', 'assistant', 'function']),
+      content: z.string(),
+      name: z.string().optional(),
+    }),
+  ),
   useCase: z.string(),
   preferredProvider: z.string().optional(),
   preferredModel: z.string().optional(),
@@ -103,12 +166,14 @@ const chatSchema = z.object({
   budget: z.number().optional(),
   maxTokens: z.number().optional(),
   temperature: z.number().optional(),
-  metadata: z.object({
-    tenantId: z.string().optional(),
-    learnerId: z.string().optional(),
-    userId: z.string().optional(),
-    requestId: z.string().optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      tenantId: z.string().optional(),
+      learnerId: z.string().optional(),
+      userId: z.string().optional(),
+      requestId: z.string().optional(),
+    })
+    .optional(),
 });
 
 const embeddingSchema = z.object({
@@ -116,15 +181,32 @@ const embeddingSchema = z.object({
   useCase: z.string().optional(),
   preferredProvider: z.string().optional(),
   preferredModel: z.string().optional(),
-  metadata: z.object({
-    tenantId: z.string().optional(),
-    learnerId: z.string().optional(),
-    userId: z.string().optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      tenantId: z.string().optional(),
+      learnerId: z.string().optional(),
+      userId: z.string().optional(),
+    })
+    .optional(),
 });
 
 const providerSchema = z.object({
-  providerType: z.enum(["OPENAI", "ANTHROPIC", "GOOGLE", "META", "COHERE", "MISTRAL", "HUGGINGFACE", "GROQ", "TOGETHER", "REPLICATE", "AZURE_OPENAI", "AWS_BEDROCK", "CUSTOM", "AIVO_BRAIN"]),
+  providerType: z.enum([
+    'OPENAI',
+    'ANTHROPIC',
+    'GOOGLE',
+    'META',
+    'COHERE',
+    'MISTRAL',
+    'HUGGINGFACE',
+    'GROQ',
+    'TOGETHER',
+    'REPLICATE',
+    'AZURE_OPENAI',
+    'AWS_BEDROCK',
+    'CUSTOM',
+    'AIVO_BRAIN',
+  ]),
   name: z.string(),
   apiEndpoint: z.string().optional(),
   apiKey: z.string().optional(),
@@ -147,7 +229,7 @@ const modelSchema = z.object({
   costPer1kInput: z.number(),
   costPer1kOutput: z.number(),
   useCases: z.array(z.string()).optional(),
-  qualityTier: z.enum(["ECONOMY", "STANDARD", "PREMIUM"]).optional(),
+  qualityTier: z.enum(['ECONOMY', 'STANDARD', 'PREMIUM']).optional(),
   supportedLanguages: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
   metadata: z.any().optional(),
@@ -162,18 +244,20 @@ const fallbackChainSchema = z.object({
   retryDelayMs: z.number().optional(),
   timeoutMs: z.number().optional(),
   budgetLimit: z.number().optional(),
-  providers: z.array(z.object({
-    providerId: z.string(),
-    priority: z.number(),
-    modelOverride: z.string().optional(),
-    config: z.any().optional(),
-  })),
+  providers: z.array(
+    z.object({
+      providerId: z.string(),
+      priority: z.number(),
+      modelOverride: z.string().optional(),
+      config: z.any().optional(),
+    }),
+  ),
 });
 
 const budgetSchema = z.object({
   tenantId: z.string().optional(),
   learnerId: z.string().optional(),
-  period: z.enum(["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY"]),
+  period: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']),
   budgetAmount: z.number(),
   alertThreshold: z.number().optional(),
   hardLimit: z.boolean().optional(),
@@ -184,30 +268,32 @@ const experimentSchema = z.object({
   description: z.string().optional(),
   useCase: z.string(),
   trafficPercent: z.number().optional(),
-  variants: z.array(z.object({
-    name: z.string(),
-    providerId: z.string().optional(),
-    modelId: z.string().optional(),
-    config: z.any().optional(),
-    trafficWeight: z.number().optional(),
-  })),
+  variants: z.array(
+    z.object({
+      name: z.string(),
+      providerId: z.string().optional(),
+      modelId: z.string().optional(),
+      config: z.any().optional(),
+      trafficWeight: z.number().optional(),
+    }),
+  ),
 });
 
 // ============================================================================
 // LEGACY DISPATCH ENDPOINT (backward compatible)
 // ============================================================================
 
-fastify.post("/dispatch", async (request, reply) => {
-  const requestId = (request.headers["x-request-id"] as string) ?? randomUUID();
-  const span = startSpan("model_dispatch", { requestId });
+fastify.post('/dispatch', async (request, reply) => {
+  const requestId = (request.headers['x-request-id'] as string) ?? randomUUID();
+  const span = startSpan('model_dispatch', { requestId });
   const startedAt = Date.now();
 
   const parsed = legacyBodySchema.parse(request.body);
   const tenantId = parsed.tenantId ?? undefined;
   const today = new Date().toISOString().slice(0, 10);
   const config: ModelDispatchConfig = parsed.config ?? {
-    primary: "openai",
-    fallbacks: ["anthropic", "google", "meta"]
+    primary: 'openai',
+    fallbacks: ['anthropic', 'google', 'meta'],
   };
 
   try {
@@ -228,9 +314,9 @@ fastify.post("/dispatch", async (request, reply) => {
       });
 
       if (filtered.length === 0) {
-        warn("No providers allowed for tenant", { tenantId, requestId });
+        warn('No providers allowed for tenant', { tenantId, requestId });
         endSpan(span);
-        return reply.status(403).send({ error: "No AI providers allowed for this tenant." });
+        return reply.status(403).send({ error: 'No AI providers allowed for this tenant.' });
       }
 
       config.primary = filtered[0] as typeof config.primary;
@@ -240,18 +326,18 @@ fastify.post("/dispatch", async (request, reply) => {
         const usage = await getTenantUsageForDate(tenantId, today);
         const used = usage?.llmCalls ?? 0;
         if (used >= limits.maxDailyLlmCalls) {
-          warn("Tenant exceeded LLM quota", {
+          warn('Tenant exceeded LLM quota', {
             tenantId,
             requestId,
-            meta: { used, limit: limits.maxDailyLlmCalls }
+            meta: { used, limit: limits.maxDailyLlmCalls },
           });
           endSpan(span);
-          return reply.status(429).send({ error: "Daily LLM quota exceeded." });
+          return reply.status(429).send({ error: 'Daily LLM quota exceeded.' });
         }
         if (used >= Math.floor(limits.maxDailyLlmCalls * 0.8)) {
           reply.header(
-            "x-aivo-usage-warning",
-            `LLM quota ${used}/${limits.maxDailyLlmCalls} approaching limit`
+            'x-aivo-usage-warning',
+            `LLM quota ${used}/${limits.maxDailyLlmCalls} approaching limit`,
           );
         }
       }
@@ -260,47 +346,50 @@ fastify.post("/dispatch", async (request, reply) => {
     const adjustedPrompt = applyToneGuidelines(parsed.prompt, parsed.selProfile);
     const result = await callWithFailover(config, {
       prompt: adjustedPrompt,
-      system: parsed.system
+      system: parsed.system,
     });
 
     const duration = Date.now() - startedAt;
 
     recordMetric({
-      name: "llm_request_latency_ms",
+      name: 'llm_request_latency_ms',
       value: duration,
       labels: {
         provider: result.provider,
-        tenantId: tenantId ?? "unknown"
+        tenantId: tenantId ?? 'unknown',
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
-    info("LLM call success", {
+    info('LLM call success', {
       tenantId,
       requestId,
       meta: {
         provider: result.provider,
-        durationMs: duration
-      }
+        durationMs: duration,
+      },
     });
 
     if (tenantId) {
       await incrementTenantUsage({
         tenantId,
         date: today,
-        llmCalls: 1
+        llmCalls: 1,
       });
     }
 
-    const safetyScan = scanForSafetyConcerns(result.content ?? "");
+    const safetyScan = scanForSafetyConcerns(result.content ?? '');
     if (safetyScan.flagged && tenantId) {
       await logSafetyIncident({
         tenantId,
         learnerId: parsed.learnerId,
-        type: safetyScan.type ?? "inappropriate_language",
-        severity: (safetyScan.severity?.toUpperCase() ?? "WATCH") as "WATCH" | "CONCERN" | "CRITICAL",
-        message: `Guardrails flagged output: ${(safetyScan.matches ?? []).join(", ")}`,
-        rawModelResponse: result.content
+        type: safetyScan.type ?? 'inappropriate_language',
+        severity: (safetyScan.severity?.toUpperCase() ?? 'WATCH') as
+          | 'WATCH'
+          | 'CONCERN'
+          | 'CRITICAL',
+        message: `Guardrails flagged output: ${(safetyScan.matches ?? []).join(', ')}`,
+        rawModelResponse: result.content,
       });
     }
 
@@ -310,25 +399,25 @@ fastify.post("/dispatch", async (request, reply) => {
     const duration = Date.now() - startedAt;
 
     recordMetric({
-      name: "llm_request_errors_total",
+      name: 'llm_request_errors_total',
       value: 1,
       labels: {
-        tenantId: tenantId ?? "unknown"
+        tenantId: tenantId ?? 'unknown',
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
-    logError("LLM call failed", {
+    logError('LLM call failed', {
       tenantId,
       requestId,
       meta: {
         error: err instanceof Error ? err.message : String(err),
-        durationMs: duration
-      }
+        durationMs: duration,
+      },
     });
 
     endSpan(span);
-    return reply.status(500).send({ error: "Model dispatch failed.", requestId });
+    return reply.status(500).send({ error: 'Model dispatch failed.', requestId });
   }
 });
 
@@ -337,47 +426,348 @@ fastify.post("/dispatch", async (request, reply) => {
 // ============================================================================
 
 // Unified completion endpoint
-fastify.post("/api/ai/completion", async (request, reply) => {
+fastify.post('/api/ai/completion', async (request, reply) => {
   try {
     const body = completionSchema.parse(request.body);
     const result = await multiProviderAIService.complete(body);
     return reply.send(result);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Completion endpoint error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Completion endpoint error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Chat completion endpoint
-fastify.post("/api/ai/chat", async (request, reply) => {
+fastify.post('/api/ai/chat', async (request, reply) => {
   try {
     const body = chatSchema.parse(request.body);
     const result = await multiProviderAIService.chat(body);
     return reply.send(result);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Chat endpoint error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Chat endpoint error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Embedding endpoint
-fastify.post("/api/ai/embedding", async (request, reply) => {
+fastify.post('/api/ai/embedding', async (request, reply) => {
   try {
     const body = embeddingSchema.parse(request.body);
     const result = await multiProviderAIService.embed(body);
     return reply.send(result);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Embedding endpoint error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Embedding endpoint error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// PYTHON BRAIN SERVICE ENDPOINTS
+// ============================================================================
+
+// Speech Analysis Schema
+const speechAnalysisSchema = z.object({
+  audioBase64: z.string(),
+  sampleRate: z.number().optional().default(16000),
+  childAge: z.number().min(2).max(18),
+  taskType: z.enum(['articulation', 'fluency', 'conversation', 'reading']),
+  targetText: z.string().optional(),
+  learnerId: z.string().optional(),
+  tenantId: z.string().optional(),
+});
+
+// ML Inference Schema
+const mlInferenceSchema = z.object({
+  modelType: z.enum([
+    'difficulty_prediction',
+    'engagement_prediction',
+    'content_recommendation',
+    'learning_style_detection',
+    'emotion_detection',
+    'focus_prediction',
+    'personalized_learning',
+  ]),
+  input: z.record(z.unknown()),
+  learnerId: z.string().optional(),
+  tenantId: z.string().optional(),
+  options: z
+    .object({
+      returnProbabilities: z.boolean().optional(),
+      topK: z.number().optional(),
+      threshold: z.number().optional(),
+    })
+    .optional(),
+});
+
+// Focus Analytics Schema
+const focusAnalyticsSchema = z.object({
+  learnerId: z.string(),
+  sessionId: z.string(),
+  metrics: z.object({
+    mouseMovements: z
+      .array(
+        z.object({
+          x: z.number(),
+          y: z.number(),
+          timestamp: z.number(),
+        }),
+      )
+      .optional(),
+    keystrokes: z
+      .array(
+        z.object({
+          key: z.string(),
+          timestamp: z.number(),
+        }),
+      )
+      .optional(),
+    scrollEvents: z
+      .array(
+        z.object({
+          scrollY: z.number(),
+          timestamp: z.number(),
+        }),
+      )
+      .optional(),
+    focusChanges: z
+      .array(
+        z.object({
+          focused: z.boolean(),
+          timestamp: z.number(),
+        }),
+      )
+      .optional(),
+    sessionDuration: z.number(),
+  }),
+  tenantId: z.string().optional(),
+});
+
+// Brain Service Health Check
+fastify.get('/api/brain/health', async (_request, reply) => {
+  try {
+    const health = await checkBrainServiceHealth();
+    const statusCode = health.healthy ? 200 : 503;
+    return reply.status(statusCode).send(health);
+  } catch (err) {
+    logError('Brain service health check error', { meta: { error: String(err) } });
+    return reply.status(503).send({
+      healthy: false,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
+
+// Speech Analysis Endpoint
+fastify.post('/api/brain/speech/analyze', async (request, reply) => {
+  const requestId = randomUUID();
+  try {
+    const body = speechAnalysisSchema.parse(request.body);
+
+    info('Routing speech analysis to Python Brain Service', {
+      meta: {
+        requestId,
+        taskType: body.taskType,
+        childAge: body.childAge,
+        learnerId: body.learnerId,
+      },
+    });
+
+    const result = await routeSpeechAnalysis(body as SpeechAnalysisPayload, requestId);
+
+    if (!result.success) {
+      logError('Speech analysis failed', {
+        meta: { requestId, error: result.error },
+      });
+      return reply.status(500).send({
+        error: result.error,
+        requestId,
+        processingTimeMs: result.processingTimeMs,
+      });
+    }
+
+    return reply.send({
+      ...result.data,
+      requestId,
+      processingTimeMs: result.processingTimeMs,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({
+        error: 'Invalid request',
+        details: err.errors,
+        requestId,
+      });
+    }
+    logError('Speech analysis endpoint error', { meta: { error: String(err), requestId } });
+    return reply.status(500).send({ error: 'Internal server error', requestId });
+  }
+});
+
+// ML Inference Endpoint
+fastify.post('/api/brain/ml/inference', async (request, reply) => {
+  const requestId = randomUUID();
+  try {
+    const body = mlInferenceSchema.parse(request.body);
+
+    info('Routing ML inference to Python Brain Service', {
+      meta: {
+        requestId,
+        modelType: body.modelType,
+        learnerId: body.learnerId,
+      },
+    });
+
+    const result = await routeMLInference(body as MLInferencePayload, requestId);
+
+    if (!result.success) {
+      logError('ML inference failed', {
+        meta: { requestId, error: result.error },
+      });
+      return reply.status(500).send({
+        error: result.error,
+        requestId,
+        processingTimeMs: result.processingTimeMs,
+      });
+    }
+
+    return reply.send({
+      ...result.data,
+      requestId,
+      processingTimeMs: result.processingTimeMs,
+      metadata: result.metadata,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({
+        error: 'Invalid request',
+        details: err.errors,
+        requestId,
+      });
+    }
+    logError('ML inference endpoint error', { meta: { error: String(err), requestId } });
+    return reply.status(500).send({ error: 'Internal server error', requestId });
+  }
+});
+
+// Focus Analytics Endpoint
+fastify.post('/api/brain/analytics/focus', async (request, reply) => {
+  const requestId = randomUUID();
+  try {
+    const body = focusAnalyticsSchema.parse(request.body);
+
+    info('Routing focus analytics to Python Brain Service', {
+      meta: {
+        requestId,
+        learnerId: body.learnerId,
+        sessionId: body.sessionId,
+      },
+    });
+
+    const result = await routeFocusAnalytics(body as FocusAnalyticsPayload, requestId);
+
+    if (!result.success) {
+      logError('Focus analytics failed', {
+        meta: { requestId, error: result.error },
+      });
+      return reply.status(500).send({
+        error: result.error,
+        requestId,
+        processingTimeMs: result.processingTimeMs,
+      });
+    }
+
+    return reply.send({
+      ...result.data,
+      requestId,
+      processingTimeMs: result.processingTimeMs,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({
+        error: 'Invalid request',
+        details: err.errors,
+        requestId,
+      });
+    }
+    logError('Focus analytics endpoint error', { meta: { error: String(err), requestId } });
+    return reply.status(500).send({ error: 'Internal server error', requestId });
+  }
+});
+
+// Generic Brain Service Proxy Endpoint
+fastify.post('/api/brain/invoke', async (request, reply) => {
+  const requestId = randomUUID();
+  try {
+    const body = z
+      .object({
+        taskType: z.string(),
+        payload: z.record(z.unknown()),
+        learnerId: z.string().optional(),
+        tenantId: z.string().optional(),
+      })
+      .parse(request.body);
+
+    if (!shouldRouteToPhython(body.taskType)) {
+      return reply.status(400).send({
+        error: `Task type '${body.taskType}' is not routed to Python Brain Service`,
+        requestId,
+      });
+    }
+
+    info('Routing task to Python Brain Service', {
+      meta: {
+        requestId,
+        taskType: body.taskType,
+        learnerId: body.learnerId,
+      },
+    });
+
+    const result = await callBrainService({
+      taskType: body.taskType,
+      payload: body.payload,
+      metadata: {
+        learnerId: body.learnerId,
+        tenantId: body.tenantId,
+        requestId,
+      },
+    });
+
+    if (!result.success) {
+      logError('Brain service invocation failed', {
+        meta: { requestId, error: result.error },
+      });
+      return reply.status(500).send({
+        error: result.error,
+        requestId,
+        processingTimeMs: result.processingTimeMs,
+      });
+    }
+
+    return reply.send({
+      data: result.data,
+      requestId,
+      processingTimeMs: result.processingTimeMs,
+      metadata: result.metadata,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({
+        error: 'Invalid request',
+        details: err.errors,
+        requestId,
+      });
+    }
+    logError('Brain invoke endpoint error', { meta: { error: String(err), requestId } });
+    return reply.status(500).send({ error: 'Internal server error', requestId });
   }
 });
 
@@ -386,37 +776,37 @@ fastify.post("/api/ai/embedding", async (request, reply) => {
 // ============================================================================
 
 // List all providers
-fastify.get("/api/admin/ai/providers", async (request, reply) => {
+fastify.get('/api/admin/ai/providers', async (request, reply) => {
   try {
     const query = request.query as { activeOnly?: string; providerType?: string };
     const providers = await listAIProviders({
-      activeOnly: query.activeOnly === "true",
+      activeOnly: query.activeOnly === 'true',
       providerType: query.providerType,
     });
     return reply.send({ providers });
   } catch (err) {
-    logError("List providers error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('List providers error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Get single provider
-fastify.get("/api/admin/ai/providers/:id", async (request, reply) => {
+fastify.get('/api/admin/ai/providers/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const provider = await getAIProvider(id);
     if (!provider) {
-      return reply.status(404).send({ error: "Provider not found" });
+      return reply.status(404).send({ error: 'Provider not found' });
     }
     return reply.send({ provider });
   } catch (err) {
-    logError("Get provider error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Get provider error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Create provider
-fastify.post("/api/admin/ai/providers", async (request, reply) => {
+fastify.post('/api/admin/ai/providers', async (request, reply) => {
   try {
     const body = providerSchema.parse(request.body);
     // TODO: Encrypt API key before storing
@@ -424,19 +814,21 @@ fastify.post("/api/admin/ai/providers", async (request, reply) => {
       ...body,
       apiKeyEncrypted: body.apiKey, // Should encrypt in production
     });
-    info("AI provider created", { meta: { providerId: provider.id, providerType: body.providerType } });
+    info('AI provider created', {
+      meta: { providerId: provider.id, providerType: body.providerType },
+    });
     return reply.status(201).send({ provider });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Create provider error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Create provider error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Update provider
-fastify.put("/api/admin/ai/providers/:id", async (request, reply) => {
+fastify.put('/api/admin/ai/providers/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const body = providerSchema.partial().parse(request.body);
@@ -444,27 +836,27 @@ fastify.put("/api/admin/ai/providers/:id", async (request, reply) => {
       ...body,
       apiKeyEncrypted: body.apiKey,
     });
-    info("AI provider updated", { meta: { providerId: id } });
+    info('AI provider updated', { meta: { providerId: id } });
     return reply.send({ provider });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Update provider error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Update provider error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Delete provider
-fastify.delete("/api/admin/ai/providers/:id", async (request, reply) => {
+fastify.delete('/api/admin/ai/providers/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     await deleteAIProvider(id);
-    info("AI provider deleted", { meta: { providerId: id } });
+    info('AI provider deleted', { meta: { providerId: id } });
     return reply.status(204).send();
   } catch (err) {
-    logError("Delete provider error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Delete provider error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
@@ -473,7 +865,7 @@ fastify.delete("/api/admin/ai/providers/:id", async (request, reply) => {
 // ============================================================================
 
 // List models
-fastify.get("/api/admin/ai/models", async (request, reply) => {
+fastify.get('/api/admin/ai/models', async (request, reply) => {
   try {
     const query = request.query as {
       providerId?: string;
@@ -483,60 +875,60 @@ fastify.get("/api/admin/ai/models", async (request, reply) => {
     };
     const models = await listAIModels({
       providerId: query.providerId,
-      activeOnly: query.activeOnly === "true",
+      activeOnly: query.activeOnly === 'true',
       capability: query.capability,
       useCase: query.useCase,
     });
     return reply.send({ models });
   } catch (err) {
-    logError("List models error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('List models error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Create model
-fastify.post("/api/admin/ai/models", async (request, reply) => {
+fastify.post('/api/admin/ai/models', async (request, reply) => {
   try {
     const body = modelSchema.parse(request.body);
     const model = await createAIModel(body);
-    info("AI model created", { meta: { modelId: model.id, providerId: body.providerId } });
+    info('AI model created', { meta: { modelId: model.id, providerId: body.providerId } });
     return reply.status(201).send({ model });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Create model error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Create model error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Update model
-fastify.put("/api/admin/ai/models/:id", async (request, reply) => {
+fastify.put('/api/admin/ai/models/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const body = modelSchema.partial().parse(request.body);
     const model = await updateAIModel(id, body);
-    info("AI model updated", { meta: { modelId: id } });
+    info('AI model updated', { meta: { modelId: id } });
     return reply.send({ model });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Update model error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Update model error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Delete model
-fastify.delete("/api/admin/ai/models/:id", async (request, reply) => {
+fastify.delete('/api/admin/ai/models/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     await deleteAIModel(id);
-    info("AI model deleted", { meta: { modelId: id } });
+    info('AI model deleted', { meta: { modelId: id } });
     return reply.status(204).send();
   } catch (err) {
-    logError("Delete model error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Delete model error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
@@ -545,78 +937,78 @@ fastify.delete("/api/admin/ai/models/:id", async (request, reply) => {
 // ============================================================================
 
 // List fallback chains
-fastify.get("/api/admin/ai/fallback-chains", async (request, reply) => {
+fastify.get('/api/admin/ai/fallback-chains', async (request, reply) => {
   try {
     const query = request.query as { useCase?: string; activeOnly?: string };
     const chains = await listFallbackChains({
       useCase: query.useCase,
-      activeOnly: query.activeOnly === "true",
+      activeOnly: query.activeOnly === 'true',
     });
     return reply.send({ chains });
   } catch (err) {
-    logError("List fallback chains error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('List fallback chains error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Get fallback chain
-fastify.get("/api/admin/ai/fallback-chains/:id", async (request, reply) => {
+fastify.get('/api/admin/ai/fallback-chains/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const chain = await getFallbackChain(id);
     if (!chain) {
-      return reply.status(404).send({ error: "Fallback chain not found" });
+      return reply.status(404).send({ error: 'Fallback chain not found' });
     }
     return reply.send({ chain });
   } catch (err) {
-    logError("Get fallback chain error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Get fallback chain error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Create fallback chain
-fastify.post("/api/admin/ai/fallback-chains", async (request, reply) => {
+fastify.post('/api/admin/ai/fallback-chains', async (request, reply) => {
   try {
     const body = fallbackChainSchema.parse(request.body);
     const chain = await createFallbackChain(body);
-    info("Fallback chain created", { meta: { chainId: chain.id, useCase: body.useCase } });
+    info('Fallback chain created', { meta: { chainId: chain.id, useCase: body.useCase } });
     return reply.status(201).send({ chain });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Create fallback chain error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Create fallback chain error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Update fallback chain
-fastify.put("/api/admin/ai/fallback-chains/:id", async (request, reply) => {
+fastify.put('/api/admin/ai/fallback-chains/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const body = fallbackChainSchema.partial().parse(request.body);
     const chain = await updateFallbackChain(id, body);
-    info("Fallback chain updated", { meta: { chainId: id } });
+    info('Fallback chain updated', { meta: { chainId: id } });
     return reply.send({ chain });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Update fallback chain error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Update fallback chain error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Delete fallback chain
-fastify.delete("/api/admin/ai/fallback-chains/:id", async (request, reply) => {
+fastify.delete('/api/admin/ai/fallback-chains/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     await deleteFallbackChain(id);
-    info("Fallback chain deleted", { meta: { chainId: id } });
+    info('Fallback chain deleted', { meta: { chainId: id } });
     return reply.status(204).send();
   } catch (err) {
-    logError("Delete fallback chain error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Delete fallback chain error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
@@ -625,7 +1017,7 @@ fastify.delete("/api/admin/ai/fallback-chains/:id", async (request, reply) => {
 // ============================================================================
 
 // Usage analytics
-fastify.get("/api/admin/ai/usage", async (request, reply) => {
+fastify.get('/api/admin/ai/usage', async (request, reply) => {
   try {
     const query = request.query as {
       startDate?: string;
@@ -634,12 +1026,12 @@ fastify.get("/api/admin/ai/usage", async (request, reply) => {
       providerId?: string;
       useCase?: string;
     };
-    
+
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
     const startDate = query.startDate
       ? new Date(query.startDate)
       : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000); // Default 30 days
-    
+
     const analytics = await getUsageAnalytics({
       startDate,
       endDate,
@@ -647,60 +1039,60 @@ fastify.get("/api/admin/ai/usage", async (request, reply) => {
       providerId: query.providerId,
       useCase: query.useCase,
     });
-    
+
     return reply.send(analytics);
   } catch (err) {
-    logError("Usage analytics error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Usage analytics error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Cost breakdown
-fastify.get("/api/admin/ai/costs", async (request, reply) => {
+fastify.get('/api/admin/ai/costs', async (request, reply) => {
   try {
     const query = request.query as {
       startDate?: string;
       endDate?: string;
       tenantId?: string;
     };
-    
+
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
     const startDate = query.startDate
       ? new Date(query.startDate)
       : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
+
     const costs = await getCostBreakdown({
       startDate,
       endDate,
       tenantId: query.tenantId,
     });
-    
+
     return reply.send(costs);
   } catch (err) {
-    logError("Cost breakdown error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Cost breakdown error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Health dashboard
-fastify.get("/api/admin/ai/health", async (request, reply) => {
+fastify.get('/api/admin/ai/health', async (request, reply) => {
   try {
     const health = await getHealthDashboard();
     return reply.send(health);
   } catch (err) {
-    logError("Health dashboard error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Health dashboard error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Run health check on all providers
-fastify.post("/api/admin/ai/health/check", async (request, reply) => {
+fastify.post('/api/admin/ai/health/check', async (request, reply) => {
   try {
     const results = await multiProviderAIService.checkAllProviderHealth();
     return reply.send({ results });
   } catch (err) {
-    logError("Health check error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Health check error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
@@ -709,35 +1101,35 @@ fastify.post("/api/admin/ai/health/check", async (request, reply) => {
 // ============================================================================
 
 // Create budget
-fastify.post("/api/admin/ai/budgets", async (request, reply) => {
+fastify.post('/api/admin/ai/budgets', async (request, reply) => {
   try {
     const body = budgetSchema.parse(request.body);
     const budget = await createBudget(body);
-    info("Budget created", { meta: { budgetId: budget.id } });
+    info('Budget created', { meta: { budgetId: budget.id } });
     return reply.status(201).send({ budget });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Create budget error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Create budget error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Update budget
-fastify.put("/api/admin/ai/budgets/:id", async (request, reply) => {
+fastify.put('/api/admin/ai/budgets/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const body = budgetSchema.partial().parse(request.body);
     const budget = await updateBudget(id, body);
-    info("Budget updated", { meta: { budgetId: id } });
+    info('Budget updated', { meta: { budgetId: id } });
     return reply.send({ budget });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Update budget error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Update budget error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
@@ -746,47 +1138,47 @@ fastify.put("/api/admin/ai/budgets/:id", async (request, reply) => {
 // ============================================================================
 
 // Create experiment
-fastify.post("/api/admin/ai/experiments", async (request, reply) => {
+fastify.post('/api/admin/ai/experiments', async (request, reply) => {
   try {
     const body = experimentSchema.parse(request.body);
     const experiment = await createAIExperiment(body);
-    info("Experiment created", { meta: { experimentId: experiment.id } });
+    info('Experiment created', { meta: { experimentId: experiment.id } });
     return reply.status(201).send({ experiment });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Create experiment error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Create experiment error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Update experiment
-fastify.put("/api/admin/ai/experiments/:id", async (request, reply) => {
+fastify.put('/api/admin/ai/experiments/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const body = experimentSchema.partial().parse(request.body);
     const experiment = await updateAIExperiment(id, body);
-    info("Experiment updated", { meta: { experimentId: id } });
+    info('Experiment updated', { meta: { experimentId: id } });
     return reply.send({ experiment });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: "Invalid request", details: err.errors });
+      return reply.status(400).send({ error: 'Invalid request', details: err.errors });
     }
-    logError("Update experiment error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Update experiment error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 // Get experiment results
-fastify.get("/api/admin/ai/experiments/:id/results", async (request, reply) => {
+fastify.get('/api/admin/ai/experiments/:id/results', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const results = await getExperimentResults(id);
     return reply.send({ results });
   } catch (err) {
-    logError("Get experiment results error", { meta: { error: String(err) } });
-    return reply.status(500).send({ error: "Internal server error" });
+    logError('Get experiment results error', { meta: { error: String(err) } });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
@@ -794,28 +1186,36 @@ fastify.get("/api/admin/ai/experiments/:id/results", async (request, reply) => {
 // METRICS ENDPOINT
 // ============================================================================
 
-fastify.get("/metrics", async (_request, reply) => {
+fastify.get('/metrics', async (_request, reply) => {
   const metrics = drainMetrics();
   return reply.send({ metrics });
+});
+
+// Prometheus-compatible metrics endpoint
+fastify.get('/metrics/prometheus', async (_request, reply) => {
+  const { getPrometheusMetrics } = await import('@aivo/observability');
+  const prometheusMetrics = getPrometheusMetrics();
+  return reply.type('text/plain; charset=utf-8').send(prometheusMetrics);
 });
 
 // ============================================================================
 // HEALTH CHECK ENDPOINT
 // ============================================================================
 
-fastify.get("/health", async (_request, reply) => {
-  return reply.send({ status: "healthy", timestamp: new Date().toISOString() });
+fastify.get('/health', async (_request, reply) => {
+  return reply.send({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // ============================================================================
 // START SERVER
 // ============================================================================
 
-fastify.listen({ port: 4001, host: "0.0.0.0" })
+fastify
+  .listen({ port: 4001, host: '0.0.0.0' })
   .then(() => {
-    info("Model Dispatch Service listening", { meta: { port: 4001 } });
+    info('Model Dispatch Service listening', { meta: { port: 4001 } });
   })
   .catch((err) => {
-    logError("Model Dispatch failed to start", { meta: { error: String(err) } });
+    logError('Model Dispatch failed to start', { meta: { error: String(err) } });
     process.exit(1);
   });

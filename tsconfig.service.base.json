@@ -2,29 +2,15 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "Node16",
     "lib": ["ES2022"],
     "strict": true,
-    "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
+    "moduleResolution": "Node16",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"],
-    "baseUrl": ".",
-    "paths": {
-      "@aivo/types": ["../../packages/types/src"],
-      "@aivo/brain-model": ["../../packages/brain-model/src/index.ts"],
-      "@aivo/brain-model/*": ["../../packages/brain-model/src/*"],
-      "@aivo/api-client": ["../../packages/api-client/src"],
-      "@aivo/auth": ["../../packages/auth/src"],
-      "@aivo/persistence": ["../../packages/persistence/src"],
-      "@aivo/ui": ["../../packages/ui/src"],
-      "@aivo/ui/native": ["../../packages/ui/src/native.ts"],
-      "@aivo/observability": ["../../packages/observability/src"],
-      "@aivo/guardrails": ["../../packages/guardrails/src"]
-    }
+    "types": ["node", "jest"]
   },
   "exclude": ["node_modules", "dist"]
 }

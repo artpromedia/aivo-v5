@@ -1,18 +1,20 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "./client";
+import { Prisma } from '@prisma/client';
+import { prisma } from './client';
 
-const DEFAULT_REGION = "north_america";
-const DEFAULT_TENANT = "demo-tenant";
+const DEFAULT_REGION = 'north_america';
+const DEFAULT_TENANT = 'demo-tenant';
 
 function inferGradeBandFromLevel(level: number): string {
-  if (!Number.isFinite(level)) return "6_8";
-  if (level <= 5) return "k_5";
-  if (level <= 8) return "6_8";
-  return "9_12";
+  if (!Number.isFinite(level)) return '6_8';
+  if (level <= 5) return 'k_5';
+  if (level <= 8) return '6_8';
+  return '9_12';
 }
 
 function extractJsonObject(value: Prisma.JsonValue | null | undefined) {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 // --- Learner queries -------------------------------------------------------
@@ -25,19 +27,19 @@ export async function getLearnerLearningContext(learnerId: string) {
         select: {
           id: true,
           name: true,
-          email: true
-        }
+          email: true,
+        },
       },
       brainProfile: true,
       plannedSessions: {
-        orderBy: { createdAt: "desc" },
-        take: 10
+        orderBy: { createdAt: 'desc' },
+        take: 10,
       },
       progressSnapshots: {
-        orderBy: { date: "desc" },
-        take: 10
-      }
-    }
+        orderBy: { date: 'desc' },
+        take: 10,
+      },
+    },
   });
 }
 
@@ -57,7 +59,7 @@ function buildBrainProfileFromLearner(learner: LearnerContext) {
     gradeBand: profile?.gradeBand ?? gradeBand,
     subjectLevels: profile?.subjectLevels ?? [],
     neurodiversity: profile?.neurodiversity ?? {},
-    preferences: profile?.preferences ?? {}
+    preferences: profile?.preferences ?? {},
   };
 }
 
@@ -67,7 +69,7 @@ export async function getLearnerWithBrainProfile(learnerId: string) {
 
   return {
     ...learner,
-    brainProfile: buildBrainProfileFromLearner(learner)
+    brainProfile: buildBrainProfileFromLearner(learner),
   };
 }
 
@@ -90,7 +92,7 @@ export async function upsertBrainProfile(args: {
       gradeBand: args.gradeBand,
       subjectLevels: args.subjectLevels,
       neurodiversity: args.neurodiversity,
-      preferences: args.preferences
+      preferences: args.preferences,
     },
     update: {
       region: args.region,
@@ -99,8 +101,8 @@ export async function upsertBrainProfile(args: {
       subjectLevels: args.subjectLevels,
       neurodiversity: args.neurodiversity,
       preferences: args.preferences,
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    },
   });
 }
 
@@ -114,7 +116,7 @@ export async function createDifficultyProposal(args: {
   toLevel: number;
   direction: string;
   rationale: string;
-  createdBy: "system" | "teacher" | "parent";
+  createdBy: 'system' | 'teacher' | 'parent';
 }) {
   return prisma.difficultyProposal.create({
     data: {
@@ -126,8 +128,8 @@ export async function createDifficultyProposal(args: {
       direction: args.direction,
       rationale: args.rationale,
       createdBy: args.createdBy,
-      status: "PENDING"
-    }
+      status: 'PENDING',
+    },
   });
 }
 
@@ -135,9 +137,9 @@ export async function listPendingProposalsForLearner(learnerId: string) {
   return prisma.difficultyProposal.findMany({
     where: {
       learnerId,
-      status: "PENDING"
+      status: 'PENDING',
     },
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: 'desc' },
   });
 }
 
@@ -150,11 +152,11 @@ export async function decideOnProposal(args: {
   return prisma.difficultyProposal.update({
     where: { id: args.proposalId },
     data: {
-      status: args.approve ? "APPROVED" : "REJECTED",
+      status: args.approve ? 'APPROVED' : 'REJECTED',
       decidedById: args.decidedById,
       decidedAt: new Date(),
-      decisionNotes: args.notes ?? null
-    }
+      decisionNotes: args.notes ?? null,
+    },
   });
 }
 
@@ -179,30 +181,30 @@ export async function createNotification(args: {
       type: args.type,
       title: args.title,
       body: args.body,
-      status: "unread",
-      relatedDifficultyProposalId: args.relatedDifficultyProposalId ?? null
-    }
+      status: 'unread',
+      relatedDifficultyProposalId: args.relatedDifficultyProposalId ?? null,
+    },
   });
 }
 
 export async function listNotificationsForUser(
   userId: string,
-  options?: { unreadOnly?: boolean; limit?: number }
+  options?: { unreadOnly?: boolean; limit?: number },
 ) {
   return prisma.extendedNotification.findMany({
     where: {
       recipientUserId: userId,
-      status: options?.unreadOnly ? "unread" : undefined
+      status: options?.unreadOnly ? 'unread' : undefined,
     },
-    orderBy: { createdAt: "desc" },
-    take: options?.limit ?? 50
+    orderBy: { createdAt: 'desc' },
+    take: options?.limit ?? 50,
   });
 }
 
 export async function markNotificationRead(notificationId: string) {
   return prisma.extendedNotification.update({
     where: { id: notificationId },
-    data: { status: "read" }
+    data: { status: 'read' },
   });
 }
 
@@ -212,8 +214,8 @@ export async function findUserWithRolesByEmail(email: string) {
   const user = await prisma.user.findUnique({
     where: { email },
     include: {
-      roles: true
-    }
+      roles: true,
+    },
   });
 
   if (!user) return null;
@@ -224,25 +226,27 @@ export async function findUserWithRolesByEmail(email: string) {
       email: user.email,
       name: user.name,
       tenantId: user.tenantId,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     },
-    roles: user.roles.map(r => r.role)
+    roles: user.roles.map((r) => r.role),
   };
 }
 
 // --- Re-exports from submodules --------------------------------------------
 
-export * from "./analytics";
-export * from "./content";
-export * from "./experiments";
-export * from "./governance";
-export * from "./safety";
-export * from "./sessions";
-export * from "./admin";
-export * from "./homework";
-export * from "./regulation";
-export * from "./sensory";
-export * from "./ai-providers";
-export * from "./roles";
-export * from "./onboarding";
-export { prisma } from "./client";
+export * from './analytics';
+export * from './content';
+export * from './experiments';
+export * from './governance';
+export * from './safety';
+export * from './sessions';
+export * from './admin';
+export * from './homework';
+export * from './regulation';
+export * from './sensory';
+export * from './ai-providers';
+export * from './roles';
+export * from './onboarding';
+// export * from "./subscriptions";  // Temporarily disabled - schema mismatch
+// export * from "./email";  // Temporarily disabled - schema mismatch
+export { prisma } from './client';

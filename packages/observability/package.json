@@ -10,7 +10,16 @@
   "dependencies": {
     "@aivo/types": "workspace:*"
   },
+  "peerDependencies": {
+    "fastify": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "fastify": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "6.0.0-dev.20251120"
   }
 }

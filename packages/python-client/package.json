@@ -1,0 +1,45 @@
+{
+  "name": "@aivo/python-client",
+  "version": "1.0.0",
+  "description": "Typed HTTP client for AIVO Python Brain Service",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@aivo/types": "workspace:*"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "aivo",
+    "python",
+    "client",
+    "brain-service",
+    "ml",
+    "speech-analysis"
+  ],
+  "author": "artpromedia",
+  "license": "MIT"
+}

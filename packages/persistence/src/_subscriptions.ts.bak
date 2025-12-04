@@ -1,0 +1,472 @@
+/**
+ * Subscription Persistence Layer
+ *
+ * Provides CRUD operations for Subscription and Payment models.
+ * Handles trial/pilot periods and Stripe integration data.
+ */
+
+import { prisma } from './client';
+import type { SubscriptionStatus, SubscriptionTier } from '@aivo/types';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface CreateSubscriptionInput {
+  tenantId: string;
+  status?: SubscriptionStatus;
+  tier?: SubscriptionTier;
+  stripeCustomerId?: string;
+}
+
+export interface UpdateSubscriptionInput {
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  status?: SubscriptionStatus;
+  tier?: SubscriptionTier;
+  trialStartedAt?: Date;
+  trialEndsAt?: Date;
+  hasUsedTrial?: boolean;
+  pilotStartedAt?: Date;
+  pilotEndsAt?: Date;
+  hasUsedPilot?: boolean;
+  pilotMaxLearners?: number;
+  pilotMaxSchools?: number;
+  currentPeriodStart?: Date;
+  currentPeriodEnd?: Date;
+  cancelledAt?: Date;
+  cancelAtPeriodEnd?: boolean;
+}
+
+export interface CreatePaymentInput {
+  subscriptionId: string;
+  stripePaymentIntentId?: string;
+  stripeInvoiceId?: string;
+  amount: number;
+  currency: string;
+  status: 'succeeded' | 'pending' | 'failed' | 'refunded';
+  invoiceNumber?: string;
+  invoicePdfUrl?: string;
+  hostedInvoiceUrl?: string;
+  description?: string;
+  failureReason?: string;
+}
+
+// ============================================================================
+// Subscription Operations
+// ============================================================================
+
+/**
+ * Get subscription by tenant ID
+ */
+export async function getSubscriptionByTenantId(tenantId: string) {
+  return prisma.subscription.findUnique({
+    where: { tenantId },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Get subscription by Stripe customer ID
+ */
+export async function getSubscriptionByStripeCustomerId(stripeCustomerId: string) {
+  return prisma.subscription.findUnique({
+    where: { stripeCustomerId },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Get subscription by Stripe subscription ID
+ */
+export async function getSubscriptionByStripeSubscriptionId(stripeSubscriptionId: string) {
+  return prisma.subscription.findUnique({
+    where: { stripeSubscriptionId },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Create a new subscription for a tenant
+ */
+export async function createSubscription(input: CreateSubscriptionInput) {
+  return prisma.subscription.create({
+    data: {
+      tenantId: input.tenantId,
+      status: input.status ?? 'NONE',
+      tier: input.tier ?? 'FREE',
+      stripeCustomerId: input.stripeCustomerId,
+    },
+  });
+}
+
+/**
+ * Update subscription by tenant ID
+ */
+export async function updateSubscriptionByTenantId(
+  tenantId: string,
+  input: UpdateSubscriptionInput
+) {
+  return prisma.subscription.update({
+    where: { tenantId },
+    data: {
+      ...input,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Update subscription by Stripe customer ID
+ */
+export async function updateSubscriptionByStripeCustomerId(
+  stripeCustomerId: string,
+  input: UpdateSubscriptionInput
+) {
+  return prisma.subscription.update({
+    where: { stripeCustomerId },
+    data: {
+      ...input,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Update subscription by Stripe subscription ID
+ */
+export async function updateSubscriptionByStripeSubscriptionId(
+  stripeSubscriptionId: string,
+  input: UpdateSubscriptionInput
+) {
+  return prisma.subscription.update({
+    where: { stripeSubscriptionId },
+    data: {
+      ...input,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Upsert subscription for a tenant
+ */
+export async function upsertSubscription(
+  tenantId: string,
+  input: Omit<CreateSubscriptionInput, 'tenantId'> & UpdateSubscriptionInput
+) {
+  return prisma.subscription.upsert({
+    where: { tenantId },
+    create: {
+      tenantId,
+      status: input.status ?? 'NONE',
+      tier: input.tier ?? 'FREE',
+      stripeCustomerId: input.stripeCustomerId,
+      stripeSubscriptionId: input.stripeSubscriptionId,
+      stripePriceId: input.stripePriceId,
+      trialStartedAt: input.trialStartedAt,
+      trialEndsAt: input.trialEndsAt,
+      hasUsedTrial: input.hasUsedTrial,
+      pilotStartedAt: input.pilotStartedAt,
+      pilotEndsAt: input.pilotEndsAt,
+      hasUsedPilot: input.hasUsedPilot,
+      pilotMaxLearners: input.pilotMaxLearners,
+      pilotMaxSchools: input.pilotMaxSchools,
+      currentPeriodStart: input.currentPeriodStart,
+      currentPeriodEnd: input.currentPeriodEnd,
+    },
+    update: {
+      ...input,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Start a trial for a tenant
+ */
+export async function startTrial(tenantId: string, trialDays: number = 30) {
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
+
+  return prisma.subscription.upsert({
+    where: { tenantId },
+    create: {
+      tenantId,
+      status: 'TRIAL_ACTIVE',
+      tier: 'FREE',
+      trialStartedAt: now,
+      trialEndsAt,
+      hasUsedTrial: true,
+    },
+    update: {
+      status: 'TRIAL_ACTIVE',
+      trialStartedAt: now,
+      trialEndsAt,
+      hasUsedTrial: true,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Start a pilot for a tenant (district)
+ */
+export async function startPilot(
+  tenantId: string,
+  options: {
+    pilotDays?: number;
+    maxLearners?: number;
+    maxSchools?: number;
+  } = {}
+) {
+  const { pilotDays = 90, maxLearners = 500, maxSchools = 10 } = options;
+  const now = new Date();
+  const pilotEndsAt = new Date(now.getTime() + pilotDays * 24 * 60 * 60 * 1000);
+
+  return prisma.subscription.upsert({
+    where: { tenantId },
+    create: {
+      tenantId,
+      status: 'PILOT_ACTIVE',
+      tier: 'ENTERPRISE',
+      pilotStartedAt: now,
+      pilotEndsAt,
+      hasUsedPilot: true,
+      pilotMaxLearners: maxLearners,
+      pilotMaxSchools: maxSchools,
+    },
+    update: {
+      status: 'PILOT_ACTIVE',
+      pilotStartedAt: now,
+      pilotEndsAt,
+      hasUsedPilot: true,
+      pilotMaxLearners: maxLearners,
+      pilotMaxSchools: maxSchools,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Cancel a subscription
+ */
+export async function cancelSubscription(tenantId: string, immediate: boolean = false) {
+  const now = new Date();
+
+  return prisma.subscription.update({
+    where: { tenantId },
+    data: immediate
+      ? {
+          status: 'CANCELLED',
+          cancelledAt: now,
+          cancelAtPeriodEnd: false,
+          updatedAt: now,
+        }
+      : {
+          cancelAtPeriodEnd: true,
+          updatedAt: now,
+        },
+  });
+}
+
+/**
+ * Check if a tenant can start a trial
+ */
+export async function canStartTrial(tenantId: string): Promise<{
+  canStart: boolean;
+  reason?: string;
+}> {
+  const subscription = await getSubscriptionByTenantId(tenantId);
+
+  if (!subscription) {
+    return { canStart: true };
+  }
+
+  if (subscription.hasUsedTrial) {
+    return { canStart: false, reason: 'Trial has already been used' };
+  }
+
+  if (subscription.status === 'ACTIVE') {
+    return { canStart: false, reason: 'Active subscription exists' };
+  }
+
+  return { canStart: true };
+}
+
+/**
+ * Check if a tenant can start a pilot
+ */
+export async function canStartPilot(tenantId: string): Promise<{
+  canStart: boolean;
+  reason?: string;
+}> {
+  const subscription = await getSubscriptionByTenantId(tenantId);
+
+  if (!subscription) {
+    return { canStart: true };
+  }
+
+  if (subscription.hasUsedPilot) {
+    return { canStart: false, reason: 'Pilot has already been used' };
+  }
+
+  if (subscription.status === 'ACTIVE') {
+    return { canStart: false, reason: 'Active subscription exists' };
+  }
+
+  return { canStart: true };
+}
+
+// ============================================================================
+// Payment Operations
+// ============================================================================
+
+/**
+ * Create a payment record
+ */
+export async function createPayment(input: CreatePaymentInput) {
+  return prisma.payment.create({
+    data: {
+      subscriptionId: input.subscriptionId,
+      stripePaymentIntentId: input.stripePaymentIntentId,
+      stripeInvoiceId: input.stripeInvoiceId,
+      amount: input.amount,
+      currency: input.currency,
+      status: input.status,
+      invoiceNumber: input.invoiceNumber,
+      invoicePdfUrl: input.invoicePdfUrl,
+      hostedInvoiceUrl: input.hostedInvoiceUrl,
+      description: input.description,
+      failureReason: input.failureReason,
+    },
+  });
+}
+
+/**
+ * Get payment by Stripe invoice ID
+ */
+export async function getPaymentByStripeInvoiceId(stripeInvoiceId: string) {
+  return prisma.payment.findUnique({
+    where: { stripeInvoiceId },
+    include: {
+      subscription: true,
+    },
+  });
+}
+
+/**
+ * Get payment by Stripe payment intent ID
+ */
+export async function getPaymentByStripePaymentIntentId(stripePaymentIntentId: string) {
+  return prisma.payment.findUnique({
+    where: { stripePaymentIntentId },
+    include: {
+      subscription: true,
+    },
+  });
+}
+
+/**
+ * Update payment by Stripe invoice ID
+ */
+export async function updatePaymentByStripeInvoiceId(
+  stripeInvoiceId: string,
+  input: Partial<Omit<CreatePaymentInput, 'subscriptionId'>>
+) {
+  return prisma.payment.update({
+    where: { stripeInvoiceId },
+    data: {
+      ...input,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * List payments for a subscription
+ */
+export async function listPaymentsBySubscriptionId(
+  subscriptionId: string,
+  options?: { limit?: number; offset?: number }
+) {
+  return prisma.payment.findMany({
+    where: { subscriptionId },
+    orderBy: { createdAt: 'desc' },
+    take: options?.limit ?? 50,
+    skip: options?.offset ?? 0,
+  });
+}
+
+/**
+ * List payments for a tenant
+ */
+export async function listPaymentsByTenantId(
+  tenantId: string,
+  options?: { limit?: number; offset?: number }
+) {
+  const subscription = await getSubscriptionByTenantId(tenantId);
+  if (!subscription) return [];
+
+  return listPaymentsBySubscriptionId(subscription.id, options);
+}
+
+/**
+ * Get payment statistics for a subscription
+ */
+export async function getPaymentStats(subscriptionId: string) {
+  const payments = await prisma.payment.findMany({
+    where: { subscriptionId },
+  });
+
+  const stats = {
+    totalPayments: payments.length,
+    totalAmount: 0,
+    successfulPayments: 0,
+    failedPayments: 0,
+    pendingPayments: 0,
+    lastPaymentDate: null as Date | null,
+  };
+
+  for (const payment of payments) {
+    if (payment.status === 'succeeded') {
+      stats.successfulPayments++;
+      stats.totalAmount += payment.amount;
+    } else if (payment.status === 'failed') {
+      stats.failedPayments++;
+    } else if (payment.status === 'pending') {
+      stats.pendingPayments++;
+    }
+
+    if (!stats.lastPaymentDate || payment.createdAt > stats.lastPaymentDate) {
+      stats.lastPaymentDate = payment.createdAt;
+    }
+  }
+
+  return stats;
+}

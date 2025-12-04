@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aivo_shared/aivo_shared.dart';
+import '../widgets/difficulty_recommendations_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showBreakReminder = false;
   DateTime? _lastEmotionCheckIn;
   int _selectedNavIndex = 0;
+  List<SubjectDifficultyRecommendation> _difficultyRecommendations = [];
 
   @override
   void initState() {
@@ -51,6 +53,30 @@ class _HomeScreenState extends State<HomeScreen> {
           region: 'US',
           subjects: ['Math', 'Reading', 'Science'],
         );
+        // Demo difficulty recommendations
+        _difficultyRecommendations = [
+          SubjectDifficultyRecommendation(
+            subject: 'Math',
+            enrolledGrade: 5,
+            assessedGradeLevel: 5,
+            masteryScore: 0.82,
+            difficultyRecommendation: 'harder',
+          ),
+          SubjectDifficultyRecommendation(
+            subject: 'Reading',
+            enrolledGrade: 5,
+            assessedGradeLevel: 4,
+            masteryScore: 0.65,
+            difficultyRecommendation: null, // maintain
+          ),
+          SubjectDifficultyRecommendation(
+            subject: 'Science',
+            enrolledGrade: 5,
+            assessedGradeLevel: 5,
+            masteryScore: 0.48,
+            difficultyRecommendation: 'easier',
+          ),
+        ];
       });
     }
   }
@@ -276,6 +302,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Subject Cards
           _buildSubjectsSection(),
+          const SizedBox(height: 24),
+
+          // Difficulty Recommendations Card
+          DifficultyRecommendationsCard(
+            recommendations: _difficultyRecommendations,
+            onViewDetails: () {
+              // TODO: Navigate to detailed analytics page
+            },
+          ),
           const SizedBox(height: 24),
 
           // Achievements Preview

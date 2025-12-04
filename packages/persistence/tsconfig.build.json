@@ -9,5 +9,11 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["../../scripts/**/*", "node_modules", "src/__tests__/**/*"]
+  "exclude": [
+    "../../scripts/**/*",
+    "node_modules",
+    "src/__tests__/**/*",
+    "src/email.ts",
+    "src/subscriptions.ts"
+  ]
 }

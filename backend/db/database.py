@@ -6,6 +6,7 @@ Date: 2025-11-23
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import text
 from typing import AsyncGenerator
 
 from core.config import settings
@@ -66,3 +67,23 @@ async def close_db():
     """
     await engine.dispose()
     logger.info("Database connections closed")
+
+
+async def get_db_status() -> dict:
+    """
+    Get database connection status for health checks
+    """
+    try:
+        async with AsyncSessionLocal() as session:
+            # Execute simple query to verify connection
+            await session.execute(text("SELECT 1"))
+            return {
+                "connected": True,
+                "pool_size": engine.pool.size() if hasattr(engine.pool, 'size') else None,
+            }
+    except Exception as e:
+        logger.error(f"Database health check failed: {str(e)}")
+        return {
+            "connected": False,
+            "error": str(e),
+        }

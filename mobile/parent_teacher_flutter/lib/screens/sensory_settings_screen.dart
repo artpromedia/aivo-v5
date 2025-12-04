@@ -334,6 +334,10 @@ class _SensorySettingsScreenState extends State<SensorySettingsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Effectiveness Score Section
+          _buildEffectivenessSection(),
+          const SizedBox(height: 24),
+          
           // Quick presets
           _buildSectionHeader('⚡', 'Quick Presets'),
           const SizedBox(height: 12),
@@ -346,6 +350,370 @@ class _SensorySettingsScreenState extends State<SensorySettingsScreen>
           const SizedBox(height: 16),
           _buildSettingsSummary(),
           const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEffectivenessSection() {
+    // Demo effectiveness data (matching Web implementation)
+    final effectivenessScore = 78;
+    final categoryScores = {
+      'Visual': 82,
+      'Auditory': 75,
+      'Motor': 88,
+      'Cognitive': 72,
+      'Environment': 73,
+    };
+    final recommendations = [
+      "Consider enabling 'Reduce Animations' to minimize visual distractions",
+      "Try the 'Focus Mode' preset for extended reading sessions",
+      "Break reminders every 15 minutes may help maintain attention",
+    ];
+    final weeklyTrend = [65, 68, 72, 70, 75, 78, 78];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AivoTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('📊', style: TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Effectiveness Overview',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AivoTheme.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'How well settings are working',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AivoTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Demo data badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AivoTheme.sunshine.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lightbulb_outline, size: 12, color: Colors.amber.shade700),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Demo',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.amber.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Score cards row
+          Row(
+            children: [
+              Expanded(
+                child: _buildScoreCard(
+                  label: 'Overall Score',
+                  value: '$effectivenessScore%',
+                  color: AivoTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildScoreCard(
+                  label: 'Current Preset',
+                  value: _profile?.presetId != null ? '✓' : '—',
+                  subtitle: _profile?.presetId ?? 'Custom',
+                  color: AivoTheme.mint,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildScoreCard(
+                  label: 'Suggestions',
+                  value: '${recommendations.length}',
+                  color: AivoTheme.sunshine,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Category scores
+          const Text(
+            'Category Scores',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AivoTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...categoryScores.entries.map((entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildCategoryScoreBar(
+              category: entry.key,
+              score: entry.value,
+            ),
+          )),
+          const SizedBox(height: 16),
+
+          // Weekly trend chart
+          _buildWeeklyTrendChart(weeklyTrend),
+          const SizedBox(height: 16),
+
+          // Recommendations
+          if (recommendations.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AivoTheme.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline, size: 18, color: AivoTheme.sunshine),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Suggestions',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AivoTheme.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ...recommendations.map((rec) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('•', style: TextStyle(color: AivoTheme.primary)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            rec,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AivoTheme.textMuted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreCard({
+    required String label,
+    required String value,
+    String? subtitle,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          if (subtitle != null)
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 10,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryScoreBar({
+    required String category,
+    required int score,
+  }) {
+    final icons = {
+      'Visual': '👁️',
+      'Auditory': '👂',
+      'Motor': '✋',
+      'Cognitive': '🧠',
+      'Environment': '🏠',
+    };
+
+    return Row(
+      children: [
+        Text(icons[category] ?? '📋', style: const TextStyle(fontSize: 16)),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 70,
+          child: Text(
+            category,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AivoTheme.textMuted,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 100,
+              backgroundColor: AivoTheme.primary.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(AivoTheme.primary),
+              minHeight: 8,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 36,
+          child: Text(
+            '$score%',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AivoTheme.textPrimary,
+            ),
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeeklyTrendChart(List<int> trend) {
+    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final maxValue = trend.reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F7FF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '7-Day Trend',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AivoTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 60,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: trend.asMap().entries.map((entry) {
+                final height = (entry.value / maxValue) * 48;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          height: height,
+                          decoration: BoxDecoration(
+                            color: AivoTheme.primary.withOpacity(0.7),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          days[entry.key],
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AivoTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ],
       ),
     );

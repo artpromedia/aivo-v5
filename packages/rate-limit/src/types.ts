@@ -42,13 +42,14 @@ export interface RateLimitInfo {
 /**
  * Rate limit tier identifiers
  */
-export type RateLimitTier = 
-  | 'auth'           // Login, register, password reset
-  | 'ai'             // LLM/AI endpoints
-  | 'upload'         // File uploads
-  | 'general'        // General API endpoints
-  | 'public'         // Public/unauthenticated endpoints
-  | 'internal';      // Internal service-to-service
+export type RateLimitTier =
+  | 'auth' // Login, register, password reset
+  | 'ai' // LLM/AI endpoints
+  | 'upload' // File uploads
+  | 'general' // General API endpoints
+  | 'public' // Public/unauthenticated endpoints
+  | 'internal' // Internal service-to-service
+  | 'webhook'; // Webhook endpoints (Stripe, etc.)
 
 /**
  * Key generator function type
