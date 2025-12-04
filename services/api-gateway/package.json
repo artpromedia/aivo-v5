@@ -31,7 +31,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.11",
     "prisma": "^6.0.0",
-    "ts-jest": "^29.1.1",
+    "ts-jest": "^29.4.6",
     "tsx": "^4.19.0",
     "typescript": "6.0.0-dev.20251120"
   }
