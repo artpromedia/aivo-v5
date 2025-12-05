@@ -16,7 +16,7 @@
     "@aivo/types": "workspace:*",
     "@aivo/brain-model": "workspace:*",
     "framer-motion": "^11.11.0",
-    "lucide-react": "^0.453.0"
+    "lucide-react": "^0.555.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.18",
