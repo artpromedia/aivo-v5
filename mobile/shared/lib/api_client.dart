@@ -285,6 +285,169 @@ class AivoApiClient {
     return LearnerAnalyticsOverview.fromJson(data['analytics'] as Map<String, dynamic>);
   }
 
+  // ==================== IEP Goal APIs ====================
+
+  /// Get all IEP goals for a learner
+  Future<List<IEPGoal>> getIEPGoals(String learnerId) async {
+    final data = await _get('/iep/goals?learnerId=$learnerId');
+    return (data['goals'] as List<dynamic>)
+        .map((e) => IEPGoal.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Get a single IEP goal by ID
+  Future<IEPGoal> getIEPGoal(String goalId) async {
+    final data = await _get('/iep/goals/$goalId');
+    return IEPGoal.fromJson(data);
+  }
+
+  /// Create a new IEP goal
+  Future<IEPGoal> createIEPGoal({
+    required String learnerId,
+    required String goal,
+    required String category,
+    required DateTime targetDate,
+    String? notes,
+  }) async {
+    final data = await _post('/iep/goals', {
+      'learnerId': learnerId,
+      'goal': goal,
+      'category': category,
+      'targetDate': targetDate.toIso8601String(),
+      if (notes != null) 'notes': notes,
+    });
+    return IEPGoal.fromJson(data['goal'] as Map<String, dynamic>);
+  }
+
+  /// Update an IEP goal
+  Future<IEPGoal> updateIEPGoal({
+    required String goalId,
+    String? goal,
+    String? category,
+    DateTime? targetDate,
+    String? status,
+    String? notes,
+  }) async {
+    final data = await _patch('/iep/goals/$goalId', {
+      if (goal != null) 'goal': goal,
+      if (category != null) 'category': category,
+      if (targetDate != null) 'targetDate': targetDate.toIso8601String(),
+      if (status != null) 'status': status,
+      if (notes != null) 'notes': notes,
+    });
+    return IEPGoal.fromJson(data);
+  }
+
+  /// Add a data point to an IEP goal
+  Future<IEPDataPoint> addIEPDataPoint({
+    required String goalId,
+    required int value,
+    required DateTime date,
+    required String collectedBy,
+    String? notes,
+    String? prompt,
+    String? response,
+    String? setting,
+    List<String>? supportUsed,
+  }) async {
+    final data = await _post('/iep/goals/$goalId/data-points', {
+      'value': value,
+      'date': date.toIso8601String(),
+      'collectedBy': collectedBy,
+      if (notes != null) 'notes': notes,
+      if (prompt != null) 'prompt': prompt,
+      if (response != null) 'response': response,
+      if (setting != null) 'setting': setting,
+      if (supportUsed != null) 'supportUsed': supportUsed,
+    });
+    return IEPDataPoint.fromJson(data);
+  }
+
+  /// Get data points for an IEP goal
+  Future<List<IEPDataPoint>> getIEPDataPoints(String goalId) async {
+    final data = await _get('/iep/goals/$goalId/data-points');
+    return (data['dataPoints'] as List<dynamic>)
+        .map((e) => IEPDataPoint.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Add a note to an IEP goal
+  Future<IEPNote> addIEPNote({
+    required String goalId,
+    required String content,
+    required String authorId,
+    required String authorName,
+    required String authorRole,
+  }) async {
+    final data = await _post('/iep/goals/$goalId/notes', {
+      'content': content,
+      'authorId': authorId,
+      'authorName': authorName,
+      'authorRole': authorRole,
+    });
+    return IEPNote.fromJson(data);
+  }
+
+  /// Get notes for an IEP goal
+  Future<List<IEPNote>> getIEPNotes(String goalId) async {
+    final data = await _get('/iep/goals/$goalId/notes');
+    return (data['notes'] as List<dynamic>)
+        .map((e) => IEPNote.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ==================== IEP Document APIs ====================
+
+  /// Get all IEP documents for a learner
+  Future<List<IEPDocument>> getIEPDocuments(String learnerId) async {
+    final data = await _get('/iep/documents/$learnerId');
+    return (data as List<dynamic>)
+        .map((e) => IEPDocument.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Upload an IEP document
+  Future<IEPDocumentUploadResponse> uploadIEPDocument({
+    required String learnerId,
+    required List<int> fileBytes,
+    required String filename,
+  }) async {
+    final uri = Uri.parse('$baseUrl/iep/upload?learner_id=$learnerId');
+    final request = http.MultipartRequest('POST', uri);
+    
+    final headers = await _headers();
+    request.headers.addAll(headers);
+    
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      fileBytes,
+      filename: filename,
+    ));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    if (response.statusCode >= 400) {
+      throw ApiException(response.statusCode, response.body);
+    }
+    
+    return IEPDocumentUploadResponse.fromJson(
+      json.decode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  /// Get document processing status
+  Future<IEPDocumentStatus> getIEPDocumentStatus(String documentId) async {
+    final data = await _get('/iep/documents/$documentId/status');
+    return IEPDocumentStatus.fromJson(data);
+  }
+
+  /// Get extracted data from a document
+  Future<IEPExtractionResult> getIEPExtractionResult(String documentId) async {
+    final data = await _get('/iep/documents/$documentId/extracted');
+    return IEPExtractionResult.fromJson(data);
+  }
+
   // ==================== Homework Helper APIs ====================
 
   /// Create a new homework session

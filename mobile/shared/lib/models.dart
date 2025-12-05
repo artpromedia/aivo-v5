@@ -2475,3 +2475,276 @@ class LearnerAnalyticsOverview {
     };
   }
 }
+
+// ==================== IEP Document Types ====================
+
+/// IEP Document model
+class IEPDocument {
+  final String id;
+  final String learnerId;
+  final String filename;
+  final String status;
+  final DateTime uploadedAt;
+  final DateTime? processingCompletedAt;
+  final Map<String, int>? extractedCounts;
+
+  IEPDocument({
+    required this.id,
+    required this.learnerId,
+    required this.filename,
+    required this.status,
+    required this.uploadedAt,
+    this.processingCompletedAt,
+    this.extractedCounts,
+  });
+
+  factory IEPDocument.fromJson(Map<String, dynamic> json) {
+    return IEPDocument(
+      id: json['id'] as String,
+      learnerId: json['learner_id'] as String? ?? json['learnerId'] as String,
+      filename: json['filename'] as String,
+      status: json['status'] as String,
+      uploadedAt: DateTime.parse(json['uploaded_at'] as String? ?? json['uploadedAt'] as String),
+      processingCompletedAt: json['processing_completed_at'] != null
+          ? DateTime.parse(json['processing_completed_at'] as String)
+          : json['processingCompletedAt'] != null
+              ? DateTime.parse(json['processingCompletedAt'] as String)
+              : null,
+      extractedCounts: json['extracted_counts'] != null
+          ? Map<String, int>.from(json['extracted_counts'] as Map)
+          : null,
+    );
+  }
+}
+
+/// IEP Document upload response
+class IEPDocumentUploadResponse {
+  final String documentId;
+  final String status;
+  final String message;
+
+  IEPDocumentUploadResponse({
+    required this.documentId,
+    required this.status,
+    required this.message,
+  });
+
+  factory IEPDocumentUploadResponse.fromJson(Map<String, dynamic> json) {
+    return IEPDocumentUploadResponse(
+      documentId: json['document_id'] as String,
+      status: json['status'] as String,
+      message: json['message'] as String,
+    );
+  }
+}
+
+/// IEP Document status
+class IEPDocumentStatus {
+  final String documentId;
+  final String status;
+  final String? errorMessage;
+  final String? virusScanStatus;
+  final double? ocrConfidence;
+
+  IEPDocumentStatus({
+    required this.documentId,
+    required this.status,
+    this.errorMessage,
+    this.virusScanStatus,
+    this.ocrConfidence,
+  });
+
+  factory IEPDocumentStatus.fromJson(Map<String, dynamic> json) {
+    return IEPDocumentStatus(
+      documentId: json['document_id'] as String,
+      status: json['status'] as String,
+      errorMessage: json['error_message'] as String?,
+      virusScanStatus: json['virus_scan_status'] as String?,
+      ocrConfidence: (json['ocr_confidence'] as num?)?.toDouble(),
+    );
+  }
+
+  bool get isProcessing =>
+      status == 'PENDING' ||
+      status == 'SCANNING' ||
+      status == 'OCR_PROCESSING' ||
+      status == 'EXTRACTING' ||
+      status == 'VALIDATING';
+
+  bool get isComplete => status == 'EXTRACTED' || status == 'REVIEWED';
+  bool get hasFailed => status == 'FAILED';
+}
+
+/// IEP Extraction result
+class IEPExtractionResult {
+  final String documentId;
+  final List<ExtractedGoal> goals;
+  final List<ExtractedService> services;
+  final List<ExtractedAccommodation> accommodations;
+  final List<ExtractedPresentLevel> presentLevels;
+
+  IEPExtractionResult({
+    required this.documentId,
+    required this.goals,
+    required this.services,
+    required this.accommodations,
+    required this.presentLevels,
+  });
+
+  factory IEPExtractionResult.fromJson(Map<String, dynamic> json) {
+    return IEPExtractionResult(
+      documentId: json['document_id'] as String,
+      goals: (json['goals'] as List<dynamic>?)
+              ?.map((e) => ExtractedGoal.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      services: (json['services'] as List<dynamic>?)
+              ?.map((e) => ExtractedService.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      accommodations: (json['accommodations'] as List<dynamic>?)
+              ?.map((e) => ExtractedAccommodation.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      presentLevels: (json['present_levels'] as List<dynamic>?)
+              ?.map((e) => ExtractedPresentLevel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+/// Extracted goal from IEP document
+class ExtractedGoal {
+  final String id;
+  final String goalText;
+  final String? category;
+  final String? measurableCriteria;
+  final String? baseline;
+  final String? targetDate;
+  final double confidence;
+  final bool verified;
+
+  ExtractedGoal({
+    required this.id,
+    required this.goalText,
+    this.category,
+    this.measurableCriteria,
+    this.baseline,
+    this.targetDate,
+    required this.confidence,
+    required this.verified,
+  });
+
+  factory ExtractedGoal.fromJson(Map<String, dynamic> json) {
+    return ExtractedGoal(
+      id: json['id'] as String,
+      goalText: json['goal_text'] as String,
+      category: json['category'] as String?,
+      measurableCriteria: json['measurable_criteria'] as String?,
+      baseline: json['baseline'] as String?,
+      targetDate: json['target_date'] as String?,
+      confidence: (json['confidence'] as num).toDouble(),
+      verified: json['verified'] as bool? ?? false,
+    );
+  }
+}
+
+/// Extracted service from IEP document
+class ExtractedService {
+  final String id;
+  final String serviceName;
+  final String? provider;
+  final String? frequency;
+  final String? duration;
+  final String? location;
+  final double confidence;
+  final bool verified;
+
+  ExtractedService({
+    required this.id,
+    required this.serviceName,
+    this.provider,
+    this.frequency,
+    this.duration,
+    this.location,
+    required this.confidence,
+    required this.verified,
+  });
+
+  factory ExtractedService.fromJson(Map<String, dynamic> json) {
+    return ExtractedService(
+      id: json['id'] as String,
+      serviceName: json['service_name'] as String,
+      provider: json['provider'] as String?,
+      frequency: json['frequency'] as String?,
+      duration: json['duration'] as String?,
+      location: json['location'] as String?,
+      confidence: (json['confidence'] as num).toDouble(),
+      verified: json['verified'] as bool? ?? false,
+    );
+  }
+}
+
+/// Extracted accommodation from IEP document
+class ExtractedAccommodation {
+  final String id;
+  final String accommodationText;
+  final String? category;
+  final String? settings;
+  final double confidence;
+  final bool verified;
+
+  ExtractedAccommodation({
+    required this.id,
+    required this.accommodationText,
+    this.category,
+    this.settings,
+    required this.confidence,
+    required this.verified,
+  });
+
+  factory ExtractedAccommodation.fromJson(Map<String, dynamic> json) {
+    return ExtractedAccommodation(
+      id: json['id'] as String,
+      accommodationText: json['accommodation_text'] as String,
+      category: json['category'] as String?,
+      settings: json['settings'] as String?,
+      confidence: (json['confidence'] as num).toDouble(),
+      verified: json['verified'] as bool? ?? false,
+    );
+  }
+}
+
+/// Extracted present level from IEP document
+class ExtractedPresentLevel {
+  final String id;
+  final String domain;
+  final String description;
+  final String? strengths;
+  final String? needs;
+  final double confidence;
+  final bool verified;
+
+  ExtractedPresentLevel({
+    required this.id,
+    required this.domain,
+    required this.description,
+    this.strengths,
+    this.needs,
+    required this.confidence,
+    required this.verified,
+  });
+
+  factory ExtractedPresentLevel.fromJson(Map<String, dynamic> json) {
+    return ExtractedPresentLevel(
+      id: json['id'] as String,
+      domain: json['domain'] as String,
+      description: json['description'] as String,
+      strengths: json['strengths'] as String?,
+      needs: json['needs'] as String?,
+      confidence: (json['confidence'] as num).toDouble(),
+      verified: json['verified'] as bool? ?? false,
+    );
+  }
+}

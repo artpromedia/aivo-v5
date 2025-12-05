@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
+import 'package:http/http.dart' as http;
 
 /// Structured logging for AIVO Flutter applications
 /// 
@@ -87,21 +88,42 @@ class AppLogger {
   
   /// Send log to remote logging service
   static Future<void> _sendToRemote(LogRecord record) async {
-    // TODO: Implement remote logging
-    // Options:
-    // - Sentry (via sentry_flutter package)
-    // - Firebase Crashlytics
-    // - Custom HTTP endpoint
+    // Remote logging implementation
+    // Sends logs to configured endpoint for centralized monitoring
     
-    // Example with custom endpoint:
-    // final url = const String.fromEnvironment('LOG_ENDPOINT');
-    // if (url.isNotEmpty) {
-    //   await http.post(
-    //     Uri.parse(url),
-    //     body: _formatLogRecord(record),
-    //     headers: {'Content-Type': 'application/json'},
-    //   );
-    // }
+    final logEndpoint = const String.fromEnvironment(
+      'LOG_ENDPOINT',
+      defaultValue: '',
+    );
+    
+    // Only send if endpoint is configured and for severe/warning logs
+    if (logEndpoint.isEmpty) return;
+    if (record.level.value < Level.WARNING.value) return;
+    
+    try {
+      final logData = {
+        'timestamp': record.time.toIso8601String(),
+        'level': record.level.name,
+        'logger': record.loggerName,
+        'message': record.message,
+        'platform': 'flutter',
+        'error': record.error?.toString(),
+        'stackTrace': record.stackTrace?.toString(),
+      };
+      
+      // Non-blocking fire-and-forget
+      // Using compute or isolate would be better for production
+      http.post(
+        Uri.parse(logEndpoint),
+        body: jsonEncode(logData),
+        headers: {'Content-Type': 'application/json'},
+      ).catchError((_) {
+        // Silently ignore remote logging failures
+        return http.Response('', 500);
+      });
+    } catch (_) {
+      // Silently ignore any encoding/parsing errors
+    }
   }
   
   /// Log debug message (only in development)

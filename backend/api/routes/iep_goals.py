@@ -12,6 +12,8 @@ from datetime import datetime
 from enum import Enum
 
 from core.logging import setup_logging
+from db.models.user import User
+from api.dependencies.auth import get_current_user
 
 logger = setup_logging(__name__)
 
@@ -193,13 +195,17 @@ class IEPGoalsListResponse(BaseModel):
 
 
 # ============================================================================
-# Mock Data Storage (Replace with database)
+# Database Integration
 # ============================================================================
 
-# In-memory storage for demo
-_goals_store: dict = {}
-_data_points_store: dict = {}
-_notes_store: dict = {}
+from db.repositories.iep_goals_repository import IEPGoalsRepository
+from db.database import get_async_session
+
+
+async def get_repository():
+    """Dependency to get IEP Goals repository with session."""
+    async with get_async_session() as session:
+        yield IEPGoalsRepository(session)
 
 
 # ============================================================================
@@ -233,6 +239,7 @@ async def get_learner_goals(
     learner_id: str,
     status: Optional[IEPGoalStatus] = None,
     category: Optional[IEPCategory] = None,
+    repo: IEPGoalsRepository = Depends(get_repository),
 ):
     """
     Get all IEP goals for a learner.
@@ -242,44 +249,84 @@ async def get_learner_goals(
     """
     logger.info(f"Fetching IEP goals for learner {learner_id}")
     
-    # TODO: Replace with database query
-    # Filter goals for learner
-    goals = [g for g in _goals_store.values() if g.get("learner_id") == learner_id]
+    # Query database
+    status_str = status.value.upper() if status else None
+    category_str = category.value.upper() if category else None
     
-    if status:
-        goals = [g for g in goals if g.get("status") == status.value]
-    if category:
-        goals = [g for g in goals if g.get("category") == category.value]
+    goals = await repo.get_goals_by_learner(
+        learner_id,
+        status=status_str,
+        category=category_str,
+    )
     
-    # If no goals exist, return mock data for demo
-    if not goals:
-        goals = _generate_mock_goals(learner_id)
+    # Convert to response format
+    goal_responses = []
+    for g in goals:
+        data_points = await repo.get_data_points(g["id"])
+        goal_responses.append(IEPGoalResponse(
+            id=g["id"],
+            learner_id=g["learnerId"],
+            goal_name=g["goal"],
+            category=IEPCategory(g["category"].lower()) if g.get("category") else IEPCategory.ACADEMIC,
+            description=g["goal"],
+            current_level=g.get("progress") or 0,
+            target_level=100.0,
+            measurement_unit="percent",
+            progress_percentage=g.get("progress") or 0,
+            status=IEPGoalStatus(g["status"].lower()) if g.get("status") else IEPGoalStatus.NOT_STARTED,
+            start_date=datetime.fromisoformat(g["createdAt"]) if g.get("createdAt") else datetime.utcnow(),
+            target_date=datetime.fromisoformat(g["targetDate"]) if g.get("targetDate") else datetime.utcnow(),
+            data_points=[],
+            notes=[],
+            created_at=datetime.fromisoformat(g["createdAt"]) if g.get("createdAt") else datetime.utcnow(),
+            updated_at=datetime.fromisoformat(g["updatedAt"]) if g.get("updatedAt") else datetime.utcnow(),
+        ))
     
     return IEPGoalsListResponse(
-        goals=[_goal_to_response(g) for g in goals],
-        total=len(goals),
+        goals=goal_responses,
+        total=len(goal_responses),
         learner_id=learner_id
     )
 
 
 @router.get("/goals/{goal_id}", response_model=IEPGoalResponse)
-async def get_goal(goal_id: str):
+async def get_goal(
+    goal_id: str,
+    repo: IEPGoalsRepository = Depends(get_repository),
+):
     """Get a single IEP goal by ID"""
-    goal = _goals_store.get(goal_id)
+    goal = await repo.get_goal(goal_id)
     
     if not goal:
-        # Return mock goal for demo
-        mock_goals = _generate_mock_goals("demo-learner")
-        goal = next((g for g in mock_goals if g["id"] == goal_id), None)
-        
-        if not goal:
-            raise HTTPException(status_code=404, detail="Goal not found")
+        raise HTTPException(status_code=404, detail="Goal not found")
     
-    return _goal_to_response(goal)
+    data_points = await repo.get_data_points(goal_id)
+    
+    return IEPGoalResponse(
+        id=goal["id"],
+        learner_id=goal["learnerId"],
+        goal_name=goal["goal"],
+        category=IEPCategory(goal["category"].lower()) if goal.get("category") else IEPCategory.ACADEMIC,
+        description=goal["goal"],
+        current_level=goal.get("progress") or 0,
+        target_level=100.0,
+        measurement_unit="percent",
+        progress_percentage=goal.get("progress") or 0,
+        status=IEPGoalStatus(goal["status"].lower()) if goal.get("status") else IEPGoalStatus.NOT_STARTED,
+        start_date=datetime.fromisoformat(goal["createdAt"]) if goal.get("createdAt") else datetime.utcnow(),
+        target_date=datetime.fromisoformat(goal["targetDate"]) if goal.get("targetDate") else datetime.utcnow(),
+        data_points=[],
+        notes=[],
+        created_at=datetime.fromisoformat(goal["createdAt"]) if goal.get("createdAt") else datetime.utcnow(),
+        updated_at=datetime.fromisoformat(goal["updatedAt"]) if goal.get("updatedAt") else datetime.utcnow(),
+    )
 
 
 @router.post("/goals", response_model=IEPGoalResponse)
-async def create_goal(goal: IEPGoalCreate):
+async def create_goal(
+    goal: IEPGoalCreate,
+    repo: IEPGoalsRepository = Depends(get_repository),
+):
     """
     Create a new IEP goal.
     
@@ -287,72 +334,86 @@ async def create_goal(goal: IEPGoalCreate):
     """
     logger.info(f"Creating IEP goal for learner {goal.learner_id}: {goal.goal_name}")
     
-    goal_id = f"goal-{datetime.utcnow().timestamp()}"
+    created = await repo.create_goal(
+        learner_id=goal.learner_id,
+        goal=goal.description,
+        category=goal.category.value.upper(),
+        target_date=goal.target_date,
+        status="NOT_STARTED",
+        progress=goal.current_level,
+    )
     
-    goal_data = {
-        "id": goal_id,
-        "learner_id": goal.learner_id,
-        "goal_name": goal.goal_name,
-        "category": goal.category.value,
-        "subject": goal.subject,
-        "description": goal.description,
-        "current_level": goal.current_level,
-        "target_level": goal.target_level,
-        "measurement_unit": goal.measurement_unit,
-        "progress_percentage": calculate_progress(goal.current_level, goal.target_level),
-        "status": IEPGoalStatus.NOT_STARTED.value,
-        "start_date": goal.start_date.isoformat(),
-        "target_date": goal.target_date.isoformat(),
-        "review_date": goal.review_date.isoformat() if goal.review_date else None,
-        "created_by_id": "current-teacher",  # TODO: Get from auth
-        "created_by_name": "Teacher Name",
-        "assigned_to_id": goal.assigned_to_id,
-        "data_points": [],
-        "notes": [],
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    
-    _goals_store[goal_id] = goal_data
-    
-    return _goal_to_response(goal_data)
+    return IEPGoalResponse(
+        id=created["id"],
+        learner_id=created["learnerId"],
+        goal_name=goal.goal_name,
+        category=goal.category,
+        description=created["goal"],
+        current_level=created.get("progress") or 0,
+        target_level=goal.target_level,
+        measurement_unit=goal.measurement_unit,
+        progress_percentage=calculate_progress(goal.current_level, goal.target_level),
+        status=IEPGoalStatus.NOT_STARTED,
+        start_date=goal.start_date,
+        target_date=goal.target_date,
+        review_date=goal.review_date,
+        data_points=[],
+        notes=[],
+        created_at=datetime.fromisoformat(created["createdAt"]) if created.get("createdAt") else datetime.utcnow(),
+        updated_at=datetime.fromisoformat(created["updatedAt"]) if created.get("updatedAt") else datetime.utcnow(),
+    )
 
 
 @router.put("/goals/{goal_id}", response_model=IEPGoalResponse)
-async def update_goal(goal_id: str, updates: IEPGoalUpdate):
+async def update_goal(
+    goal_id: str,
+    updates: IEPGoalUpdate,
+    repo: IEPGoalsRepository = Depends(get_repository),
+):
     """
     Update an IEP goal.
     
     Teachers only.
     """
-    goal = _goals_store.get(goal_id)
-    
-    if not goal:
+    existing = await repo.get_goal(goal_id)
+    if not existing:
         raise HTTPException(status_code=404, detail="Goal not found")
     
-    # Apply updates
-    update_dict = updates.model_dump(exclude_unset=True)
-    for key, value in update_dict.items():
-        if value is not None:
-            if isinstance(value, Enum):
-                goal[key] = value.value
-            elif isinstance(value, datetime):
-                goal[key] = value.isoformat()
-            else:
-                goal[key] = value
+    # Build update dict
+    update_dict = {}
+    if updates.goal_name:
+        update_dict["goal"] = updates.goal_name
+    if updates.description:
+        update_dict["goal"] = updates.description
+    if updates.status:
+        update_dict["status"] = updates.status.value.upper()
+    if updates.current_level is not None:
+        update_dict["progress"] = updates.current_level
+    if updates.target_date:
+        update_dict["target_date"] = updates.target_date
     
-    # Recalculate progress if levels changed
-    if "current_level" in update_dict or "target_level" in update_dict:
-        goal["progress_percentage"] = calculate_progress(
-            goal["current_level"], 
-            goal["target_level"]
-        )
-    
-    goal["updated_at"] = datetime.utcnow().isoformat()
+    updated = await repo.update_goal(goal_id, update_dict)
     
     logger.info(f"Updated IEP goal {goal_id}")
     
-    return _goal_to_response(goal)
+    return IEPGoalResponse(
+        id=updated["id"],
+        learner_id=updated["learnerId"],
+        goal_name=updated["goal"],
+        category=IEPCategory(existing["category"].lower()) if existing.get("category") else IEPCategory.ACADEMIC,
+        description=updated["goal"],
+        current_level=updated.get("progress") or 0,
+        target_level=updates.target_level or 100.0,
+        measurement_unit=updates.measurement_unit or "percent",
+        progress_percentage=updated.get("progress") or 0,
+        status=IEPGoalStatus(updated["status"].lower()) if updated.get("status") else IEPGoalStatus.NOT_STARTED,
+        start_date=datetime.fromisoformat(updated["createdAt"]) if updated.get("createdAt") else datetime.utcnow(),
+        target_date=datetime.fromisoformat(updated["targetDate"]) if updated.get("targetDate") else datetime.utcnow(),
+        data_points=[],
+        notes=[],
+        created_at=datetime.fromisoformat(updated["createdAt"]) if updated.get("createdAt") else datetime.utcnow(),
+        updated_at=datetime.fromisoformat(updated["updatedAt"]) if updated.get("updatedAt") else datetime.utcnow(),
+    )
 
 
 # ============================================================================
@@ -360,14 +421,30 @@ async def update_goal(goal_id: str, updates: IEPGoalUpdate):
 # ============================================================================
 
 @router.get("/goals/{goal_id}/data-points", response_model=List[IEPDataPointResponse])
-async def get_data_points(goal_id: str):
+async def get_data_points(
+    goal_id: str,
+    repo: IEPGoalsRepository = Depends(get_repository),
+):
     """Get all data points for a goal"""
-    data_points = [dp for dp in _data_points_store.values() if dp.get("goal_id") == goal_id]
-    return [_data_point_to_response(dp) for dp in data_points]
+    data_points = await repo.get_data_points(goal_id)
+    return [IEPDataPointResponse(
+        id=dp.get("id", ""),
+        goal_id=goal_id,
+        value=dp.get("value", 0),
+        measurement_date=datetime.fromisoformat(dp["measurement_date"]) if dp.get("measurement_date") else datetime.utcnow(),
+        context=IEPMeasurementContext(dp.get("context", "classroom")),
+        notes=dp.get("notes"),
+        created_at=datetime.fromisoformat(dp["created_at"]) if dp.get("created_at") else datetime.utcnow(),
+    ) for dp in data_points]
 
 
 @router.post("/goals/{goal_id}/data-points", response_model=IEPDataPointResponse)
-async def add_data_point(goal_id: str, data_point: IEPDataPointCreate):
+async def add_data_point(
+    goal_id: str,
+    data_point: IEPDataPointCreate,
+    repo: IEPGoalsRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
+):
     """
     Add a data point to a goal.
     
@@ -377,35 +454,46 @@ async def add_data_point(goal_id: str, data_point: IEPDataPointCreate):
     """
     logger.info(f"Adding data point to goal {goal_id}: {data_point.value}")
     
-    # TODO: Check role permissions for context
+    # Check role permissions for context
+    user_role = getattr(current_user, 'role', 'parent').lower()
+    context = data_point.context.value
     
-    dp_id = f"dp-{datetime.utcnow().timestamp()}"
-    
-    dp_data = {
-        "id": dp_id,
-        "goal_id": goal_id,
-        "value": data_point.value,
-        "measurement_date": data_point.measurement_date.isoformat(),
-        "recorded_by_id": "current-user",  # TODO: Get from auth
-        "recorded_by_role": "PARENT",  # TODO: Get from auth
-        "recorded_by_name": "User Name",
-        "context": data_point.context.value,
-        "notes": data_point.notes,
-        "evidence_url": data_point.evidence_url,
-        "created_at": datetime.utcnow().isoformat()
+    # Define context permissions by role
+    role_contexts = {
+        'teacher': ['classroom', 'assessment', 'home', 'therapy', 'community', 'other'],
+        'admin': ['classroom', 'assessment', 'home', 'therapy', 'community', 'other'],
+        'platform_admin': ['classroom', 'assessment', 'home', 'therapy', 'community', 'other'],
+        'parent': ['home', 'community', 'other'],
+        'therapist': ['therapy', 'other'],
+        'slp': ['therapy', 'classroom', 'other'],
     }
     
-    _data_points_store[dp_id] = dp_data
+    allowed_contexts = role_contexts.get(user_role, ['home', 'other'])
     
-    # Update goal's current level and add to data points list
-    if goal_id in _goals_store:
-        goal = _goals_store[goal_id]
-        goal["current_level"] = data_point.value
-        goal["progress_percentage"] = calculate_progress(data_point.value, goal["target_level"])
-        goal["data_points"].append(dp_data)
-        goal["updated_at"] = datetime.utcnow().isoformat()
+    if context not in allowed_contexts:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Your role ({user_role}) cannot add data for context: {context}"
+        )
     
-    return _data_point_to_response(dp_data)
+    dp = await repo.add_data_point(
+        goal_id=goal_id,
+        value=data_point.value,
+        measurement_date=data_point.measurement_date,
+        context=data_point.context.value,
+        notes=data_point.notes,
+    )
+    
+    return IEPDataPointResponse(
+        id=dp.get("id", ""),
+        goal_id=goal_id,
+        value=dp.get("value", 0),
+        measurement_date=datetime.fromisoformat(dp["measurement_date"]) if dp.get("measurement_date") else datetime.utcnow(),
+        context=data_point.context,
+        notes=dp.get("notes"),
+        evidence_url=data_point.evidence_url,
+        created_at=datetime.fromisoformat(dp["created_at"]) if dp.get("created_at") else datetime.utcnow(),
+    )
 
 
 # ============================================================================
@@ -415,13 +503,20 @@ async def add_data_point(goal_id: str, data_point: IEPDataPointCreate):
 @router.get("/goals/{goal_id}/notes", response_model=List[IEPNoteResponse])
 async def get_notes(
     goal_id: str,
-    include_private: bool = Query(default=False, description="Include private notes (educators only)")
+    include_private: bool = Query(default=False, description="Include private notes (educators only)"),
+    current_user: User = Depends(get_current_user),
 ):
     """Get all notes for a goal"""
     notes = [n for n in _notes_store.values() if n.get("goal_id") == goal_id]
     
-    # TODO: Filter private notes based on user role
-    if not include_private:
+    # Filter private notes based on user role
+    # Only educators (teachers, admins, therapists) can see private notes
+    user_role = getattr(current_user, 'role', 'parent').lower()
+    educator_roles = {'teacher', 'admin', 'platform_admin', 'therapist', 'slp', 'educator'}
+    
+    can_see_private = include_private and user_role in educator_roles
+    
+    if not can_see_private:
         notes = [n for n in notes if not n.get("is_private", False)]
     
     return [_note_to_response(n) for n in notes]

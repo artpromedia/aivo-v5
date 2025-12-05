@@ -6,3 +6,5 @@ export 'theme.dart';
 export 'sensory_profile.dart';
 export 'sensory_provider.dart';
 export 'presets.dart';
+export 'user_context.dart';
+export 'logger.dart';

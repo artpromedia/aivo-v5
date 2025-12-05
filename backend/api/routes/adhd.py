@@ -339,21 +339,39 @@ async def complete_breakdown_step(breakdown_id: str, step_number: int, actual_mi
 @router.post("/ai/breakdown", response_model=AIBreakdownResponse)
 async def generate_ai_breakdown(request: AIBreakdownRequest):
     """Generate an AI-powered project breakdown."""
-    # Calculate step due dates
-    days_until_due = (request.final_due_date - datetime.now()).days
-    days_per_step = max(1, days_until_due // request.num_steps)
+    from services.adhd_ai import adhd_ai_service
     
-    # Generate steps (in production, use actual LLM)
+    # Call AI service to generate breakdown
+    ai_result = await adhd_ai_service.generate_project_breakdown(
+        project_title=request.project_title,
+        project_description=request.project_description or "",
+        subject=request.subject,
+        final_due_date=request.final_due_date,
+        num_steps=request.num_steps,
+        estimated_total_minutes=request.estimated_total_minutes,
+        learner_strengths=request.learner_strengths,
+        learner_challenges=request.learner_challenges,
+        grade_level=request.grade_level,
+    )
+    
+    # Calculate days for scheduling
+    days_until_due = max(1, (request.final_due_date - datetime.now()).days)
+    
+    # Convert AI response to ProjectStep objects
     steps = []
-    for i in range(request.num_steps):
-        step_due = datetime.now() + timedelta(days=(i + 1) * days_per_step)
+    for step_data in ai_result.get("steps", []):
+        step_num = step_data.get("step_number", len(steps) + 1)
+        suggested_day = step_data.get("suggested_day", step_num)
+        step_due = datetime.now() + timedelta(days=suggested_day)
+        
         steps.append(ProjectStep(
-            step_number=i + 1,
-            title=f"Step {i + 1}: {'Research' if i == 0 else 'Draft' if i == 1 else 'Review' if i == request.num_steps - 1 else f'Work on section {i}'}",
-            description=f"AI-generated step for {request.project_title}",
-            estimated_minutes=(request.estimated_total_minutes or 120) // request.num_steps,
+            step_number=step_num,
+            title=step_data.get("title", f"Step {step_num}"),
+            description=step_data.get("description", ""),
+            estimated_minutes=step_data.get("estimated_minutes", 30),
             due_date=step_due,
             status=AssignmentStatus.NOT_STARTED,
+            adhd_tips=step_data.get("tips"),
         ))
     
     breakdown = ProjectBreakdownResponse(
@@ -367,7 +385,7 @@ async def generate_ai_breakdown(request: AIBreakdownRequest):
         generated_by_ai=True,
         ai_prompt=request.project_description,
         was_modified=False,
-        total_estimated_minutes=request.estimated_total_minutes or 120,
+        total_estimated_minutes=request.estimated_total_minutes or sum(s.estimated_minutes or 0 for s in steps),
         actual_time_spent=None,
         completed_steps=0,
         total_steps=len(steps),
@@ -378,11 +396,12 @@ async def generate_ai_breakdown(request: AIBreakdownRequest):
     
     return AIBreakdownResponse(
         breakdown=breakdown,
-        ai_explanation="I've broken down your project into manageable steps based on the due date and complexity.",
+        ai_explanation=ai_result.get("explanation", "I've broken down your project into manageable steps."),
         suggested_schedule=[
-            {"step": i + 1, "suggested_day": (datetime.now() + timedelta(days=(i + 1) * days_per_step)).strftime("%A")}
-            for i in range(request.num_steps)
+            {"step": s.step_number, "suggested_day": s.due_date.strftime("%A") if s.due_date else "Soon"}
+            for s in steps
         ],
+        success_strategies=ai_result.get("success_strategies", []),
     )
 
 
@@ -444,7 +463,97 @@ async def complete_time_block(learner_id: str, plan_date: date, block_id: str):
 @router.post("/ai/daily-plan", response_model=AIDailyPlanResponse)
 async def generate_ai_daily_plan(request: AIDailyPlanRequest):
     """Generate an AI-powered daily plan."""
-    # In production, use actual LLM and integrate with assignments
+    from services.adhd_ai import adhd_ai_service
+    
+    # Prepare assignments data
+    assignments_data = [
+        {
+            "title": a.title if hasattr(a, 'title') else str(a),
+            "due_date": a.due_date.isoformat() if hasattr(a, 'due_date') else None,
+            "estimated_minutes": a.estimated_minutes if hasattr(a, 'estimated_minutes') else 30,
+            "urgency": a.urgency.value if hasattr(a, 'urgency') else "medium",
+        }
+        for a in (request.assignments or [])
+    ]
+    
+    # Call AI service
+    ai_result = await adhd_ai_service.generate_daily_plan(
+        learner_id=request.learner_id,
+        date=request.date,
+        wake_time=request.wake_time,
+        bed_time=request.bed_time,
+        school_start=request.school_start_time,
+        school_end=request.school_end_time,
+        assignments=assignments_data,
+        preferred_study_times=request.preferred_study_times,
+        ef_challenges=request.ef_challenges,
+    )
+    
+    # Convert AI response to TimeBlock objects
+    blocks = []
+    for i, block_data in enumerate(ai_result.get("time_blocks", [])):
+        category_str = block_data.get("category", "break").upper()
+        try:
+            category = TimeBlockCategory[category_str]
+        except KeyError:
+            category = TimeBlockCategory.BREAK
+        
+        start = block_data.get("start_time", "09:00")
+        end = block_data.get("end_time", "09:30")
+        duration = _time_diff_minutes(start, end)
+        
+        blocks.append(TimeBlock(
+            id=f"block_{i}",
+            start_time=start,
+            end_time=end,
+            duration=duration,
+            activity=block_data.get("title", "Activity"),
+            description=block_data.get("description"),
+            category=category,
+            is_flexible=category in [TimeBlockCategory.BREAK, TimeBlockCategory.FREE_TIME],
+            assignment_id=block_data.get("related_assignment_id"),
+        ))
+    
+    # If AI returned no blocks, fall back to basic schedule
+    if not blocks:
+        blocks = _generate_fallback_blocks(request)
+    
+    plan = DailyPlanResponse(
+        id="plan_ai_" + request.date.strftime("%Y%m%d"),
+        learner_id=request.learner_id,
+        date=request.date,
+        wake_time=request.wake_time,
+        school_start_time=request.school_start_time,
+        school_end_time=request.school_end_time,
+        bed_time=request.bed_time,
+        time_blocks=blocks,
+        generated_by_ai=True,
+        ai_prompt=f"Generate plan for {request.date}",
+        was_modified=False,
+        completion_rate=0,
+        total_blocks=len(blocks),
+        completed_blocks=0,
+        morning_routine_notes="\n".join(ai_result.get("morning_tips", [])),
+        evening_routine_notes="\n".join(ai_result.get("evening_tips", [])),
+        parent_notes=None,
+        learner_reflection=None,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    
+    return AIDailyPlanResponse(
+        plan=plan,
+        ai_explanation="I've created a balanced schedule with breaks and optimal focus times.",
+        tips_for_success=ai_result.get("focus_strategies", [
+            "Start homework when you're most alert",
+            "Use timers for transitions",
+            "Take movement breaks every 45 minutes",
+        ]),
+    )
+
+
+def _generate_fallback_blocks(request) -> List[TimeBlock]:
+    """Generate basic fallback time blocks."""
     blocks = []
     block_id = 0
     
@@ -473,74 +582,43 @@ async def generate_ai_daily_plan(request: AIDailyPlanRequest):
     block_id += 1
     
     # School blocks
-    school_hours = _time_diff_minutes(request.school_start_time, request.school_end_time)
-    blocks.append(TimeBlock(
-        id=f"block_{block_id}",
-        start_time=request.school_start_time,
-        end_time=request.school_end_time,
-        duration=school_hours,
-        activity="School",
-        category=TimeBlockCategory.CLASS,
-        is_flexible=False,
-    ))
-    block_id += 1
+    if request.school_start_time and request.school_end_time:
+        school_hours = _time_diff_minutes(request.school_start_time, request.school_end_time)
+        blocks.append(TimeBlock(
+            id=f"block_{block_id}",
+            start_time=request.school_start_time,
+            end_time=request.school_end_time,
+            duration=school_hours,
+            activity="School",
+            category=TimeBlockCategory.CLASS,
+            is_flexible=False,
+        ))
+        block_id += 1
+        
+        # After school break
+        blocks.append(TimeBlock(
+            id=f"block_{block_id}",
+            start_time=request.school_end_time,
+            end_time=_add_minutes(request.school_end_time, 30),
+            duration=30,
+            activity="Snack & Break",
+            category=TimeBlockCategory.BREAK,
+            is_flexible=True,
+        ))
+        block_id += 1
+        
+        # Homework time
+        blocks.append(TimeBlock(
+            id=f"block_{block_id}",
+            start_time=_add_minutes(request.school_end_time, 30),
+            end_time=_add_minutes(request.school_end_time, 90),
+            duration=60,
+            activity="Homework",
+            category=TimeBlockCategory.HOMEWORK,
+            is_flexible=False,
+        ))
     
-    # After school break
-    blocks.append(TimeBlock(
-        id=f"block_{block_id}",
-        start_time=request.school_end_time,
-        end_time=_add_minutes(request.school_end_time, 30),
-        duration=30,
-        activity="Snack & Break",
-        category=TimeBlockCategory.BREAK,
-        is_flexible=True,
-    ))
-    block_id += 1
-    
-    # Homework time
-    blocks.append(TimeBlock(
-        id=f"block_{block_id}",
-        start_time=_add_minutes(request.school_end_time, 30),
-        end_time=_add_minutes(request.school_end_time, 90),
-        duration=60,
-        activity="Homework",
-        category=TimeBlockCategory.HOMEWORK,
-        is_flexible=False,
-    ))
-    block_id += 1
-    
-    plan = DailyPlanResponse(
-        id="plan_ai_" + request.date.strftime("%Y%m%d"),
-        learner_id=request.learner_id,
-        date=request.date,
-        wake_time=request.wake_time,
-        school_start_time=request.school_start_time,
-        school_end_time=request.school_end_time,
-        bed_time=request.bed_time,
-        time_blocks=blocks,
-        generated_by_ai=True,
-        ai_prompt=f"Generate plan for {request.date}",
-        was_modified=False,
-        completion_rate=0,
-        total_blocks=len(blocks),
-        completed_blocks=0,
-        morning_routine_notes=None,
-        evening_routine_notes=None,
-        parent_notes=None,
-        learner_reflection=None,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
-    )
-    
-    return AIDailyPlanResponse(
-        plan=plan,
-        ai_explanation="I've created a balanced schedule with breaks every 45 minutes.",
-        tips_for_success=[
-            "Start homework when you're most alert (usually after a snack break)",
-            "Use the Pomodoro technique for longer homework sessions",
-            "Set a timer for transitions between activities",
-        ],
-    )
+    return blocks
 
 
 # Helper functions for time manipulation
@@ -872,34 +950,78 @@ async def rate_intervention(intervention_id: str, rating: RateInterventionReques
 @router.post("/ai/strategies", response_model=AIStrategiesResponse)
 async def get_ai_strategies(request: AIStrategiesRequest):
     """Get AI-suggested strategies based on EF profile."""
-    # In production, use actual LLM and EF profile data
-    suggestions = [
-        EFInterventionCreate(
+    from services.adhd_ai import adhd_ai_service
+    
+    # Build EF profile dict from request
+    ef_profile = {
+        "strengths": request.strengths or [],
+        "challenges": request.challenges or [],
+        "organization_rating": request.organization_rating,
+        "time_management_rating": request.time_management_rating,
+        "planning_rating": request.planning_rating,
+        "task_initiation_rating": request.task_initiation_rating,
+        "working_memory_rating": request.working_memory_rating,
+    }
+    
+    # Call AI service
+    ai_result = await adhd_ai_service.suggest_ef_strategies(
+        learner_id=request.learner_id,
+        ef_profile=ef_profile,
+        current_challenge=request.current_challenge,
+        context=request.context,
+    )
+    
+    # Convert AI suggestions to intervention objects
+    suggestions = []
+    for strategy in ai_result.get("strategies", []):
+        domain_str = strategy.get("domain", "organization").upper()
+        try:
+            domain = EFDomain[domain_str]
+        except KeyError:
+            domain = EFDomain.ORGANIZATION
+        
+        suggestions.append(EFInterventionCreate(
             learner_id=request.learner_id,
-            domain=EFDomain.ORGANIZATION,
-            strategy_name="Color-Coded Binder System",
-            description="Use different colored folders/sections for each subject",
-            how_to_implement="Assign one color per subject. Use matching colored folders, tabs, and supplies.",
-            materials=["Colored folders", "Tab dividers", "Colored pens"],
-            frequency="daily",
-            implemented_by="SELF",
-        ),
-        EFInterventionCreate(
-            learner_id=request.learner_id,
-            domain=EFDomain.TASK_INITIATION,
-            strategy_name="5-4-3-2-1 Launch",
-            description="Count down from 5 and start the task when you reach 1",
-            how_to_implement="When struggling to start, count 5-4-3-2-1 out loud and begin the task at 1.",
-            materials=[],
+            domain=domain,
+            strategy_name=strategy.get("title", "Strategy"),
+            description=strategy.get("description", ""),
+            how_to_implement=strategy.get("description", ""),
+            materials=strategy.get("tools_needed", []),
             frequency="as needed",
             implemented_by="SELF",
-        ),
-    ]
+            evidence_basis=strategy.get("why_it_helps"),
+        ))
+    
+    # Fall back to default suggestions if AI failed
+    if not suggestions:
+        suggestions = [
+            EFInterventionCreate(
+                learner_id=request.learner_id,
+                domain=EFDomain.ORGANIZATION,
+                strategy_name="Color-Coded Binder System",
+                description="Use different colored folders/sections for each subject",
+                how_to_implement="Assign one color per subject. Use matching colored folders, tabs, and supplies.",
+                materials=["Colored folders", "Tab dividers", "Colored pens"],
+                frequency="daily",
+                implemented_by="SELF",
+            ),
+            EFInterventionCreate(
+                learner_id=request.learner_id,
+                domain=EFDomain.TASK_INITIATION,
+                strategy_name="5-4-3-2-1 Launch",
+                description="Count down from 5 and start the task when you reach 1",
+                how_to_implement="When struggling to start, count 5-4-3-2-1 out loud and begin the task at 1.",
+                materials=[],
+                frequency="as needed",
+                implemented_by="SELF",
+            ),
+        ]
     
     return AIStrategiesResponse(
         suggestions=suggestions,
-        explanation="Based on the EF profile, I recommend focusing on organization and task initiation strategies.",
-        priority_order=["ORGANIZATION", "TASK_INITIATION", "TIME_MANAGEMENT"],
+        explanation=ai_result.get("explanation", "Based on the EF profile, here are recommended strategies."),
+        priority_order=[s.domain.value for s in suggestions[:3]],
+        encouragement=ai_result.get("encouragement", "Small steps lead to big changes!"),
     )
 
 

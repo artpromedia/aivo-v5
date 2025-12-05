@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import Fastify from 'fastify';
 import { z } from 'zod';
 import fetch from 'node-fetch';
@@ -849,6 +849,24 @@ fastify.post('/sessions/plan', async (request, reply) => {
 
 fastify.post('/baseline/generate', async (request, reply) => {
   const body = request.body as GenerateBaselineRequest;
+  const user = (request as any).user as RequestUser | null;
+
+  // Get tenant from authenticated user
+  const tenantId = user?.tenantId ?? 'demo-tenant';
+
+  // Fetch learner profile to get region and current grade
+  let region = 'north_america';
+  let currentGrade = 7;
+  
+  try {
+    const learnerProfile = await getLearnerWithBrainProfile(body.learnerId);
+    if (learnerProfile) {
+      region = (learnerProfile.region as string) || region;
+      currentGrade = learnerProfile.currentGrade || currentGrade;
+    }
+  } catch (err) {
+    warn('Could not fetch learner profile for baseline generation', { meta: { learnerId: body.learnerId, error: String(err) } });
+  }
 
   // Forward to baseline-assessment service
   const res = await fetch('http://baseline-assessment:4002/generate', {
@@ -856,27 +874,28 @@ fastify.post('/baseline/generate', async (request, reply) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       learnerId: body.learnerId,
-      tenantId: 'demo-tenant', // TODO: from auth
-      region: 'north_america', // TODO: from learner profile
-      currentGrade: 7, // TODO: from learner
+      tenantId,
+      region,
+      currentGrade,
       subjects: body.subjects,
     }),
   });
 
   const data: unknown = await res.json();
 
+  // Map the actual assessment response from baseline-assessment service
+  const assessmentData = data as any;
   const response: GenerateBaselineResponse = {
-    // TODO: map real assessment returned by the service
     assessment: {
-      id: (data as any).assessment?.id ?? 'baseline-1',
+      id: assessmentData.assessment?.id ?? randomUUID(),
       learnerId: body.learnerId,
-      tenantId: 'demo-tenant',
-      region: 'north_america',
-      grade: 7,
+      tenantId,
+      region,
+      grade: currentGrade,
       subjects: body.subjects,
-      items: (data as any).assessment?.items ?? [],
-      createdAt: new Date().toISOString(),
-      status: 'draft',
+      items: assessmentData.assessment?.items ?? [],
+      createdAt: assessmentData.assessment?.createdAt ?? new Date().toISOString(),
+      status: assessmentData.assessment?.status ?? 'draft',
     },
   };
 
@@ -885,14 +904,32 @@ fastify.post('/baseline/generate', async (request, reply) => {
 
 fastify.post('/baseline/submit', async (request, reply) => {
   const body = request.body as SubmitBaselineResponsesRequest;
+  const user = (request as any).user as RequestUser | null;
 
-  // TODO: real auth/tenant resolution
-  const tenantId = 'demo-tenant';
-  const region = 'north_america';
+  // Resolve tenant from authenticated user
+  const tenantId = user?.tenantId ?? 'demo-tenant';
+  
+  // Get learnerId from the assessment if not directly provided
+  // In a real system, look up the assessment to get the learnerId
+  let learnerId = 'demo-learner';
+  let region = 'north_america';
+  let currentGrade = 7;
 
-  // For now, we don't receive learnerId in this request. In a real system,
-  // this should come from auth/session or by looking up the assessment.
-  const learnerId = 'demo-learner';
+  // Try to find the assessment to get the learner information
+  try {
+    const assessment = await (prisma as any).baselineAssessment.findFirst({
+      where: { id: body.assessmentId },
+      select: { learnerId: true, region: true, grade: true },
+    });
+    if (assessment) {
+      learnerId = assessment.learnerId;
+      region = assessment.region || region;
+      currentGrade = assessment.grade || currentGrade;
+    }
+  } catch (err) {
+    // Assessment lookup failed, use defaults
+    warn('Could not find assessment', { meta: { assessmentId: body.assessmentId } });
+  }
 
   // Ensure learner exists (simple upsert by id for now)
   const learner = await (prisma as any).learner.upsert({
@@ -901,10 +938,10 @@ fastify.post('/baseline/submit', async (request, reply) => {
     create: {
       id: learnerId,
       tenantId,
-      ownerId: learnerId, // TODO: link to real user
-      displayName: learnerId,
-      currentGrade: 7, // TODO: from learner
-      region: 'north_america',
+      ownerId: user?.userId ?? learnerId,
+      displayName: user?.name ?? learnerId,
+      currentGrade,
+      region,
     },
   });
 
@@ -914,7 +951,7 @@ fastify.post('/baseline/submit', async (request, reply) => {
       learnerId: learner.id,
       tenantId,
       region: region as any,
-      grade: 7,
+      grade: currentGrade,
       // We don't have subject information per response in this contract yet,
       // so we store the raw responses and leave subjects empty for now.
       subjects: [],
@@ -923,19 +960,53 @@ fastify.post('/baseline/submit', async (request, reply) => {
     },
   });
 
-  // TODO: call brain-orchestrator to compute subject levels
+  // Call brain-orchestrator to compute subject levels
+  let subjectLevels: any[] = [];
+  let notes = 'Baseline assessment completed and scored.';
+  
+  try {
+    const brainOrchestratorUrl = process.env.BRAIN_ORCHESTRATOR_URL || 'http://brain-orchestrator:4003';
+    const scoringResponse = await fetch(`${brainOrchestratorUrl}/compute-levels`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        learnerId: learner.id,
+        assessmentId: assessment.id,
+        responses: body.responses,
+        currentGrade,
+      }),
+    });
+    
+    if (scoringResponse.ok) {
+      const scoringData = await scoringResponse.json() as any;
+      subjectLevels = scoringData.subjectLevels || [];
+      notes = scoringData.notes || notes;
+    } else {
+      warn('Brain orchestrator scoring failed', { meta: { status: scoringResponse.status } });
+      notes = 'Baseline assessment persisted. Scoring pending.';
+    }
+  } catch (err) {
+    warn('Could not reach brain-orchestrator for scoring', { meta: { error: String(err) } });
+    notes = 'Baseline assessment persisted. Scoring service unavailable.';
+  }
+
+  // Determine grade band based on current grade
+  const gradeBand = currentGrade <= 2 ? 'k_2' : 
+                    currentGrade <= 5 ? '3_5' : 
+                    currentGrade <= 8 ? '6_8' : '9_12';
+
   const response: SubmitBaselineResponsesResponse = {
     summary: {
-      subjectLevels: [],
-      notes: 'Mock summary â€“ persisted baseline assessment in Postgres, real scoring TBD',
+      subjectLevels,
+      notes,
     },
     updatedBrainProfile: {
       learnerId: learner.id,
       tenantId,
       region: region as any,
       currentGrade: learner.currentGrade,
-      gradeBand: '6_8',
-      subjectLevels: [],
+      gradeBand,
+      subjectLevels,
       neurodiversity: {},
       preferences: {},
       lastUpdatedAt: new Date().toISOString(),
@@ -985,22 +1056,35 @@ fastify.post('/difficulty/proposals', async (request, reply) => {
     status: created.status as any,
   };
 
-  await dbCreateNotification({
-    tenantId: user.tenantId ?? 'demo-tenant',
-    learnerId: body.learnerId,
-    recipientUserId: 'user-parent-1', // TODO: lookup real caregiver(s)
-    audience: 'parent',
-    type: 'difficulty_proposal',
-    title:
-      direction === 'harder'
-        ? 'AIVO suggests a gentle increase in difficulty'
-        : 'AIVO suggests making this subject gentler',
-    body:
-      direction === 'harder'
-        ? 'Based on recent progress, AIVO recommends trying slightly more challenging work. Please review and approve if you agree.'
-        : 'AIVO noticed some struggle and suggests temporarily easing the difficulty. Please review and approve if you agree.',
-    relatedDifficultyProposalId: created.id,
-  });
+  // Look up caregivers (parents/teachers) for this learner
+  const caregivers = await prisma.learnerGuardianAssociation.findMany({
+    where: { learnerId: body.learnerId },
+    include: { user: true },
+  }).catch(() => []);
+  
+  // Create notification for each caregiver, or fallback to creating one for the current user
+  const notificationRecipients = caregivers.length > 0 
+    ? caregivers.map(c => ({ userId: c.userId, audience: c.role === 'teacher' ? 'teacher' as const : 'parent' as const }))
+    : [{ userId: user.id, audience: 'parent' as const }];
+  
+  for (const recipient of notificationRecipients) {
+    await dbCreateNotification({
+      tenantId: user.tenantId ?? 'demo-tenant',
+      learnerId: body.learnerId,
+      recipientUserId: recipient.userId,
+      audience: recipient.audience,
+      type: 'difficulty_proposal',
+      title:
+        direction === 'harder'
+          ? 'AIVO suggests a gentle increase in difficulty'
+          : 'AIVO suggests making this subject gentler',
+      body:
+        direction === 'harder'
+          ? 'Based on recent progress, AIVO recommends trying slightly more challenging work. Please review and approve if you agree.'
+          : 'AIVO noticed some struggle and suggests temporarily easing the difficulty. Please review and approve if you agree.',
+      relatedDifficultyProposalId: created.id,
+    });
+  }
 
   return reply.send({ proposal });
 });
@@ -1558,9 +1642,20 @@ fastify.get('/caregiver/learners/:learnerId/overview', async (request, reply) =>
   const params = z.object({ learnerId: z.string() }).parse(request.params);
   const learnerId = params.learnerId;
 
-  // TODO: enforce that this user is a parent/teacher of the learner
   if (!user || (!user.roles.includes('parent') && !user.roles.includes('teacher'))) {
     return reply.status(403).send({ error: 'Only parents and teachers can view this overview.' });
+  }
+
+  // Enforce that this user is a parent/teacher of the learner
+  const association = await prisma.learnerGuardianAssociation.findFirst({
+    where: {
+      learnerId,
+      userId: user.id,
+    },
+  }).catch(() => null);
+
+  if (!association && !user.roles.includes('platform_admin')) {
+    return reply.status(403).send({ error: 'You are not authorized to view this learner.' });
   }
 
   // Mock learner & brain profile
@@ -2146,11 +2241,43 @@ fastify.post('/content/generate-draft', async (request, reply) => {
   }
 
   const { topicId, subject, grade, type } = request.body as any;
-  const prompt = 'Generate content for this topic';
+  const prompt = `Generate educational ${type} content for ${subject} at grade ${grade} level. Topic ID: ${topicId}. Be age-appropriate, engaging, and educational.`;
 
-  // TODO: Call model-dispatch service to generate content based on prompt
-  // For now, create a placeholder draft item
-  const generatedText = `[AI Generated Content]\n\nPrompt: ${prompt}\n\nThis is a placeholder. Integrate with model-dispatch service for actual AI generation.`;
+  // Call model-dispatch service to generate content
+  let generatedText = '';
+  let aiModel = 'placeholder-model';
+  
+  try {
+    const modelDispatchUrl = process.env.MODEL_DISPATCH_URL || 'http://model-dispatch:4007';
+    const generateResponse = await fetch(`${modelDispatchUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': request.headers.authorization || '',
+      },
+      body: JSON.stringify({
+        model: 'auto', // Let model-dispatch select the best provider
+        messages: [
+          { role: 'system', content: `You are an expert educational content creator. Generate ${type} content that is engaging, age-appropriate for grade ${grade}, and pedagogically sound.` },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 2000,
+        temperature: 0.7,
+      }),
+    });
+
+    if (generateResponse.ok) {
+      const data = await generateResponse.json() as any;
+      generatedText = data.choices?.[0]?.message?.content || '';
+      aiModel = data.model || 'model-dispatch';
+    } else {
+      warn('Model-dispatch content generation failed', { meta: { status: generateResponse.status } });
+      generatedText = `[Placeholder Content]\n\nContent generation is temporarily unavailable. Please try again later or create content manually.`;
+    }
+  } catch (err) {
+    warn('Could not reach model-dispatch for content generation', { meta: { error: String(err) } });
+    generatedText = `[Placeholder Content]\n\nContent generation is temporarily unavailable. Please try again later or create content manually.`;
+  }
 
   const item = await createContentItem({
     tenantId: user.tenantId,
@@ -2168,7 +2295,7 @@ fastify.post('/content/generate-draft', async (request, reply) => {
     status: 'draft',
     createdByUserId: user.userId,
     aiGenerated: true,
-    aiModel: 'placeholder-model',
+    aiModel,
   });
 
   return reply.send({

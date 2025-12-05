@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:aivo_shared/aivo_shared.dart';
+import 'package:aivo_shared/user_context.dart';
 
 /// Screen for entering IEP goal data points
 class IEPDataEntryScreen extends StatefulWidget {
@@ -16,6 +17,8 @@ class IEPDataEntryScreen extends StatefulWidget {
 }
 
 class _IEPDataEntryScreenState extends State<IEPDataEntryScreen> {
+  final AivoApiClient _client = AivoApiClient();
+  final UserContextService _userContext = UserContextService.instance;
   final _valueController = TextEditingController();
   final _notesController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -801,10 +804,13 @@ class _IEPDataEntryScreenState extends State<IEPDataEntryScreen> {
     );
   }
 
-  void _save() {
+  void _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
+
+    // Get user info from auth context
+    final authorInfo = _userContext.getAuthorInfo();
 
     // Create the data point
     final dataPoint = IEPDataPoint(
@@ -812,20 +818,37 @@ class _IEPDataEntryScreenState extends State<IEPDataEntryScreen> {
       goalId: widget.goal.id,
       value: double.parse(_valueController.text),
       measurementDate: _selectedDate,
-      recordedById: 'current-user', // TODO: Get from auth
-      recordedByRole: 'PARENT', // TODO: Get from auth
-      recordedByName: 'You',
+      recordedById: authorInfo['authorId']!,
+      recordedByRole: authorInfo['authorRole']!,
+      recordedByName: authorInfo['authorName']!,
       context: _selectedContext,
       notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       evidenceUrl: _evidenceUrl,
     );
 
-    // TODO: Save to API
-    Future.delayed(const Duration(milliseconds: 500), () {
+    // Save to API
+    try {
+      await _client.addIEPDataPoint(
+        goalId: widget.goal.id,
+        value: dataPoint.value,
+        measurementDate: dataPoint.measurementDate,
+        recordedById: dataPoint.recordedById,
+        recordedByRole: dataPoint.recordedByRole,
+        context: dataPoint.context.name,
+        notes: dataPoint.notes,
+      );
+      
       if (mounted) {
         Navigator.pop(context, dataPoint);
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    }
   }
 
   IconData _getContextIcon(IEPMeasurementContext context) {

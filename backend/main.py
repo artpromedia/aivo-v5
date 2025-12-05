@@ -18,7 +18,9 @@ from core.exceptions import setup_exception_handlers
 from db.database import init_db, close_db
 from agents.agent_manager import agent_manager
 from api.websockets import socket_manager, router as websocket_router
-from api.routes import agents_router, focus_analytics_router, iep_goals_router
+from api.routes import agents_router, focus_analytics_router, iep_goals_router, iep_upload_router
+from api.routes.speech import router as speech_router
+from api.routes.ml import router as ml_router
 from api.routes.websocket_metrics import router as websocket_metrics_router
 
 # Setup logging
@@ -163,9 +165,24 @@ app.include_router(
     tags=["IEP Goals"]
 )
 app.include_router(
+    iep_upload_router,
+    prefix=f"{settings.API_PREFIX}/iep",
+    tags=["IEP Upload"]
+)
+app.include_router(
     websocket_metrics_router,
     prefix=f"{settings.API_PREFIX}/websocket",
     tags=["WebSocket Metrics"]
+)
+app.include_router(
+    speech_router,
+    prefix=f"{settings.API_PREFIX}/speech",
+    tags=["Speech Analysis"]
+)
+app.include_router(
+    ml_router,
+    prefix=f"{settings.API_PREFIX}/ml",
+    tags=["Machine Learning"]
 )
 app.include_router(websocket_router, tags=["WebSocket"])
 

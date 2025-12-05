@@ -388,10 +388,100 @@ export class TutorOrchestrationService {
 	async endSession(sessionId: string): Promise<void> {
 		const context = this.sessionContexts.get(sessionId);
 		if (context) {
-			// Save conversation to database or analytics
-			// TODO: Persist conversation history for analysis
+			// Persist conversation history to database
+			try {
+				await this.persistConversationHistory(context);
+			} catch (error) {
+				console.error(`Failed to persist conversation history for session ${sessionId}:`, error);
+			}
 
 			this.sessionContexts.delete(sessionId);
+		}
+	}
+
+	/**
+	 * Persist conversation history to database for analysis
+	 */
+	private async persistConversationHistory(context: TutorSessionContext): Promise<void> {
+		const { sessionId, learnerId, conversationHistory, currentActivity, startTime } = context;
+		
+		if (!conversationHistory || conversationHistory.length === 0) {
+			return;
+		}
+
+		const endTime = new Date();
+		const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+
+		// Store as LearningSession with conversation in interactions JSON
+		try {
+			await this.prisma.learningSession.create({
+				data: {
+					learnerId,
+					subject: currentActivity.subject,
+					topic: currentActivity.topic ?? 'tutoring',
+					gradeLevel: 0, // Will be enriched from learner profile
+					presentationLevel: currentActivity.difficulty ?? 0.5,
+					startTime,
+					endTime,
+					duration: durationMinutes,
+					interactions: {
+						sessionId,
+						type: 'tutor_conversation',
+						messages: conversationHistory.map(msg => ({
+							learnerInput: msg.learnerInput,
+							tutorResponse: msg.tutorResponse,
+							timestamp: msg.timestamp.toISOString(),
+							inputType: msg.inputType,
+						})),
+						stats: {
+							totalInteractions: conversationHistory.length,
+							hintsProvided: context.previousHints.length,
+						}
+					},
+					focusScore: null,
+					completion: 1.0,
+				}
+			});
+
+			console.log(`Persisted ${conversationHistory.length} conversation messages for session ${sessionId}`);
+		} catch (dbError) {
+			// If direct Prisma fails, try API gateway as fallback
+			console.warn('Direct DB save failed, trying API gateway:', dbError);
+			
+			const apiGatewayUrl = process.env.API_GATEWAY_BASE_URL ?? 'http://api-gateway:4000';
+			
+			try {
+				const response = await fetch(`${apiGatewayUrl}/api/v1/sessions/learning`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						learnerId,
+						subject: currentActivity.subject,
+						topic: currentActivity.topic ?? 'tutoring',
+						gradeLevel: 0,
+						presentationLevel: currentActivity.difficulty ?? 0.5,
+						startTime: startTime.toISOString(),
+						endTime: endTime.toISOString(),
+						duration: durationMinutes,
+						interactions: {
+							sessionId,
+							type: 'tutor_conversation',
+							messages: conversationHistory,
+							stats: {
+								totalInteractions: conversationHistory.length,
+								hintsProvided: context.previousHints.length,
+							}
+						}
+					})
+				});
+
+				if (!response.ok) {
+					throw new Error(`API gateway returned ${response.status}`);
+				}
+			} catch (apiError) {
+				console.error('Failed to persist conversation via API gateway:', apiError);
+				throw apiError;
+			}
 		}
 	}
 

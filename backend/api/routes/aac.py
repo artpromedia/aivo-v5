@@ -247,7 +247,16 @@ async def create_symbol(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new AAC symbol (admin only)"""
-    # TODO: Add admin check
+    # Check admin/SLP permissions
+    allowed_roles = {"admin", "platform_admin", "slp", "speech_therapist", "therapist"}
+    user_roles = set(getattr(current_user, 'roles', []) or [])
+    user_role = getattr(current_user, 'role', '').lower()
+    
+    if not (user_roles & allowed_roles) and user_role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators and speech therapists can create AAC symbols"
+        )
     
     db_symbol = AACSymbol(
         label=symbol.label,

@@ -3,7 +3,7 @@
  * Multi-Provider AI system with automatic fallback, cost tracking, and admin management
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID, createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import Fastify from 'fastify';
 import { z } from 'zod';
 import { callWithFailover } from './index';
@@ -48,6 +48,53 @@ import {
   listAIProviders,
   createAIModel,
   updateAIModel,
+} from '@aivo/observability';
+
+// ============================================================================
+// Encryption Utilities for API Keys
+// ============================================================================
+
+const ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_SECRET || 'default-dev-secret-change-in-production-32';
+const ALGORITHM = 'aes-256-gcm';
+
+function getEncryptionKey(): Buffer {
+  // Use scrypt to derive a 32-byte key from the secret
+  return scryptSync(ENCRYPTION_KEY, 'aivo-salt', 32);
+}
+
+export function encryptApiKey(apiKey: string): string {
+  const key = getEncryptionKey();
+  const iv = randomBytes(16);
+  const cipher = createCipheriv(ALGORITHM, key, iv);
+  
+  let encrypted = cipher.update(apiKey, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  
+  const authTag = cipher.getAuthTag();
+  
+  // Return iv:authTag:encrypted
+  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+}
+
+export function decryptApiKey(encryptedData: string): string {
+  const key = getEncryptionKey();
+  const [ivHex, authTagHex, encrypted] = encryptedData.split(':');
+  
+  if (!ivHex || !authTagHex || !encrypted) {
+    throw new Error('Invalid encrypted data format');
+  }
+  
+  const iv = Buffer.from(ivHex, 'hex');
+  const authTag = Buffer.from(authTagHex, 'hex');
+  
+  const decipher = createDecipheriv(ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+  
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
+}
   deleteAIModel,
   listAIModels,
   createFallbackChain,
@@ -809,10 +856,11 @@ fastify.get('/api/admin/ai/providers/:id', async (request, reply) => {
 fastify.post('/api/admin/ai/providers', async (request, reply) => {
   try {
     const body = providerSchema.parse(request.body);
-    // TODO: Encrypt API key before storing
+    // Encrypt API key before storing
+    const encryptedApiKey = body.apiKey ? encryptApiKey(body.apiKey) : undefined;
     const provider = await createAIProvider({
       ...body,
-      apiKeyEncrypted: body.apiKey, // Should encrypt in production
+      apiKeyEncrypted: encryptedApiKey,
     });
     info('AI provider created', {
       meta: { providerId: provider.id, providerType: body.providerType },
@@ -832,9 +880,11 @@ fastify.put('/api/admin/ai/providers/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const body = providerSchema.partial().parse(request.body);
+    // Encrypt API key if provided
+    const encryptedApiKey = body.apiKey ? encryptApiKey(body.apiKey) : undefined;
     const provider = await updateAIProvider(id, {
       ...body,
-      apiKeyEncrypted: body.apiKey,
+      apiKeyEncrypted: encryptedApiKey,
     });
     info('AI provider updated', { meta: { providerId: id } });
     return reply.send({ provider });

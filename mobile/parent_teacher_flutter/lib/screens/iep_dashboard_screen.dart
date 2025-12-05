@@ -20,6 +20,7 @@ class IEPDashboardScreen extends StatefulWidget {
 }
 
 class _IEPDashboardScreenState extends State<IEPDashboardScreen> {
+  final AivoApiClient _client = AivoApiClient();
   List<IEPGoal> _goals = [];
   bool _loading = true;
   String? _error;
@@ -44,20 +45,28 @@ class _IEPDashboardScreenState extends State<IEPDashboardScreen> {
   }
 
   Future<void> _loadGoals() async {
+    if (widget.learnerId == null) {
+      setState(() {
+        _loading = false;
+        _error = 'No learner selected';
+      });
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Mock data for demonstration
-      _goals = _generateMockGoals();
+      // Fetch goals from API
+      final goals = await _client.getIEPGoals(widget.learnerId!);
       
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() {
+          _goals = goals;
+          _loading = false;
+        });
       }
     } catch (e) {
       if (mounted) {

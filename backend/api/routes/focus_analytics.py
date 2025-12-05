@@ -12,10 +12,18 @@ from datetime import datetime
 from enum import Enum
 
 from core.logging import setup_logging
+from db.repositories.focus_repository import FocusAnalyticsRepository
+from db.database import get_async_session
 
 logger = setup_logging(__name__)
 
 router = APIRouter(prefix="/focus", tags=["Focus Analytics"])
+
+
+async def get_repository():
+    """Dependency to get Focus Analytics repository with session."""
+    async with get_async_session() as session:
+        yield FocusAnalyticsRepository(session)
 
 
 # ============================================================================
@@ -123,7 +131,10 @@ class FocusInsightsResponse(BaseModel):
 # ============================================================================
 
 @router.post("/metrics")
-async def submit_focus_metrics(metrics: FocusMetricsSubmission):
+async def submit_focus_metrics(
+    metrics: FocusMetricsSubmission,
+    repo: FocusAnalyticsRepository = Depends(get_repository),
+):
     """
     Submit aggregated focus metrics from a learning session.
     
@@ -136,18 +147,36 @@ async def submit_focus_metrics(metrics: FocusMetricsSubmission):
         f"breaks_taken={metrics.breaks_taken}/{metrics.breaks_suggested}"
     )
     
-    # TODO: Store in database when available
-    # For now, just log and acknowledge
+    # Store in database
+    saved = await repo.save_focus_metrics(
+        learner_id=metrics.learner_id,
+        session_id=metrics.session_id,
+        focus_score=metrics.average_focus_score,
+        distractions=metrics.breaks_dismissed,  # Dismissed breaks indicate distraction
+        metrics={
+            "min_focus_score": metrics.min_focus_score,
+            "max_focus_score": metrics.max_focus_score,
+            "breaks_suggested": metrics.breaks_suggested,
+            "breaks_taken": metrics.breaks_taken,
+            "breaks_dismissed": metrics.breaks_dismissed,
+            "total_session_minutes": metrics.total_session_minutes,
+            "active_minutes": metrics.active_minutes,
+        }
+    )
     
     return {
         "status": "received",
+        "id": saved.get("id"),
         "learner_id": metrics.learner_id,
         "timestamp": datetime.utcnow().isoformat()
     }
 
 
 @router.post("/break-completed")
-async def record_focus_break(break_data: FocusBreakCompleted):
+async def record_focus_break(
+    break_data: FocusBreakCompleted,
+    repo: FocusAnalyticsRepository = Depends(get_repository),
+):
     """
     Record a completed focus break game.
     
@@ -160,10 +189,19 @@ async def record_focus_break(break_data: FocusBreakCompleted):
         f"completed={break_data.completed}"
     )
     
-    # TODO: Store in database and update learner preferences
+    # Store in database
+    saved = await repo.save_game_session(
+        learner_id=break_data.learner_id,
+        game_type=break_data.game_type.value.upper(),
+        duration=break_data.duration_seconds,
+        completed=break_data.completed,
+        score=break_data.score,
+        triggered_by="focus_break",
+    )
     
     return {
         "status": "recorded",
+        "id": saved.get("id"),
         "learner_id": break_data.learner_id,
         "game_type": break_data.game_type.value,
         "timestamp": datetime.utcnow().isoformat()
@@ -171,33 +209,90 @@ async def record_focus_break(break_data: FocusBreakCompleted):
 
 
 @router.get("/insights/{learner_id}", response_model=FocusInsightsResponse)
-async def get_focus_insights(learner_id: str):
+async def get_focus_insights(
+    learner_id: str,
+    repo: FocusAnalyticsRepository = Depends(get_repository),
+):
     """
     Get personalized focus insights for a learner.
     
     Based on aggregated focus patterns and break preferences.
     """
-    # TODO: Generate real insights from stored data
-    # For now, return sensible defaults
+    # Get aggregated data
+    aggregates = await repo.get_focus_aggregates(learner_id, days=30)
+    preferred_breaks = await repo.get_preferred_break_types(learner_id, days=30)
+    optimal_length = await repo.get_optimal_session_length(learner_id, days=30)
+    
+    # Generate insights based on data
+    insights = []
+    
+    if aggregates["sessionCount"] > 0:
+        avg_score = aggregates["averageScore"]
+        
+        if avg_score >= 75:
+            insights.append(FocusInsight(
+                insight_type="focus_strength",
+                message=f"Great focus! Your average focus score is {avg_score:.0f}%.",
+                recommendation="Keep up the excellent work!",
+                confidence=0.9
+            ))
+        elif avg_score >= 50:
+            insights.append(FocusInsight(
+                insight_type="focus_improvement",
+                message=f"Your average focus score is {avg_score:.0f}%. There's room to improve.",
+                recommendation="Try taking more frequent breaks to maintain focus.",
+                confidence=0.8
+            ))
+        else:
+            insights.append(FocusInsight(
+                insight_type="focus_challenge",
+                message=f"Focus seems challenging. Average score is {avg_score:.0f}%.",
+                recommendation="Consider shorter learning sessions with movement breaks.",
+                confidence=0.75
+            ))
+        
+        if aggregates["totalDistractions"] > aggregates["sessionCount"] * 2:
+            insights.append(FocusInsight(
+                insight_type="distraction_pattern",
+                message="You often dismiss break suggestions.",
+                recommendation="Taking suggested breaks can help maintain focus longer.",
+                confidence=0.7
+            ))
+    else:
+        # No data yet
+        insights = [
+            FocusInsight(
+                insight_type="getting_started",
+                message="We're learning your focus patterns.",
+                recommendation="Complete a few learning sessions to get personalized insights.",
+                confidence=0.5
+            )
+        ]
+    
+    # Add optimal timing insight
+    insights.append(FocusInsight(
+        insight_type="optimal_timing",
+        message=f"Your optimal session length appears to be around {optimal_length} minutes.",
+        recommendation=f"Try {optimal_length}-minute focused work periods with breaks.",
+        confidence=0.7
+    ))
+    
+    # Map preferred breaks to enum
+    preferred_types = []
+    for b in preferred_breaks:
+        try:
+            preferred_types.append(FocusGameType(b.lower()))
+        except ValueError:
+            preferred_types.append(FocusGameType.MOVEMENT)
+    
+    if not preferred_types:
+        preferred_types = [FocusGameType.MOVEMENT, FocusGameType.BREATHING]
     
     return FocusInsightsResponse(
         learner_id=learner_id,
-        insights=[
-            FocusInsight(
-                insight_type="optimal_timing",
-                message="You focus best in shorter sessions with regular breaks.",
-                recommendation="Try 15-20 minute focused work periods.",
-                confidence=0.7
-            ),
-            FocusInsight(
-                insight_type="preferred_breaks",
-                message="Movement breaks help you refocus most effectively.",
-                recommendation="Quick stretches between activities boost focus.",
-                confidence=0.65
-            )
-        ],
-        preferred_break_types=[FocusGameType.MOVEMENT, FocusGameType.BREATHING],
-        optimal_session_length_minutes=20,
+        insights=insights,
+        preferred_break_types=preferred_types,
+        optimal_session_length_minutes=optimal_length,
         generated_at=datetime.utcnow()
     )
 

@@ -5,11 +5,14 @@ Author: artpromedia
 Date: 2025-11-29
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from typing import List, Optional
 from datetime import datetime
+import aiofiles
+import uuid
+import os
 
 from db.database import get_db
 from db.models.user import User
@@ -259,6 +262,157 @@ async def get_skill_prerequisites(
         )
     )
     return prereq_result.scalars().all()
+
+
+@router.post("/{skill_id}/video")
+async def upload_skill_video(
+    skill_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Upload a video model for a functional skill
+    
+    This endpoint handles video file uploads for ILS video modeling.
+    Videos are stored and the URL is added to the skill's video_modeling_urls.
+    """
+    from fastapi import File, UploadFile
+    import aiofiles
+    import uuid
+    import os
+    
+    # Re-define the endpoint with File parameter
+    pass
+
+
+@router.post("/{skill_id}/video-upload", status_code=status.HTTP_201_CREATED)
+async def add_video_model_to_skill(
+    skill_id: str,
+    file: "UploadFile",
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Upload video modeling content for a functional skill
+    
+    Accepts video files (mp4, mov, webm) up to 100MB.
+    Videos are stored in cloud storage and the URL is added to the skill.
+    """
+    from fastapi import File, UploadFile
+    import aiofiles
+    import uuid
+    import os
+    
+    # Validate skill exists
+    result = await db.execute(
+        select(FunctionalSkill).where(FunctionalSkill.id == skill_id)
+    )
+    skill = result.scalar_one_or_none()
+    
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    # Validate file type
+    allowed_types = ["video/mp4", "video/quicktime", "video/webm", "video/x-msvideo"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid file type. Allowed: mp4, mov, webm, avi"
+        )
+    
+    # Check file size (100MB limit)
+    max_size = 100 * 1024 * 1024  # 100MB
+    file_size = 0
+    
+    # Generate unique filename
+    file_ext = os.path.splitext(file.filename or "video.mp4")[1]
+    unique_filename = f"ils_video_{skill_id}_{uuid.uuid4().hex}{file_ext}"
+    
+    # Determine upload directory
+    upload_dir = os.environ.get("UPLOAD_DIR", "/tmp/uploads/ils_videos")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    try:
+        # Save file
+        async with aiofiles.open(file_path, 'wb') as out_file:
+            while chunk := await file.read(1024 * 1024):  # 1MB chunks
+                file_size += len(chunk)
+                if file_size > max_size:
+                    os.remove(file_path)
+                    raise HTTPException(
+                        status_code=413,
+                        detail="File too large. Maximum size is 100MB"
+                    )
+                await out_file.write(chunk)
+        
+        # Generate URL (in production, this would be a CDN/S3 URL)
+        base_url = os.environ.get("CONTENT_BASE_URL", "http://localhost:4000/uploads")
+        video_url = f"{base_url}/ils_videos/{unique_filename}"
+        
+        # Add video URL to skill's video_modeling_urls
+        current_urls = skill.video_modeling_urls or []
+        current_urls.append(video_url)
+        skill.video_modeling_urls = current_urls
+        
+        await db.commit()
+        await db.refresh(skill)
+        
+        logger.info(f"Uploaded video for skill {skill_id}: {video_url}")
+        
+        return {
+            "success": True,
+            "videoUrl": video_url,
+            "filename": unique_filename,
+            "size": file_size,
+            "skillId": skill_id,
+            "totalVideos": len(current_urls),
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Clean up on error
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        logger.error(f"Video upload failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Video upload failed: {str(e)}"
+        )
+
+
+@router.delete("/{skill_id}/video")
+async def remove_video_from_skill(
+    skill_id: str,
+    video_url: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Remove a video model URL from a skill"""
+    result = await db.execute(
+        select(FunctionalSkill).where(FunctionalSkill.id == skill_id)
+    )
+    skill = result.scalar_one_or_none()
+    
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    current_urls = skill.video_modeling_urls or []
+    if video_url not in current_urls:
+        raise HTTPException(status_code=404, detail="Video URL not found for this skill")
+    
+    current_urls.remove(video_url)
+    skill.video_modeling_urls = current_urls
+    
+    await db.commit()
+    
+    logger.info(f"Removed video from skill {skill_id}: {video_url}")
+    
+    return {"success": True, "remainingVideos": len(current_urls)}
 
 
 # Placeholder for FunctionalSkill model - will use Prisma in actual implementation

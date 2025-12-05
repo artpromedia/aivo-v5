@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aivo_shared/aivo_shared.dart';
+import 'package:aivo_shared/user_context.dart';
 import '../widgets/iep_progress_chart.dart';
 import '../widgets/iep_goal_card.dart';
 import 'iep_data_entry_screen.dart';
@@ -19,6 +20,8 @@ class IEPGoalDetailScreen extends StatefulWidget {
 
 class _IEPGoalDetailScreenState extends State<IEPGoalDetailScreen> 
     with SingleTickerProviderStateMixin {
+  final AivoApiClient _client = AivoApiClient();
+  final UserContextService _userContext = UserContextService.instance;
   late TabController _tabController;
   late IEPGoal _goal;
   bool _loading = false;
@@ -39,11 +42,23 @@ class _IEPGoalDetailScreenState extends State<IEPGoalDetailScreen>
   Future<void> _refreshGoal() async {
     setState(() => _loading = true);
     
-    // TODO: Fetch updated goal from API
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    if (mounted) {
-      setState(() => _loading = false);
+    try {
+      // Fetch updated goal from API
+      final updatedGoal = await _client.getIEPGoal(_goal.id);
+      
+      if (mounted) {
+        setState(() {
+          _goal = updatedGoal;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to refresh: $e')),
+        );
+      }
     }
   }
 
@@ -1024,19 +1039,52 @@ class _IEPGoalDetailScreenState extends State<IEPGoalDetailScreen>
     );
   }
 
-  void _setStatus(IEPGoalStatus status) {
+  Future<void> _setStatus(IEPGoalStatus status) async {
+    final previousGoal = _goal;
+    
+    // Optimistic update
     setState(() {
       _goal = _goal.copyWith(status: status);
     });
-    // TODO: Update via API
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Status updated to ${status.displayName}'),
-        backgroundColor: AivoTheme.mint,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    
+    try {
+      // Update via API
+      final updatedGoal = await _client.updateIEPGoal(
+        goalId: _goal.id,
+        status: status.name,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _goal = updatedGoal;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Status updated to ${status.displayName}'),
+            backgroundColor: AivoTheme.mint,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      // Rollback on error
+      if (mounted) {
+        setState(() {
+          _goal = previousGoal;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update status: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    }
   }
 
   void _shareProgress() {
@@ -1164,6 +1212,7 @@ class _AddNoteSheet extends StatefulWidget {
 
 class _AddNoteSheetState extends State<_AddNoteSheet> {
   final _contentController = TextEditingController();
+  final _userContext = UserContextService.instance;
   IEPNoteType _selectedType = IEPNoteType.observation;
   bool _isPrivate = false;
 
@@ -1276,12 +1325,13 @@ class _AddNoteSheetState extends State<_AddNoteSheet> {
   }
 
   void _save() {
+    final authorInfo = _userContext.getAuthorInfo();
     final note = IEPNote(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       goalId: widget.goalId,
-      authorId: 'current-user', // TODO: Get from auth
-      authorRole: 'PARENT', // TODO: Get from auth
-      authorName: 'You',
+      authorId: authorInfo['authorId']!,
+      authorRole: authorInfo['authorRole']!,
+      authorName: authorInfo['authorName']!,
       content: _contentController.text,
       noteType: _selectedType,
       isPrivate: _isPrivate,

@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.nextjs.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },

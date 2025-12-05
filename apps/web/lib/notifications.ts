@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendEmailNotification } from "@/lib/notifications/email-provider";
 import { renderNotificationTemplate } from "@/lib/notifications/templates";
+import { sendPushNotification } from "@/lib/notifications/push-provider";
 
 export interface NotificationPayload {
   userId?: string;
@@ -10,7 +11,7 @@ export interface NotificationPayload {
   subject: string;
   template: string;
   data: Record<string, unknown>;
-  channel?: "EMAIL" | "IN_APP";
+  channel?: "EMAIL" | "IN_APP" | "PUSH";
 }
 
 export async function sendNotification(payload: NotificationPayload) {
@@ -68,6 +69,17 @@ export async function sendNotification(payload: NotificationPayload) {
         data: metadata
       })
     );
+  } else if (payload.channel === "PUSH") {
+    // Deliver push notification if user has a push token
+    queueMicrotask(() =>
+      deliverPushNotification({
+        notificationId: notification.id,
+        userId: user.id,
+        title: payload.subject,
+        body: messageBody,
+        data: metadata
+      })
+    );
   } else if (process.env.NODE_ENV === "development") {
     console.info("Notification stored without email delivery", payload);
   }
@@ -78,6 +90,14 @@ interface DeliveryPayload {
   to: string;
   subject: string;
   template: string;
+  data: Record<string, unknown>;
+}
+
+interface PushDeliveryPayload {
+  notificationId: string;
+  userId: string;
+  title: string;
+  body: string;
   data: Record<string, unknown>;
 }
 
@@ -109,6 +129,51 @@ async function deliverEmailNotification(payload: DeliveryPayload) {
           ...payload.data,
           deliveryError: error instanceof Error ? error.message : String(error),
           deliveryFailedAt: new Date().toISOString()
+        } as Prisma.InputJsonValue
+      }
+    });
+  }
+}
+
+async function deliverPushNotification(payload: PushDeliveryPayload) {
+  try {
+    // Get user's push tokens from notification preferences
+    const preferences = await prisma.notificationPreference.findFirst({
+      where: { userId: payload.userId }
+    });
+
+    const pushToken = preferences?.pushToken;
+
+    if (!pushToken) {
+      console.info("No push token for user", { userId: payload.userId });
+      return;
+    }
+
+    await sendPushNotification({
+      token: pushToken,
+      title: payload.title,
+      body: payload.body,
+      data: payload.data
+    });
+
+    await prisma.notification.update({
+      where: { id: payload.notificationId },
+      data: {
+        data: {
+          ...payload.data,
+          pushDeliveredAt: new Date().toISOString()
+        } as Prisma.InputJsonValue
+      }
+    });
+  } catch (error) {
+    console.error("Push notification delivery failed", error);
+    await prisma.notification.update({
+      where: { id: payload.notificationId },
+      data: {
+        data: {
+          ...payload.data,
+          pushDeliveryError: error instanceof Error ? error.message : String(error),
+          pushDeliveryFailedAt: new Date().toISOString()
         } as Prisma.InputJsonValue
       }
     });
